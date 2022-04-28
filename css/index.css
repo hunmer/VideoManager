@@ -1,0 +1,130 @@
+body {
+	display: inline-flex;
+    width: 100%;
+	margin: 0;
+	min-height: calc(100vh);
+	-webkit-overflow-scrolling: touch;
+    font-family: -apple-system, BlinkMacSystemFont, Roboto, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+	/*padding: 50px;*/
+  overflow-y: hidden;
+}
+
+::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+}
+
+::-webkit-scrollbar-track {
+    width: 5px;
+    background: rgba(#101F1C, 0.1);
+    -webkit-border-radius: 2em;
+    -moz-border-radius: 2em;
+    border-radius: 2em;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: rgba(144, 147, 153, .5);
+    background-clip: padding-box;
+    min-height: 28px;
+    -webkit-border-radius: 2em;
+    -moz-border-radius: 2em;
+    border-radius: 2em;
+    transition: background-color .3s;
+    cursor: pointer;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(144, 147, 153, .3);
+}
+* {
+  
+ touch-action: pan-y;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    outline: none;
+    /*-webkit-user-drag: none;*/
+}
+
+.seled{border:1px solid
+      red;background-color:#D6DFF7}
+
+.media img {
+	height: 50px;
+}
+
+.hide {
+	display: none !important;
+}
+
+.hide1 {
+  display: none;
+}
+
+
+.inputstyle {
+    cursor: pointer;
+    font-size: 30px;
+    outline: medium none;
+    position: absolute;
+    filter: alpha(opacity=0);
+    -moz-opacity: 0;
+    opacity: 0;
+    left: -100px;
+    top: -100px;
+}
+
+.card_active {
+  color:  var(--light); 
+  background-color:  var(--primary); 
+}
+
+#wrapper {
+  width: 100%;
+  overflow: hidden;
+}
+
+#sidebar-wrapper {
+	height: 100%;
+  margin-left: -16rem;
+  transition: margin 0.25s ease-out;
+}
+
+#sidebar-wrapper .sidebar-heading {
+	width: 250px;
+  padding: 0.875rem 1.25rem;
+  font-size: 1.2rem;
+}
+
+#page-content-wrapper {
+  min-width: 100vw;
+}
+
+body.sb-sidenav-toggled #wrapper #sidebar-wrapper {
+  margin-left: 0;
+}
+
+@media (min-width: 900px) {
+  #sidebar-wrapper {
+    margin-left: 0;
+  }
+
+  #page-content-wrapper {
+    min-width: 0;
+    width: 100%;
+  }
+
+  body.sb-sidenav-toggled #wrapper #sidebar-wrapper {
+    margin-left: -16rem;
+  }
+}
+
+#player {
+     height: calc(100vh - 200px);
+}
+
+#player video {
+    width: 100%;
+
+}

@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
+    <meta name="theme-color" content="#000000">
+    <meta name="msapplication-navbutton-color" content="#000000">
+    <meta name="apple-mobile-web-app-status-bar-style" content="#000000">
+    <meta name="description" content="">
+    <meta name="author" content="hunmer">
+    <meta name="keywords" content="">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="">
+    <meta property="og:title" content="videoManager">
+    <meta property="og:description" content="">
+    <meta property="og:image" content="favicon.png">
+    <link rel="shortcut icon" href="favicon.png">
+    <meta http-equiv="pragma" content="no-cache" />
+    <meta http-equiv="content-type" content="no-cache, must-revalidate" />
+    <meta http-equiv="expires" content="Wed, 26 Feb 1997 08:21:57 GMT" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-touch-fullscreen" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="full-screen" content="yes">
+    <meta name="browsermode" content="application">
+    <meta name="x5-fullscreen" content="true">
+    <meta name="x5-page-mode" content="app">
+    <meta name="Author" contect="liaoyanjie2000@gmail.com">
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/bootstrap-icons.css">
+    <link rel="stylesheet" href="plugins/datepicker/tempusdominus-bootstrap-4.min.css">
+    <link rel="stylesheet" href="css/index.css">
+    <title>视频管理</title>
+</head>
+
+<body>
+    <input id="upload" class='inputstyle' type="file" accept=".json" onchange="parseFile(this)" />
+    <div id="preview_video_popup" style="display: none;position: fixed;z-index: 99999;width:350px;">
+        <div style="position: relative;">
+            <video autoplay loop ontimeupdate="$('#progress_preview').css('width', parseInt(this.currentTime / this.duration * 100)+'%');" onplay="g_player.playVideo(false);this.volume = 0.25;" style="width: 100%;"></video>
+            <div class="progress" style="height: 5px;position: absolute;bottom: 0;left:0;width: 100%;">
+                <div id="progress_preview" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%"></div>
+            </div>
+        </div>
+    </div>
+    <div id="file-drop" class="text-center bg-white hide1" style="position: fixed;width: 100%;height:100%;z-index: 99999;">
+        <div class="card" style="width: 18rem;margin: 0 auto;top: 40%;">
+            <i class="bi bi-download" style="font-size: 4rem;"></i>
+            <!-- <img src="..." class="card-img-top" alt="..."> -->
+            <div class="card-body">
+                <p class="card-text">拖放文件完成导入</p>
+            </div>
+        </div>
+    </div>
+    <div data-style="alert-warning" class="alert alert-warning alert-dismissible hide" role="alert" style="height: fit-content;
+    position: fixed;
+    right: 10px;
+    top: 20px;
+    z-index: 9999;">
+        <span class="text"></span>
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+    <div class="modal fade" id="modal_search" tabindex="-1" aria-labelledby="modal_searchLable" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modal_searchLable">搜索片段</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="card mb-2">
+                        <div class="card-header">
+                            <button class="btn btn-outline-secondary dropdown-toggle float-right" type="button" data-toggle="dropdown" aria-expanded="false">过滤</button>
+                            <div class="dropdown-menu">
+                                <a class="dropdown-item" data-action="filter_addTag">标签</a>
+                                <a class="dropdown-item" data-action="filter_addFolder">目录</a>
+                                <a class="dropdown-item" data-action="filter_addSize">尺寸</a>
+                                <a class="dropdown-item" data-action="filter_addTime">时间</a>
+                                <div role="separator" class="dropdown-divider"></div>
+                                <a class="dropdown-item" data-action="filter_reset">重置</a>
+                            </div>
+                        </div>
+                        <div class="card-body " id="search_fliters">
+                        </div>
+                    </div>
+                    <div class="container-fluid">
+                        <div class="card-columns" id="search_result">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <!-- <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button> -->
+                    <button type="button" class="btn btn-primary disabled" data-action="collection_add"><span class="badge badge-success mr-2" id="selected_cnt">0</span>添加到列表</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="modal_addFiles" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">添加文件</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">合集名称</span>
+                        </div>
+                        <input type="text" class="form-control" placeholder="" aria-label="" id="input_folderName" aria-describedby="input_folderName">
+                        <button type="button" data-action="modal_folders,#input_folderName" class="btn btn-outline-secondary"><i class="bi bi-list"></i></button>
+                    </div>
+                    <ul class="list-group" id="files_add">
+                        <!-- <li class="list-group-item"></li> -->
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-action="btn_file_selectAll">全选</button>
+                    <button type="button" class="btn btn-primary disabled" data-action="btn_file_add"><span class="badge badge-success mr-2" id="selected_file_cnt">0</span>添加文件</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="d-flex" id="wrapper">
+        <div class="border-end bg-white" id="sidebar-wrapper">
+            <div class="sidebar-heading border-bottom bg-light">
+                <input class="form-control mr-sm-2" type="search" placeholder="搜索影片" aria-label="Search" oninput="g_video.searchVideo(this.value)">
+            </div>
+            <div class="accordion" style="width: 250px;" id="accordionExample">
+            </div>
+        </div>
+        <div id="page-content-wrapper">
+            <nav class="navbar navbar-expand-lg navbar-light bg-light">
+                <a class="navbar-brand" data-action="toggleSideBar"><i class="bi bi-list"></i></a>
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                    <ul class="navbar-nav mr-auto">
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-expanded="false">
+                                数据
+                            </a>
+                            <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                <a class="dropdown-item" data-action="data_export">导出数据</a>
+                                <a class="dropdown-item" data-action="data_import">导入数据</a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item text-danger" data-action="data_reset">重置数据</a>
+                            </div>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-expanded="false">
+                                关于
+                            </a>
+                            <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                <a class="dropdown-item" data-action="openURL" data-url="https://github.com/hunmer/videoManager">主页</a>
+                                <a class="dropdown-item" data-action="openURL" data-url="https://wwu.lanzouy.com/b0drzllad" href="javascript: alert('密码:drj2')">更新地址</a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item text-danger" >2022/4/27 23:51</a>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+            <div class="row">
+                <div class="col-8 pl-5" id="ui_video">
+                    <div id="player" onmousewheel="srcollVideo(event, _player.video)">
+                        <!-- <video controls autoplay loop  poster="" style="width: 100%;"  onmousewheel="srcollVideo(event)">
+                        </video> -->
+                    </div>
+                    <div id="div_video_toolBar" class="row pl-2 pr-2">
+                        <!-- <div class="d-flex w-100 justify-content-around mb-3">
+                            <div class="p-2"><i data-action="videoThumb" class="bi bi-file-earmark-image-fill" data-toggle="tooltip" data-placement="bottom" title="时间预览图"></i></div>
+                            <div class="p-2"><i data-action="setVideoCover" class="bi bi-image-fill" data-toggle="tooltip" data-placement="bottom" title="封面"></i></div>
+                        </div> -->
+                        <div class="input-group p-3" id="input_group_time">
+                            <div class="input-group-prepend">
+                                <button type="button" id="scrollAddTime" class="btn btn-outline-secondary" onmousewheel="nextScrollTime()">1.0</button>
+                                <button type="button" class="btn btn-outline-secondary dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-expanded="false">
+                                    <span class="sr-only">选择时间</span>
+                                </button>
+                                <div class="dropdown-menu">
+                                    <a class="dropdown-item" data-action="setScrollAddTime" data-time="0.1">0.1</a>
+                                    <a class="dropdown-item" data-action="setScrollAddTime" data-time="0.25">0.25</a>
+                                    <a class="dropdown-item" data-action="setScrollAddTime" data-time="0.50">0.50</a>
+                                    <a class="dropdown-item" data-action="setScrollAddTime" data-time="1.0">1.0</a>
+                                </div>
+                            </div>
+                            <!-- onblur="g_player.playVideo(true);"  -->
+                            <input type="text" class="form-control time_start">
+                            <input type="text" class="form-control time_end">
+                        </div>
+                    </div>
+                </div>
+                <div class="col bg-light" id="div_video_side" style="height:  100vh;">
+                    <ul class="nav nav-tabs" id="myTab" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link active" id="_tags-tab" data-toggle="tab" href="#_tags" role="tab" aria-controls="_tags" aria-selected="true">标签</a>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link" id="_list-tab" data-toggle="tab" href="#_list" role="tab" aria-controls="_list" aria-selected="false">列表<span class="badge badge-primary ml-1">0</span></a>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link" id="_detail-tab" data-toggle="tab" href="#_detail" role="tab" aria-controls="_detail" aria-selected="false">信息</a>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link" id="_sub-tab" data-toggle="tab" href="#_sub" role="tab" aria-controls="_sub" aria-selected="false">字幕</a>
+                        </li>
+                    </ul>
+                    <div class="tab-content" id="myTabContent">
+                        <div class="tab-pane fade show active" id="_tags" role="tabpanel" aria-labelledby="_tags-tab">
+                            <div class="border-bottom">
+                                <div class="input-group mb-3 col-12 mt-2">
+                                    <div class="input-group-prepend">
+                                        <select class="form-control" id="select_tag_folder" onchange="">
+                                            <option disabled selected>分类</option>
+                                        </select>
+                                    </div>
+                                    <input type="text" id="input_tag" class="form-control" aria-label="Text input with dropdown button" onfocus="g_player.playVideo(false)">
+                                </div>
+                                <div id="tags_rent" class="p-10 col-12"></div>
+                                <div class="col-12 d-flex" style="height: 100px;overflow-y: auto;">
+                                    <div id="tags_all" class="col-6 border-right">
+                                        <h6 class="text-center">所有</h6>
+                                        <div class="tags_content"></div>
+                                    </div>
+                                    <div id="tags" class="col-6">
+                                        <h6 class="text-center">标记</h6>
+                                        <div class="tags_content"></div>
+                                    </div>
+                                </div>
+                                <div id="" class="col-12 p-2" style="text-align: right;">
+                                    <button type="button" data-action="resetPos" class="btn btn-dark hide">取消</button>
+                                    <button type="button" data-action="addPos" class="btn btn-info">保存</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="_detail" role="tabpanel" aria-labelledby="_detail-tab" style="overflow-y: auto;">
+                        </div>
+                        <div class="tab-pane fade" id="_list" role="tabpanel" aria-labelledby="_list-tab">
+                            <ul class="list-unstyled div_video_side_list" style="overflow-y: auto;padding-bottom: 100px;">
+                            </ul>
+                        </div>
+                        <div class="tab-pane fade" id="_sub" role="tabpanel" aria-labelledby="_sub-tab">
+                            <div class="input-group">
+                                <input type="text" class="form-control" placeholder="搜索字幕" id="input_subSearch" oninput="if(g_sub.lines < 1000){g_sub.searchSub(this.value)}" onkeydown="if(event.keyCode == 13){g_sub.searchSub(this.value)}">
+                                <div class="input-group-append">
+                                    <!-- <button type="button" class="btn btn-outline-secondary"><i class="bi bi-search"></i></button> -->
+                                    <button type="button" class="btn btn-outline-secondary dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-expanded="false">
+                                        <span class="sr-only">操作</span>
+                                    </button>
+                                    <div class="dropdown-menu">
+                                        <a class="dropdown-item" data-action="sub_setTarget">读取</a>
+                                        <a class="dropdown-item" data-action="sub_refresh">刷新</a>
+                                        <div role="separator" class="dropdown-divider"></div>
+                                        <a class="dropdown-item text-danger" data-action="sub_delete">删除</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <ul class="list-group list-group-flush" style="overflow-y: auto;padding-bottom: 50px;height: calc(100vh - 200px);;" id="list_sub_item">
+                                <!-- <li class="list-group-item"><b style="margin-right: 10px;">00:22:00</b>这是一条字幕</li> -->
+                            </ul>
+                            <div id="" class="col-12 p-2" style="text-align: right;">
+                                <!--   <button type="button" data-action="resetPos" class="btn btn-dark hide">取消</button> -->
+                                <button type="button" data-action="sub_saveSub" class="btn btn-info hide">保存</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="js/jquery.slim.min.js"></script>
+    <script src="renderer.js"></script>
+    <script src="js/bootstrap.bundle.min.js"></script>
+    <script src="js/lazyload.min.js"></script>
+    <script src="plugins/dplayer/DPlayer.min.js"></script>
+    <script src="plugins/datepicker/moment.min.js"></script>
+    <script src="plugins/datepicker/lang/zh-cn.js"></script>
+    <script src="plugins/datepicker/tempusdominus-bootstrap-4.min.js"></script>
+    <script src="js/until.js"></script>
+    <script src="js/md5.js"></script>
+    <script src="js/pinyin.js"></script>
+    <script src="js/player.js"></script>
+    <script src="js/index.js"></script>
+    <script src="js/sub.js"></script>
+    <script src="js/video.js"></script>
+    <script src="js/search.js"></script>
+    <script src="js/menu.js"></script>
+    <script src="js/event.js"></script>
+    <script src="js/select.js"></script>
+    <script src="js/test.js"></script>
+</body>
+
+</html>
