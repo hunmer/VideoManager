@@ -112,13 +112,17 @@ const files = {
         return fs.existsSync(file) ? fs.readFileSync(file).toString() : def
     },
     exists: (path) => {
-        var file = files.getPath(path);
-        return fs.existsSync(path)
+        return fs.existsSync(files.getPath(path))
     },
     isFile: (path) => fs.existsSync(path) && fs.statSync(path).isFile(),
     isDir: (path) => fs.existsSync(path) && fs.statSync(path).isDirectory(),
-    mkdir: (dir) => mkdirsSync(dir),
-    write: (file, content) => files.mkdir(path.dirname(file)) && fs.writeFileSync(file, content),
+    mkdir: (dir) => {
+        return mkdirsSync(files.getPath(dir))
+    },
+    write: (file, content) => {
+        file = files.getPath(file);
+        files.mkdir(path.dirname(file)) && fs.writeFileSync(file, content)
+    },
     searchDirFiles: (dir, list, fileExts, C) => {
         fs.readdirSync(dir).forEach(fileName => {
             var path = files.join(dir, fileName);

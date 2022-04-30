@@ -13,15 +13,15 @@ var g_player = {
         var thumbnails = '';
 
         if (key != undefined) {
-            thumbnails = '*path*/thumbnails/' + key + '.jpg';
-            if (!nodejs.files.exists(thumbnails, true)) thumbnails = '';
+            thumbnails = nodejs.files.getPath('*path*/thumbnails/' + key + '.jpg');
+            if (!nodejs.files.exists(thumbnails)) thumbnails = '';
             opts.url = 'file://' + encodeURI(opts.url.replaceAll('\\', '/')).replaceAll('#', '%23');
         }
 
         var ext = popString(opts.url, '.').toLowerCase();
         if (ext == 'ts') {
             //opts.type = 'ts';
-            var file = '*path*/cache/'+key+'.m3u8';
+            var file = nodejs.files.getPath('*path*/cache/'+key+'.m3u8');
             nodejs.files.write(file, `#EXTM3U\n#EXT-X-VERSION:3\n#EXT-X-MEDIA-SEQUENCE:0\n#EXT-X-TARGETDURATION:19\n#EXT-X-PLAYLIST-TYPE:VOD\n${opts.url}\n#EXT-X-ENDLIST`);
             opts.url = file;
         }

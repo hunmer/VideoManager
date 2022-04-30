@@ -393,6 +393,10 @@ function doAction(dom, action, event) {
         g_actions[action[0]](dom, action, event);
     }
     switch (action[0]) {
+        case 'pin':
+            ipc_send('pin');
+            $(dom).toggleClass('text-primary');
+            break;
         case 'aboutMe':
             confirm(`
                 <img src="res/payment.jpg" draggable="false" style="width: 100%;">
@@ -685,7 +689,7 @@ function dragFile(ev, src) {
     g_cache.dragFile = file;
     ipc_send('ondragstart', {
         file: file,
-        icon: target.dataset.icon || src,
+        icon: (target.dataset.icon || src).replace('.', '*path*'),
     });
 }
 

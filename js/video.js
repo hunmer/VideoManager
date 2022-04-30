@@ -341,6 +341,7 @@ var g_video = {
         if (this.pos2 != -1 && this.pos1 == this.pos2) {
             return alert('至少要有1秒');
         }
+        loadTab('list');
         var tag = $('#input_tag').val();
         if (tag != '') {
             self.tags.addTag(tag);

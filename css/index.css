@@ -9,6 +9,10 @@ body {
   overflow-y: hidden;
 }
 
+a,i {
+    -webkit-user-drag: none;
+}
+
 #traffic {
     display: inline-flex;
 }

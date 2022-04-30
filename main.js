@@ -13,7 +13,7 @@ var g_method = {};
 var g_config = JSON.parse(files.read('./config.json', JSON.stringify({
     devTool: false,
     hideFrame: true,
-    fullScreen: false,
+    fullScreen: true,
 })));
 var g_cache = {};
 
@@ -118,9 +118,9 @@ function createWindow() {
             //console.log(event);
             var fileName = event.sender.getFilename();
             if (state === 'completed') {
-                send('toast', [`下载成功 <b><a data-action="openFile" data-file="${event.sender.getSavePath()}" href="javascript: void(0);">${fileName}</a></b>`, 'alert-success' ]);
+                send('toast', [`下载成功 <b><a data-action="openFile" data-file="${event.sender.getSavePath()}" href="javascript: void(0);">${fileName}</a></b>`, 'alert-success']);
             } else {
-                send('toast', [ `下载失败 <b><a href="javascript: void(0);">${fileName}</a></b>`, 'alert-danger']);
+                send('toast', [`下载失败 <b><a href="javascript: void(0);">${fileName}</a></b>`, 'alert-danger']);
             }
         })
     });
@@ -131,14 +131,13 @@ function createWindow() {
             action: 'deny'
         }
     });
+    win.show();
+    if (g_config.bounds) {
+        win.setBounds(g_config.bounds)
+    } else
     if (g_config.fullScreen) {
         win.maximize();
-    } else
-    if (g_config.restorePos) {
-        // 恢复位置
     }
-    win.show();
-    g_config.bounds && win.setBounds(g_config.bounds);
     // todo 记住程序位置
     const savePos = () => {
         g_config.bounds = win.getBounds();
@@ -154,7 +153,9 @@ function createWindow() {
     win.on('resize', (event) => {
         savePos();
     });
-
+    win.on('always-on-top-changed', (event, onTop) => {
+        send('onTop', onTop);
+    });
     win.loadFile('index.html');
     if (g_config.devTool) win.webContents.toggleDevTools();
 
@@ -162,7 +163,6 @@ function createWindow() {
 
 app.whenReady().then(() => {
     createWindow()
-
 
     app.on('activate', function() {
         if (BrowserWindow.getAllWindows().length === 0) createWindow()
@@ -173,20 +173,19 @@ app.on('window-all-closed', function() {
 });
 
 function saveDialog(callback, opts) {
-    dialog.showSaveDialog(win, Object.assign({
-    }, opts)).then(res => callback(res.filePath));
+    dialog.showSaveDialog(win, Object.assign({}, opts)).then(res => callback(res.filePath));
 }
 
-function send(type, params){
-    switch(type){
+function send(type, params) {
+    switch (type) {
         case 'toast':
             params = {
                 text: params[0],
                 class: params[1],
             }
             break;
-        }
-     win.webContents.send(type, params);
+    }
+    win.webContents.send(type, params);
 }
 
 
@@ -196,6 +195,9 @@ ipcMain.on("method", (event, data) => {
     }
     var d = data.msg;
     switch (data.type) {
+        case 'pin':
+            win.setAlwaysOnTop(!win.isAlwaysOnTop(), 'screen');
+            break;
         case 'saveAsZip':
             saveDialog(saveTo => {
                 if (typeof(saveTo) == 'string' && saveTo.length) {
@@ -204,9 +206,9 @@ ipcMain.on("method", (event, data) => {
                     const archive = archiver('zip', {
                         zlib: { level: 9 }
                     });
-                   
+
                     output.on('close', function() {
-                        send('toast', [`[${files.renderSize(archive.pointer())}]保存成功 <b><a data-action="openFile" data-file="${saveTo}" href="#">${files.getFileName(saveTo)}</a></b>`, 'alert-success' ]);
+                        send('toast', [`[${files.renderSize(archive.pointer())}]保存成功 <b><a data-action="openFile" data-file="${saveTo}" href="#">${files.getFileName(saveTo)}</a></b>`, 'alert-success']);
                     });
                     const showErr = err => {
                         dialog.showErrorBox('下载失败', err.toString());
@@ -216,18 +218,17 @@ ipcMain.on("method", (event, data) => {
                     archive.pipe(output);
                     for (var file in d.files) {
                         var name = files.safePath(d.files[file]);
-                        archive.file(file, { name: name+path.extname(file) });
+                        archive.file(file, { name: name + path.extname(file) });
                     }
                     archive.finalize();
                 }
             }, {
-                 title: '保存视频压缩包',
-                 defaultPath: d.fileName,
-                 filters: [{
+                title: '保存视频压缩包',
+                defaultPath: d.fileName,
+                filters: [{
                     name: '压缩文件',
                     extensions: ['zip'], // , 'rar'
-                    },
-                ],
+                }, ],
             });
             break;
         case 'url':
@@ -239,7 +240,7 @@ ipcMain.on("method", (event, data) => {
                 var icon = files.getPath(d.icon);
                 win.webContents.startDrag({
                     file: file,
-                    icon: files.exists(icon) ? icon : __dirname+'/favicon.png',
+                    icon: files.exists(icon) ? icon : __dirname + '/favicon.png',
                 });
             }
             break;
@@ -277,4 +278,3 @@ ipcMain.on("method", (event, data) => {
             break;
     }
 });
-

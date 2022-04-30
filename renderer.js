@@ -70,6 +70,10 @@ function videoThumb(file, output) {
 ipcRenderer.on('toast', (event, arg) => {
     toast(arg.text, arg.class);
 });
+ipcRenderer.on('onTop', (event, arg) => {
+    domSelector({action: 'pin'}).toggleClass('text-primary', arg);
+});
+
 
 
 function doFFMPEG(opts, callback) {

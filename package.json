@@ -1,11 +1,12 @@
 {
   "name": "videoManager",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder"
+    "build": "electron-builder",
+    "build-32": "electron-builder --win --ia32"
   },
   "repository": "https://github.com/hunmer/videoManager",
   "keywords": [],

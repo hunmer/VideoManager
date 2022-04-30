@@ -24,8 +24,13 @@ $(function() {
     }
 
     const fileDragHover = (e) => {
+        if( e.originalEvent){
+            if(!e.originalEvent.dataTransfer.files.length) return;
+        }
+        
         e.stopPropagation();
         e.preventDefault();
+        console.log(e);
         if(!g_cache.draging){ // 过滤从浏览器拖动的文件
             $('#file-drop').toggleClass('hide1', !inArea(e, 'body'));
         }
@@ -71,7 +76,7 @@ function parseFiles(files) {
         // video/mp4
         // if (!f.type.startsWith('image/')) 
     }
-    if (cnt == 0) {
+    if (cnt == 0 && g_cache.files.length > 0) {
         g_video.reviceFiles(g_cache.files);
     }
 }
