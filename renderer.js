@@ -2,6 +2,7 @@ const { win, ipcRenderer } = require('electron');
 const files = require('./file.js')
 var spawn = require("child_process").spawn;
 const iconvLite = require('iconv-lite');
+const fs = require('fs');
 const path = require('path');
 const { execFile } = require('child_process');
 const ffmpeg = require('fluent-ffmpeg');
@@ -12,18 +13,29 @@ var Jimp = require('jimp');
 var os = require('os');
 
 
+function replaceAll_once(str, search, replace, start = 0) {
+    while (true) {
+        var i = str.indexOf(search, start);
+        if (i == -1) break;
+        start = i + search.length;
+        str = str.substr(0, i) + replace + str.substr(start, str.length - start);
+        start += replace.length - search.length;
+    }
+    return str;
+}
+
 window.nodejs = {
     files: files,
     env: process.env,
+    path: replaceAll_once(__dirname, '\\', '\/'),
 }
-
 
 function videoThumb(file, output) {
     return new Promise(function(resolve, reject) {
         if (files.exists(output)) {
             return resolve(output);
         }
-        var tmp = __dirname+'/cache/'+files.getMd5(file)+'/';
+        var tmp = __dirname + '/cache/' + files.getMd5(file) + '/';
         files.mkdir(tmp);
         ffmpeg(file)
             .screenshots({
@@ -45,7 +57,7 @@ function videoThumb(file, output) {
                     Jimp.read(tmp + '/sprite.png', function(err, lenna) {
                         if (err) throw err;
                         lenna.quality(60).write(output);
-                         rm(tmp, function () {
+                        rm(tmp, function() {
                             resolve(output);
                         });
                     });
@@ -55,36 +67,17 @@ function videoThumb(file, output) {
 }
 
 
-
-// ffmpeg('C:\\Users\\31540\\Downloads\\Video\\天道\\20.mp4').outputOptions([
-//         '-y',
-//         '-ss 2.9',
-//         '-vcodec mjpeg',
-//         '-vframes 1',
-//         '-an',
-//         '-f rawvideo',
-//         '-s 240x180',
-//     ]).on('start', function(cmd) {})
-//     .on('progress', function(progress) { console.log(progress) })
-//     .on('end', function(str) {
-
-//     })
-//     .save("C:\\AppServ\\www\\videoManager\\cover\\1650382810074.jpg");
-
 ipcRenderer.on('toast', (event, arg) => {
     toast(arg.text, arg.class);
 });
 
 
-// registerAction('openFile', (dom, action, event) => {
-
-// });
-
 function doFFMPEG(opts, callback) {
     switch (opts.type) {
         case 'cut':
-             if (!files.isDir(__dirname+'/cuts/')) files.mkdir(__dirname+'/cuts/')
-            const setText = (text) => g_video.setClipStatus(opts.key, text);
+            if (!files.isDir(__dirname + '/cuts/')) files.mkdir(__dirname + '/cuts/')
+            const setText = (text, style = 'badge-secondary') => g_video.setClipStatus(opts.key, text, style);
+            setText('队列中');
             ffmpeg(files.getPath(opts.input)).outputOptions(opts.params)
                 .videoCodec('libx264')
                 // .audioCodec('libmp3lame')
@@ -92,17 +85,17 @@ function doFFMPEG(opts, callback) {
                     setText('准备中');
                 })
                 .on('progress', function(progress) {
-                    setText(parseInt(toTime(progress.timemark) / opts.duration * 100 )+'%');
+                    setText(parseInt(toTime(progress.timemark) / opts.duration * 100) + '%', 'badge-primary');
                 })
                 .on('end', function(str) {
-                    setText('');
+                    setText('任务完成', 'badge-success');
                     callback();
                 })
                 .save(files.getPath(opts.output));
             break;
 
         case 'cover':
-             if (!files.isDir(__dirname+'/cover/')) files.mkdir(__dirname+'/cover/')
+            if (!files.isDir(__dirname + '/cover/')) files.mkdir(__dirname + '/cover/')
             ffmpeg(files.getPath(opts.input))
                 .screenshots({
                     timestamps: opts.params,
@@ -121,18 +114,48 @@ function doFFMPEG(opts, callback) {
             });
             break;
     }
-
 }
 
-
-
 window._api = {
+    
+
     method: function(data) {
         console.log(data);
         var d = data.msg;
         switch (data.type) {
+           
+            case 'share_resetDB':
+                return;
+                if (g_share.db) {
+                    g_share.db.close();
+                    files.remove(g_config.sharePath + '/' + 'data.db');
+                    ipc_send('share_initDB');
+                }
+                break;
+            case 'share_initDB':
+                g_share.getDB = function(readonly = true) {
+                    var dbFile = g_config.sharePath + '/' + 'data.db';
+                    var exists = files.exists(dbFile);
+                    if (!exists && readonly) return false;
+
+                    var db = require('better-sqlite3')(dbFile, {
+                        readonly: readonly,
+                    });
+                    if (!exists) {
+                        db.exec(`CREATE TABLE IF NOT EXISTS videos(
+                             id      INTEGER PRIMARY KEY AUTOINCREMENT,
+                             tags   TEXT,
+                             uploader   TEXT,
+                             link   TEXT,
+                             desc   TEXT,
+                             md5    CHAR(32)           NOT NULL
+                         );`);
+                    }
+                    return db;
+                }
+                break;
             case 'videoThumb':
-                videoThumb(d.file, __dirname+'/thumbnails/' + d.key + '.jpg').then(img => g_player.setVideothumbnails(img));
+                videoThumb(d.file, __dirname + '/thumbnails/' + d.key + '.jpg').then(img => g_player.setVideothumbnails(img));
                 break;
             case 'openFile':
                 files.openFile(files.getPath(d));
@@ -150,15 +173,15 @@ window._api = {
                 d.input = files.getPath(d.input);
                 if (!files.exists(d.input)) return;
                 doFFMPEG(d, (meta) => {
-                        d.callback(d.key, meta)
+                    d.callback(d.key, meta)
                 });
                 return;
                 break;
             case 'cmd':
                 d.output = files.getPath(d.output);
-                if (files.exists(d.output)) return; // todo
+                //if (files.exists(d.output)) return;
                 doFFMPEG(d, () => {
-                        d.callback(d.key, d.output, files.exists(d.output))
+                    d.callback(d.key, d.output, files.exists(d.output))
                 })
                 return;
             case 'files.getPath':

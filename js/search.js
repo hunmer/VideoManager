@@ -2,7 +2,6 @@
     tagName: [clip, clip]
 */
 
-
 g_video.searchVideo = function(s) {
     var py = PinYinTranslate.start(s);
     var sz = PinYinTranslate.sz(s);
@@ -54,20 +53,14 @@ g_video.clearSearchClip = function(query) {
 
 }
 
-
 g_video.onSearchClip = function() {
     var h = '';
-    var a = [];
-    for (var d of $('[data-filter]')) {
-        a.push(unescapeHTML(d.dataset.filter));
-    }
-    var r = this.searchClip(a);
-    g_cache.searchedClip = r;
+    var r = this.searchClip(g_filter.filter_list('local'));
     for (var time in r) {
         var d = r[time];
         var n = getFileName(d.file);
         h += `
-            <div class="card search_item" data-action="card_selected" data-key="${time}"  data-file="%path%/cuts/${time}.mp4" draggable="true">
+            <div class="card search_item" data-action="card_selected" data-key="${time}"  data-file="*path*/cuts/${time}.mp4" draggable="true">
               <img draggable="false" src="./res/loading.gif" data-src="./cover/${time}.jpg" class="card-img-top lazyload" data-preview data-pos='bottom'>
                 <div class="card-body">
                   <b class="card-title d-inline-block text-truncate" style="max-width: -webkit-fill-available;" title="${n}">${n}</b>
@@ -78,38 +71,6 @@ g_video.onSearchClip = function() {
         `;
     }
     $('#search_result').html(h).find('.lazyload').lazyload();
-}
-
-// 
-g_video.filter_init = function() {
-    var h = '';
-    for (var filter of g_cache.filters) {
-        h += `<a class="badge badge-primary mr-2 badge_filter" onclick="g_video.filter_remove(this)" data-filter="${filter.content}" data-type="${filter.type}">${filter.text}</a>`
-    }
-    if (h == '') h = `<h6 class="text-center">右上角添加搜索条件</h6>`
-    $('#search_fliters').html(h);
-    g_video.onSearchClip();
-}
-g_video.filter_get = function(type) {
-    return domSelector({ type: type }, '.badge_filter');
-}
-g_video.filter_add = function(text, content, type) {
-    if (g_cache.filters.some((d) => d.content == content)) {
-        return alert('已存在!');
-    }
-    g_cache.filters.push({ text: text, content: content, type: type });
-    g_video.filter_init();
-}
-
-g_video.filter_remove = function(dom) {
-    var i = g_cache.filters.findIndex((d) => {
-        return d.content == dom.dataset.filter
-    });
-    if (i != -1) {
-        g_cache.filters.splice(i, 1);
-        g_video.filter_init();
-    }
-    dom.remove();
 }
 
 g_video.modal_tag = function(selected, callback) {
@@ -132,13 +93,16 @@ g_video.modal_tag = function(selected, callback) {
     }
     h += '</ul>';
     confirm(h, {
+        id: 'modal_tags',
         title: '选择标签',
         callback: (id) => {
             if (id == 'ok') {
                 var tags = [];
-                for (var d of $('#modal_confirm .list-group-item.active')) {
+                for (var d of $('#modal_tags .list-group-item.active')) {
                     tags.push(d.dataset.value);
                 }
+                var s = $('#modal_tags input').val();
+                if(s != '') tags.push(s);
                 callback(tags);
             }
             return true;

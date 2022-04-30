@@ -113,7 +113,8 @@ function downloadData(blob, fileName) {
 var g_actions = {};
 
 function registerAction(name, callback) {
-    g_actions[name] = callback;
+    if(!Array.isArray(name)) name = [name];
+    for(var alisa of name) g_actions[alisa] = callback;
 }
 
 Date.prototype.format = function(fmt) {
@@ -306,7 +307,7 @@ function getVal(value, defaultV) {
 
 
 function getFileName(s) {
-    return s.split('\\').pop().split('.')[0];
+    return typeof(s) == 'string' ? s.split('\\').pop().split('.')[0] : '';
 }
 
 function randNum(min, max) {

@@ -28,7 +28,7 @@ function replaceAll_once(str, search, replace, start = 0) {
 }
 
 function getPath(p) {
-    return replaceAll_once(p, '%path%', replaceAll_once(__dirname, '\\', '\/'));
+    return replaceAll_once(p, '*path*', replaceAll_once(__dirname, '\\', '\/'));
 }
 
 module.exports = {

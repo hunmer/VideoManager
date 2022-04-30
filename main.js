@@ -1,3 +1,8 @@
+require('update-electron-app')({
+    repo: 'hunmer/videoManager',
+    updateInterval: '30 minutes',
+})
+
 // var electron = require('electron')
 var fs = require('fs')
 var files = require('./file.js')
@@ -5,6 +10,16 @@ const { app, session, BrowserWindow, Menu, dialog, ipcMain, shell } = require('e
 const path = require('path');
 const iconvLite = require('iconv-lite');
 var g_method = {};
+var g_config = JSON.parse(files.read('./config.json', JSON.stringify({
+    devTool: false,
+    hideFrame: true,
+    fullScreen: false,
+})));
+var g_cache = {};
+
+function saveConfig() {
+    files.write('./config.json', JSON.stringify(g_config));
+}
 //定义菜单
 // var template = [{
 //     label: '操作',
@@ -27,6 +42,7 @@ app.commandLine.appendSwitch("disable-features", 'PreloadMediaEngagementData, Me
 // app.commandLine.appendSwitch('disable-background-timer-throttling')
 app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
 app.commandLine.appendSwitch("disable-http-cache");
+app.commandLine.appendSwitch('wm-window-animations-disabled');
 
 function runJs(script) {
     win.webContents.executeJavaScript(script).then((result) => {
@@ -40,21 +56,33 @@ function registerMethod(type, callback) {
 
 function createWindow() {
     // Create the browser window.
-    win = new BrowserWindow({
+    var opts = {
         width: 1920,
         height: 1080,
         resizable: true,
         show: false,
-        title: '',
-        // fullscreen: true,
+        title: 'loading...',
+        // hasShadow: true,
+        frame: !g_config.hideFrame,
+        // nativeWindowOpen: true,
         webPreferences: {
             webSecurity: false,
             preload: path.join(__dirname, 'preload.js'),
             nodeIntegration: true,
             webviewTag: true,
             contextIsolation: false,
-
         }
+    }
+    win = new BrowserWindow(opts);
+    win.webContents.on('dom-ready', (event) => {
+        if (!opts.frame) {
+            win.webContents.insertCSS(`
+                #traffic {
+                    display: none;
+                }
+          `);
+        }
+
     });
 
     win.webContents.session.on('will-download', (event, item, webContents) => {
@@ -90,9 +118,9 @@ function createWindow() {
             //console.log(event);
             var fileName = event.sender.getFilename();
             if (state === 'completed') {
-                webContents.send('toast', { text: `下载成功 <b><a data-action="openFile" data-file="${event.sender.getSavePath()}" href="javascript: void(0);">${fileName}</a></b>`, class: 'alert-success' });
+                send('toast', [`下载成功 <b><a data-action="openFile" data-file="${event.sender.getSavePath()}" href="javascript: void(0);">${fileName}</a></b>`, 'alert-success' ]);
             } else {
-                webContents.send('toast', { text: `下载失败 <b><a href="javascript: void(0);">${fileName}</a></b>`, class: 'alert-danger' });
+                send('toast', [ `下载失败 <b><a href="javascript: void(0);">${fileName}</a></b>`, 'alert-danger']);
             }
         })
     });
@@ -103,16 +131,39 @@ function createWindow() {
             action: 'deny'
         }
     });
-
-    win.maximize();
+    if (g_config.fullScreen) {
+        win.maximize();
+    } else
+    if (g_config.restorePos) {
+        // 恢复位置
+    }
     win.show();
-    win.loadFile('index.html')
-    // win.webContents.toggleDevTools();
+    g_config.bounds && win.setBounds(g_config.bounds);
+    // todo 记住程序位置
+    const savePos = () => {
+        g_config.bounds = win.getBounds();
+        if (g_cache.savePos) clearTimeout(g_cache.savePos);
+        g_cache.savePos = setTimeout(() => {
+            delete g_cache.savePos;
+            saveConfig();
+        }, 1000);
+    }
+    win.on('move', (event) => {
+        savePos();
+    });
+    win.on('resize', (event) => {
+        savePos();
+    });
+
+    win.loadFile('index.html');
+    if (g_config.devTool) win.webContents.toggleDevTools();
 
 }
 
 app.whenReady().then(() => {
     createWindow()
+
+
     app.on('activate', function() {
         if (BrowserWindow.getAllWindows().length === 0) createWindow()
     })
@@ -120,26 +171,80 @@ app.whenReady().then(() => {
 app.on('window-all-closed', function() {
     if (process.platform !== 'darwin') app.quit()
 });
+
+function saveDialog(callback, opts) {
+    dialog.showSaveDialog(win, Object.assign({
+    }, opts)).then(res => callback(res.filePath));
+}
+
+function send(type, params){
+    switch(type){
+        case 'toast':
+            params = {
+                text: params[0],
+                class: params[1],
+            }
+            break;
+        }
+     win.webContents.send(type, params);
+}
+
+
 ipcMain.on("method", (event, data) => {
     if (g_method[data.type]) {
         return g_method[data.type](event, data);
     }
     var d = data.msg;
     switch (data.type) {
+        case 'saveAsZip':
+            saveDialog(saveTo => {
+                if (typeof(saveTo) == 'string' && saveTo.length) {
+                    const archiver = require('archiver');
+                    const output = fs.createWriteStream(saveTo);
+                    const archive = archiver('zip', {
+                        zlib: { level: 9 }
+                    });
+                   
+                    output.on('close', function() {
+                        send('toast', [`[${files.renderSize(archive.pointer())}]保存成功 <b><a data-action="openFile" data-file="${saveTo}" href="#">${files.getFileName(saveTo)}</a></b>`, 'alert-success' ]);
+                    });
+                    const showErr = err => {
+                        dialog.showErrorBox('下载失败', err.toString());
+                    }
+                    archive.on('warning', err => showErr(err));
+                    archive.on('error', err => showErr(err));
+                    archive.pipe(output);
+                    for (var file in d.files) {
+                        var name = files.safePath(d.files[file]);
+                        archive.file(file, { name: name+path.extname(file) });
+                    }
+                    archive.finalize();
+                }
+            }, {
+                 title: '保存视频压缩包',
+                 defaultPath: d.fileName,
+                 filters: [{
+                    name: '压缩文件',
+                    extensions: ['zip'], // , 'rar'
+                    },
+                ],
+            });
+            break;
         case 'url':
             shell.openExternal(d);
             break;
         case 'ondragstart':
             var file = files.getPath(d.file);
             if (files.exists(file)) {
+                var icon = files.getPath(d.icon);
                 win.webContents.startDrag({
                     file: file,
-                    icon: files.exists(d.icon) ? d.icon : './favicon.png',
+                    icon: files.exists(icon) ? icon : __dirname+'/favicon.png',
                 });
             }
             break;
         case 'cmd':
-            files.runCmd(d.replace('%path%', __dirname), (output) => {
+            files.runCmd(d.replace('*path*', __dirname), (output) => {
                 console.log(output)
             }, () => {
                 // console.log('done');
@@ -172,3 +277,4 @@ ipcMain.on("method", (event, data) => {
             break;
     }
 });
+

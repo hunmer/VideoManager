@@ -2,6 +2,7 @@ const fs = require("fs");
 var { shell } = require('electron');
 const crypto = require('crypto')
 var spawn = require("child_process").spawn;
+
 function replaceAll_once(str, search, replace, start = 0) {
     while (true) {
         var i = str.indexOf(search, start);
@@ -9,7 +10,6 @@ function replaceAll_once(str, search, replace, start = 0) {
         start = i + search.length;
         str = str.substr(0, i) + replace + str.substr(start, str.length - start);
         start += replace.length - search.length;
-
     }
     return str;
 }
@@ -26,9 +26,60 @@ function mkdirsSync(dirname) {
     }
 }
 const files = {
+    safePath: str => {
+        str = str.replaceAll('\\', '＼')
+        str = str.replaceAll('/', '／')
+        str = str.replaceAll(':', '：')
+        str = str.replaceAll('*', '＊')
+        str = str.replaceAll('?', '？')
+        str = str.replaceAll('"', '＂')
+        str = str.replaceAll('<', '＜')
+        str = str.replaceAll('>', '＞')
+        str = str.replaceAll("|", "｜")
+        return str
+    },
+    safeSql: str => {
+        str = str.replaceAll('/', '//')
+        str = str.replaceAll('[', '/[')
+        str = str.replaceAll(']', '/]')
+        str = str.replaceAll('%', '/%')
+        str = str.replaceAll('&', '/&')
+        str = str.replaceAll('_', '/_')
+        str = str.replaceAll('(', '/(')
+        str = str.replaceAll(')', '/)')
+        str = str.replaceAll("'", "''")
+        return str
+    },
+    renderSize: value => {
+        if (null == value || value == '') {
+            return "0 Bytes";
+        }
+        var unitArr = new Array("Bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB");
+        var index = 0;
+        var srcsize = parseFloat(value);
+        index = Math.floor(Math.log(srcsize) / Math.log(1024));
+        var size = srcsize / Math.pow(1024, index);
+        size = size.toFixed(2); //保留的小数位数
+        return size + unitArr[index];
+    },
     getAppData: () => process.env.APPDATA || (process.platform == 'darwin' ? process.env.HOME + '/Library/Preferences' : process.env.HOME + "/.local/share"),
+    getFileMd5: (file) => {
+        //  const stream = fs.createReadStream(file);
+        // const hash = crypto.createHash('md5');
+        // stream.on('data', chunk => {
+        //   hash.update(chunk, 'utf8');
+        // });
+        // stream.on('end', () => {
+        //    hash.digest('hex');
+        // });
+        // return crypto.createHash('md5').update(s).digest("hex")
+    },
     getMd5: (s) => {
         return crypto.createHash('md5').update(s).digest("hex")
+    },
+    getFileName: (file, ext = true) => {
+        if(ext) ext = path.extname(file);
+        return path.basename(file, ext)
     },
     runCmd: (cmd, callback, onClose) => {
         console.log(cmd);
@@ -44,7 +95,7 @@ const files = {
         });
     },
     getPath: (p) => {
-        return replaceAll_once(p, '%path%', replaceAll_once(__dirname, '\\', '\/'));
+        return replaceAll_once(p, '*path*', replaceAll_once(__dirname, '\\', '\/'));
     },
     openFile: (path) => {
         if (!fs.existsSync(path)) return false
@@ -56,8 +107,14 @@ const files = {
         shell.showItemInFolder(path)
         return true
     },
-    read: (file) => fs.existsSync(file) && fs.readFileSync(file).toString(),
-    exists: (path) => fs.existsSync(path),
+    read: (file, def) => {
+        var file = files.getPath(file);
+        return fs.existsSync(file) ? fs.readFileSync(file).toString() : def
+    },
+    exists: (path) => {
+        var file = files.getPath(path);
+        return fs.existsSync(path)
+    },
     isFile: (path) => fs.existsSync(path) && fs.statSync(path).isFile(),
     isDir: (path) => fs.existsSync(path) && fs.statSync(path).isDirectory(),
     mkdir: (dir) => mkdirsSync(dir),
@@ -77,6 +134,24 @@ const files = {
                 }
             }
         });
+    },
+
+    items: (dir) => {
+        var r = {
+            base: dir,
+            paths: [],
+            files: [],
+        }
+        fs.readdirSync(dir).forEach(fileName => {
+            var path = files.join(dir, fileName);
+            if (files.isDir(path)) {
+                r.paths.push(fileName);
+            } else {
+                r.files.push(fileName);
+            }
+        });
+        return r;
+
     },
     getExtension: (file) => path.extname(file).replace('.', ''),
     remove: (file) => { fs.existsSync(file) && fs.rmSync(file) },

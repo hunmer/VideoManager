@@ -1,6 +1,7 @@
 var _player;
 var g_player = {
     url: '',
+    video: undefined,
     getUrl: function() {
         return this.url;
     },
@@ -12,10 +13,19 @@ var g_player = {
         var thumbnails = '';
 
         if (key != undefined) {
-            thumbnails = './thumbnails/' + key + '.jpg';
-            if (!nodejs.files.exists(thumbnails)) thumbnails = '';
+            thumbnails = '*path*/thumbnails/' + key + '.jpg';
+            if (!nodejs.files.exists(thumbnails, true)) thumbnails = '';
             opts.url = 'file://' + encodeURI(opts.url.replaceAll('\\', '/')).replaceAll('#', '%23');
         }
+
+        var ext = popString(opts.url, '.').toLowerCase();
+        if (ext == 'ts') {
+            //opts.type = 'ts';
+            var file = '*path*/cache/'+key+'.m3u8';
+            nodejs.files.write(file, `#EXTM3U\n#EXT-X-VERSION:3\n#EXT-X-MEDIA-SEQUENCE:0\n#EXT-X-TARGETDURATION:19\n#EXT-X-PLAYLIST-TYPE:VOD\n${opts.url}\n#EXT-X-ENDLIST`);
+            opts.url = file;
+        }
+
         opts.thumbnails = thumbnails;
         const fun = () => {
             if (_player) _player.destroy();
@@ -25,9 +35,73 @@ var g_player = {
                 volume: 1,
                 container: $('#player')[0],
                 screenshot: true,
-                video: opts,
-                   contextmenu: [
-                    {
+                video: Object.assign({
+                    customType: {
+                        /*ts: function(video, player) {
+                            loadRes([
+                                { url: './plugins/mux.min.js', type: 'js' },
+                            ], () => {
+                                // Create array of TS files to play
+                                segments = [opts.url];
+
+                                // Replace this value with your files codec info
+                                mime = 'video/mp4; codecs="mp4a.40.2,avc1.64001f"';
+
+                                let mediaSource = new MediaSource();
+                                let transmuxer = new muxjs.mp4.Transmuxer();
+
+                                video.src = URL.createObjectURL(mediaSource);
+                                mediaSource.addEventListener("sourceopen", appendFirstSegment);
+
+                                function appendFirstSegment() {
+                                    // if (segments.length == 0) return;
+                                    URL.revokeObjectURL(video.src);
+                                    sourceBuffer = mediaSource.addSourceBuffer(mime);
+                                    sourceBuffer.addEventListener('updateend', appendNextSegment);
+
+                                    transmuxer.on('data', (segment) => {
+                                        let data = new Uint8Array(segment.initSegment.byteLength + segment.data.byteLength);
+                                        data.set(segment.initSegment, 0);
+                                        data.set(segment.data, segment.initSegment.byteLength);
+                                        console.log(muxjs.mp4.tools.inspect(data));
+                                        sourceBuffer.appendBuffer(data);
+                                    })
+
+                                    fetch(segments.shift()).then((response) => {
+                                        return response.arrayBuffer();
+                                    }).then((response) => {
+                                        transmuxer.push(new Uint8Array(response));
+                                        transmuxer.flush();
+                                    })
+                                }
+
+                                function appendNextSegment() {
+                                    // reset the 'data' event listener to just append (moof/mdat) boxes to the Source Buffer
+                                    transmuxer.off('data');
+                                    transmuxer.on('data', (segment) => {
+                                        sourceBuffer.appendBuffer(new Uint8Array(segment.data));
+                                    })
+
+                                    if (segments.length == 0) {
+                                        // notify MSE that we have no more segments to append.
+                                        mediaSource.endOfStream();
+                                    }
+
+                                    segments.forEach((segment) => {
+                                        // fetch the next segment from the segments array and pass it into the transmuxer.push method
+                                        fetch(segments.shift()).then((response) => {
+                                            return response.arrayBuffer();
+                                        }).then((response) => {
+                                            transmuxer.push(new Uint8Array(response));
+                                            transmuxer.flush();
+                                        })
+                                    })
+                                }
+                            })
+                        }*/
+                    }
+                }, opts),
+                contextmenu: [{
                         text: '设为封面',
                         click: player => {
                             doAction(null, 'setVideoCover');
@@ -40,9 +114,11 @@ var g_player = {
                         },
                     },
                 ],
-            };
-            var sub = './subs/' + key + '.vtt';
-            if(nodejs.files.exists(sub)){
+            }
+
+
+            var sub = '*path*/subs/' + key + '.vtt';
+            if (nodejs.files.exists(sub)) {
                 config.subtitle = {
                     url: sub,
                 }
@@ -50,7 +126,7 @@ var g_player = {
             _player = new DPlayer(config)
             _player.on('loadeddata', function(e) {
                 g_sub.loadSub(key);
-                if(start) _player.video.currentTime = start;
+                if (start) _player.video.currentTime = start;
                 _player.video.play();
                 // var self.autoSave = setInterval(() => {
                 // })
@@ -67,7 +143,7 @@ var g_player = {
             _player.on('webfullscreen_cancel', function(e) {
                 g_player.onFullscreen(false);
             });
-            
+
 
 
             /*
@@ -156,6 +232,7 @@ var g_player = {
         return _player && !_player.video.paused;
     },
     playVideo: function(play) {
+        if(!_player) return;
         var video = _player.video;
         if (video) {
             if (play == undefined) play = video.paused;
@@ -167,9 +244,10 @@ var g_player = {
         }
     },
     getCurrentTime: function() {
-        return _player.video.currentTime;
+        return _player.video.currentTime || -1;
     },
     setCurrentTime: function(time, play = false) {
+        if(!_player) return;
         var video = _player.video;
         if (video) {
             video.currentTime = time;

@@ -9,6 +9,21 @@ body {
   overflow-y: hidden;
 }
 
+#traffic {
+    display: inline-flex;
+}
+#traffic div {
+    margin: 8px;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+li,.badge {
+    cursor: pointer;
+}
+
 ::-webkit-scrollbar {
     width: 5px;
     height: 5px;
@@ -36,6 +51,15 @@ body {
 ::-webkit-scrollbar-thumb:hover {
     background-color: rgba(144, 147, 153, .3);
 }
+
+.none-select {
+  -moz-user-select:none;/*火狐*/
+  -webkit-user-select:none;/*webkit浏览器*/
+  -ms-user-select:none;/*IE10*/
+  -khtml-user-select:none;/*早期浏览器*/
+  user-select:none;
+}
+
 * {
   
  touch-action: pan-y;

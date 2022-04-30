@@ -12,13 +12,16 @@
   "author": "hunmer",
   "license": "CC0-1.0",
   "devDependencies": {
-    "electron-builder": "^22.14.13",
-    "electron": "^18.1.0"
+    "electron": "^18.1.0",
+    "electron-builder": "^22.14.13"
   },
   "dependencies": {
+    "archiver": "^5.3.1",
+    "better-sqlite3": "^7.5.1",
     "dplayer-thumbnails": "^0.0.5",
     "fluent-ffmpeg": "^2.1.2",
-    "iconv-lite": "^0.6.3"
+    "iconv-lite": "^0.6.3",
+    "update-electron-app": "^2.0.1"
   },
   "build": {
     "productName": "videoManager",

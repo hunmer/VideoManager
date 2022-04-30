@@ -45,7 +45,7 @@ $(function() {
 
 function parseFiles(files) {
     //console.log(files);
-     var base = nodejs.files.getPath('%path%/cuts/');
+     var base = nodejs.files.getPath('*path*/cuts/');
     var cnt = 0;
     g_cache.files = [];
     g_cache.paths = [];
@@ -60,7 +60,7 @@ function parseFiles(files) {
             }
             if(f.path == g_cache.dragFile) return;
             var ext = f.name.split('.').pop().toLowerCase();
-            if(['mp4', 'ts'].includes(ext)){
+            if(['mp4', 'ts', 'm3u8', 'flv', 'mdp'].includes(ext)){
                     if(f.path.indexOf(base) == 0){ // 忽略裁剪过的文件
                         cnt++;
                         continue;

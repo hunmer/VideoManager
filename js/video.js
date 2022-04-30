@@ -136,9 +136,9 @@ var g_video = {
 
 
 
-    initTagsFolder: function(){
+    initTagsFolder: function() {
         var h = ``;
-        for(var name of []){
+        for (var name of []) {
             h += `<option>${name}</option>`;
         }
         $('#select_tag_folder').html(h);
@@ -214,7 +214,34 @@ var g_video = {
                        ` + (() => {
 
                 var r = '';
-                for (var key in list[folder]) {
+                var cnt = 0;
+                var style = g_config.folder_style || 'image';
+                var sort = g_config.folder_sort || '名称';
+                var keys = Object.keys(list[folder]).sort(function(a, b){
+                    var a1 = self.getVideo(a);
+                    var b1 = self.getVideo(b);
+                    switch(sort){
+                        case '替换文本':
+                            var a2 = a1.file;
+                            var b2 = b1.file;
+                            for(var s of g_config.folder_sort_replace.split(',')){
+                                a2 = a2.replace(s, '')
+                                b2 = b2.replace(s, '');
+                            }
+                            return parseInt(b2.replace(/[^0-9]/ig, '')) - parseInt(a2.replace(/[^0-9]/ig, ''));
+                        case '自定义':
+                            return eval('(() => {'+g_config.folder_sort_fun.replaceAll('\n', '')+'})()');
+                        case '名称':
+                            return parseInt(b1.file.replace(/[^0-9]/ig, '')) - parseInt(a1.file.replace(/[^0-9]/ig, ''));
+                        case '片段数':
+                            return Object.keys(b1.clips).length - Object.keys(a1.clips).length;
+                        case '添加日期':
+                            return d1.add - a1.add;
+                    }
+                });
+
+                if(g_config.folder_sort_reverse == '1') keys = keys.reverse();
+                for (var key of keys) {
                     var d = self.getVideo(key);
                     var t = 0;
                     var c = 0;
@@ -224,18 +251,33 @@ var g_video = {
                     }
                     var file = list[folder][key];
                     var name = getFileName(file);
-                    r += `
-                            <div class="card p-2 text-white" data-file="${file}" draggable="true" data-action="loadVideo" data-video="${key}">
+                    var classes = key == g_video.key ? ' card_active' : '';
+                    switch (style) {
+                        case 'image':
+                            r += `
+                            <div class="card p-2 text-white${classes}" data-file="${file}" draggable="true" data-action="loadVideo" data-video="${key}">
                               <img data-src="./cover/${key}.jpg" class="card-img lazyload" alt="${name}">
                               <div class="card-img-overlay">
                                 <h5 class="card-title" style="max-height: 50%;overflow: hidden">${name}</h5>
                                 `;
-                    r += `<span class="badge badge-danger mr-2${ !c ? ' hide' : ''}">${c}个片段</span>`;
-                    r += `<span class="badge badge-primary mr-2${ !d.meta ? ' hide' : ''}">${d.meta ? getTime(d.meta.duration) : ''}</span>`;
-                    r += `<span class="badge badge-success mr-2${ !d.meta ? ' hide' : ''}">${d.meta ? d.meta.quickly.replace('yuv', '') : ''}</span>`;
-                    r += `<p class="card-text">${new Date(d.add).format('yyyy/MM/dd')}</p>
+                            r += `<span class="badge badge-danger mr-2${ !c ? ' hide' : ''}">${c}个片段</span>`;
+                            r += `<span class="badge badge-primary mr-2${ !d.meta ? ' hide' : ''}">${d.meta ? getTime(d.meta.duration) : ''}</span>`;
+                            r += `<span class="badge badge-success mr-2${ !d.meta ? ' hide' : ''}">${d.meta ? d.meta.quickly.replace('yuv', '') : ''}</span>`;
+                            r += `<p class="card-text">${new Date(d.add).format('yyyy/MM/dd')}</p>
                               </div>
                             </div>`;
+                            break;
+
+                        case 'text':
+                            if (cnt == 0) {
+                                r += '<ul class="list-group">';
+                            }
+                            r += `<li class="list-group-item${classes}" data-file="${file}" draggable="true" data-action="loadVideo" data-video="${key}"><span class="badge badge-danger mr-2${ !c ? ' hide' : ''}">${c}个片段</span>${name}</li>`;
+                            if (cnt == keys.length - 1) {
+                                r += '</ul>';
+                            }
+                    }
+                    cnt++;
                 }
                 return r;
             })() + `
@@ -247,22 +289,22 @@ var g_video = {
         }
         $('#sidebar-wrapper .accordion').html(h).find('.lazyload').lazyload();
         if (g_config.lastFolder != undefined) {
-           g_video.openFolder(g_config.lastFolder)
+            g_video.openFolder(g_config.lastFolder)
         }
 
     },
 
-    getShowingFolder: function(){
+    getShowingFolder: function() {
         return $('.collapse.show').attr('id') || ''
     },
 
-    openFolder: function(folder){
-        if(this.getShowingFolder().substring(7) == folder) return; // 展示中
-         domSelector({
-                toggle: "collapse",
-                target: '#folder_' + folder
-            }).click();
-     },
+    openFolder: function(folder) {
+        if (this.getShowingFolder().substring(7) == folder) return; // 展示中
+        domSelector({
+            toggle: "collapse",
+            target: '#folder_' + folder
+        }).click();
+    },
 
     setStart: function(time, jump = false) {
         var t = (Number(time) || g_player.getCurrentTime()).toFixed(2);
@@ -293,10 +335,10 @@ var g_video = {
         if (this.pos1 == -1) {
             return alert('未设置pos1');
         }
-        if (this.pos2 == -1) {
-            return alert('未设置pos2');
-        }
-        if (this.pos1 == this.pos2) {
+        // if (this.pos2 == -1) {
+        //     return alert('未设置pos2');
+        // }
+        if (this.pos2 != -1 && this.pos1 == this.pos2) {
             return alert('至少要有1秒');
         }
         var tag = $('#input_tag').val();
@@ -304,9 +346,17 @@ var g_video = {
             self.tags.addTag(tag);
             $('#input_tag').val('');
         }
+
+        var run = true;
         if (!this.clip) { // 新建
             this.clip = new Date().getTime();
+        }else
+        if(this.clipData.start != this.pos1 || this.clipData.end != this.pos2){ // 改动
+            // 重新剪辑
+        }else{
+            run = false;
         }
+
         var time = this.clip;
         if (!_videos[this.key]['clips']) _videos[this.key]['clips'] = {};
         _videos[this.key]['clips'][time] = {
@@ -316,11 +366,12 @@ var g_video = {
         }
         local_saveJson('videos', _videos);
 
-        // setTimeout(() => {
-        // TODO 修改存在数据时判断是否有更改
-        this.cover(time, this.pos1, this.data.file, `%path%/cover/${time}.jpg`, false);
-        this.cut(time, this.pos1, this.pos2 - this.pos1, this.data.file, `%path%/cuts/${time}.mp4`, false);
-        // }, 500);
+        if(run){
+            this.setClipStatus(time, '队列中', 'badge-primary');
+            this.cover(time, this.pos1, this.data.file, `*path*/cover/${time}.jpg`, false);
+            this.cut(time, this.pos1, this.pos2 - this.pos1, this.data.file, `*path*/cuts/${time}.mp4`, false);
+        }
+        
         this.initPos();
         g_player.setCurrentTime(this.pos2);
         g_player.playVideo(true);
@@ -333,10 +384,10 @@ var g_video = {
     modal_search: function() {
         g_player.playVideo(false);
         bindModalEvent($('#modal_search'), {
-        	onShow: modal => g_player.tryStop(),
-        	onClose: modal => g_player.tryStart(),
+            onShow: modal => g_player.tryStop(),
+            onClose: modal => g_player.tryStart(),
         }).modal('show');
-        g_video.filter_init();
+        g_filter.filter_init('local');
     },
 
     clearInput: function(start = -1) {
@@ -348,9 +399,11 @@ var g_video = {
         this.pos1 = start;
         this.pos2 = -1;
         this.clip = undefined;
+        delete g_cache.lastClip;
     },
 
     cut: function(key, start, time, file, saveTo, tip = true) {
+        if(isNaN(time) || time <= 0) return;
         ipc_send('cmd', {
             input: file,
             key: key,
@@ -400,7 +453,7 @@ var g_video = {
         ipc_send('cmd', {
             input: d.file,
             key: key,
-            output: '%path%/cover/' + key + '.jpg',
+            output: '*path*/cover/' + key + '.jpg',
             params: [time],
             type: 'cover',
             size: '240x180',
@@ -421,17 +474,17 @@ var g_video = {
         $('[data-action="loadVideo"][data-video="' + time + '"]').find('.lazyload').attr('data-src', url).lazyload();
     },
 
-    setClipStatus: function(clip, text){
-        var d = domSelector({action: 'loadClip', clip: clip});
-        if(!d.length) return;
+    setClipStatus: function(clip, text, style = 'badge-primary') {
+        var d = domSelector({ action: 'loadClip', clip: clip });
+        if (!d.length) return;
         var empty = text == undefined || text == '';
         var badge = d.find('.badge');
-        if(!badge.length){
-            if(empty) return;
-            badge = $(`<span class="badge badge-primary float-right"></span>`).appendTo(d.find('h5'));
+        if (!badge.length) {
+            if (empty) return;
+            badge = $(`<span></span>`).appendTo(d.find('h5'));
         }
-        if(empty) return badge.remove();
-        badge.html(text);
+        if (empty) return badge.remove();
+        badge.attr('class', `badge ${style} float-right`).html(text);
     },
 
     initPos: function() {
@@ -440,7 +493,7 @@ var g_video = {
         for (var time in this.data.clips) {
             var d = this.data.clips[time];
             h += `
-                <li data-file="%path%/cuts/${time}.mp4" draggable="true" class="media p-2" data-action="loadClip" data-clip="${time}">
+                <li data-start="${d.start}" data-file="*path*/cuts/${time}.mp4" draggable="true" class="media p-2" data-action="loadClip" data-clip="${time}">
                     <img draggable="false" data-src="./cover/${time}.jpg" class="mr-3 lazyload" data-preview>
                     <div class="media-body">
                         <h5 class="mt-0 mb-1">
@@ -453,17 +506,17 @@ var g_video = {
             `;
             i++;
         }
+        if (h == '') h = '<h5 class="text-center mt-10">还没有任何片段</h5>';
         $('[data-video].card_active').find('.badge-danger').html(i + '个片段').toggleClass('hide', i == 0);
         $('#_list-tab span').html(i).toggleClass('hide', i == 0);
         $('.div_video_side_list').html(h).find('.lazyload').lazyload();
     },
 
     onTimeInputScroll: function(e) {
-        console.log(e);
         if (!this.key) return;
         var i = e.originalEvent.deltaY;
         var t = Number($('#scrollAddTime').html());
-        var add = i > 0 ?  0 - t : t;
+        var add = i > 0 ? 0 - t : t;
         if (e.target.classList.contains('time_start')) {
             if (this.pos1 == -1) return;
             this.setStart(Number(g_video.pos1) + add, true)
@@ -484,6 +537,7 @@ var g_video = {
         $('[data-action="resetPos"]').removeClass('hide');
         this.clip = time;
         var d = this.data.clips[time];
+        this.clipData = d;
         this.setStart(d.start);
         this.setEnd(d.end);
         this.tags.update(d.tags);
@@ -497,9 +551,15 @@ var g_video = {
         var d = this.getVideo(key);
         if (d) {
             // g_sub.loadSub(key);
-        	this.clearInput();
+            this.clearInput();
+
+            var t = new Date().getTime();
             g_config.lastVideo = key;
+            if(!g_config.last) g_config.last = {};
+            g_config.last[key] = t;
+            for(var i=Object.keys(g_config.last).length;i>20;i--) delete g_config.last[key];
             local_saveJson('config', g_config);
+            d.last = t;
 
             this.key = key;
             this.data = d;
@@ -515,6 +575,8 @@ var g_video = {
             } else {
                 this.loadMeta(d.meta);
             }
+
+            this.saveVideos(false);
         }
     },
 
@@ -534,7 +596,7 @@ var g_video = {
                     quickly: v.pix_fmt,
                     size: f.size,
                 }
-                self.saveVideos();
+                self.saveVideos(false);
                 self.loadMeta(d.meta);
             }
         });
@@ -546,10 +608,10 @@ var g_video = {
         card.find('.badge-success').html(meta.quickly.replace('yuv', '')).removeClass('hide');
         $('#_detail').html(
             `<ul class="list-group list-group-flush">
-                          <li class="list-group-item">分辨率: ${meta.width + 'x' + meta.height}(${meta.quickly})</li>
-                          <li class="list-group-item">时长: ${getTime(parseInt(meta.duration), '小时', '分', '秒', false)}</li>
-                          <li class="list-group-item">大小: ${renderSize(meta.size)}</li>
-                        </ul>`
+              <li class="list-group-item">分辨率: ${meta.width + 'x' + meta.height}(${meta.quickly})</li>
+              <li class="list-group-item">时长: ${getTime(parseInt(meta.duration), '小时', '分', '秒', false)}</li>
+              <li class="list-group-item">大小: ${renderSize(meta.size)}</li>
+            </ul>`
         );
     },
 
@@ -577,11 +639,11 @@ var g_video = {
     addFiles: function(files, folder = '') {
         var exists = [];
         var saved = 0;
-        for (var file of files){
+        for (var file of files) {
             var key = SparkMD5.hash(file);
-            if(_videos[key]){
+            if (_videos[key]) {
                 exists.push(file);
-            }else{
+            } else {
                 saved++;
                 _videos[key] = {
                     file: file,
@@ -593,15 +655,15 @@ var g_video = {
                 // TODO 队列
                 this.videoCover(key, false);
             }
-    }
-    if(saved){
-        this.saveVideos();
-    }
-     if(exists.length){
-        //this.reviceFiles(exists, true);
-        toast('有 ' + exists.length + ' 个文件重复', 'alert-danger');
-    }
-},
+        }
+        if (saved) {
+            this.saveVideos();
+        }
+        if (exists.length) {
+            //this.reviceFiles(exists, true);
+            toast('有 ' + exists.length + ' 个文件重复', 'alert-danger');
+        }
+    },
     saveVideos: function(init = true) {
         local_saveJson('videos', _videos);
         init && this.initVideos();

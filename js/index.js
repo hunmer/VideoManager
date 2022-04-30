@@ -48,6 +48,10 @@ function loadConfig() {
 function bindModalEvent(modal, opts) {
     modal
         .on('shown.bs.modal', function(event) {
+            if(opts.autoFocus){
+                $(this).find('textarea').focus()
+                $(this).find('input').focus()
+            }
             opts.onShow && opts.onShow(modal);
         })
         .on('hidden.bs.modal', function(event) {
@@ -60,6 +64,7 @@ function buildModal(text, opts) {
     opts = Object.assign({
         id: 'modal_confirm',
         title: '弹出窗口',
+        autoFocus: true,
         btns: [{
             id: 'ok',
             text: '确定',
@@ -69,6 +74,7 @@ function buildModal(text, opts) {
             text: '取消',
             class: 'btn-secondary',
         }],
+        html: '%html%',
         onShow: () => {},
         callback: (id) => {},
         onBtnClick: (config, btn) => {},
@@ -79,7 +85,7 @@ function buildModal(text, opts) {
         modal = $(MODAL_HTML(opts.id, '')).appendTo('body');
     }
     modal.find('.modal-title').html(opts.title);
-    modal.find('.modal-body').html(text);
+    modal.find('.modal-body').html(opts.html.replace('%html%', text));
     var footer = modal.find('.modal-footer').html('');
     for (var btn of opts.btns) {
         $(`<button id="btn_${btn.id}" type="button" class="btn ${btn.class}">${btn.text}</button>`)
@@ -100,10 +106,45 @@ function hidePreview() {
     g_player.tryStart();
 }
 $(function() {
+    $.fn.tooltip.Constructor.Default.whiteList['*'].push(/^data-[\w-]*$/i);
     loadConfig();
     $('[data-toggle="tooltip"]').tooltip()
+    $('[data-toggle="popover"]').
+    on('shown.bs.popover', function(e) {
+        switch (this.dataset.originalTitle) {
+            case '视图':
+                domSelector({ action: 'folder_style,' + g_config.folder_style }).addClass('active');
+                break;
 
+        }
+    }).popover({
+        html: true,
+        container: "body",
+        trigger: 'focus',
+        content: function() {
+            switch (this.dataset.originalTitle) {
+                case '视图':
+                    var h = '';
+                    for(var type of ['image', 'text']){
+                        h+=`<a data-action="folder_style,${type}" href="#" class="badge badge-${type == g_config.folder_style ? 'primary' : 'secondary'} mr-2">${type == 'image' ? '背景图' : '文本'}</a>`;
+                    }
+                    return h;
 
+                case '排序':
+                    var h = '';
+                    var sort = g_config.folder_sort || '名称';
+                    for(var type of ['名称', '时长', '片段数', '替换文本', '自定义']){
+                        h+=`<a data-action="folder_sort,${type}" href="#" class="badge badge-${type == sort ? 'primary' : 'secondary'} mr-2">${type}</a>`;
+                    }
+                    h += '<hr class="border-bottom">';
+                    for(var k of [0, 1]){
+                         h+=`<a data-action="folder_sort_reverse,${k}" href="#" class="badge badge-${k == g_config.folder_sort_reverse ? 'primary' : 'secondary'} mr-2">${k == 0 ? '正序' : '反序'}</a>`;
+                    }
+                    return h;
+            }
+            return ` `;
+        }
+    });
 
     $(window).on('DOMContentLoaded', event => {
             const sidebarToggle = document.body.querySelector('#sidebarToggle');
@@ -124,7 +165,7 @@ $(function() {
 
 
     window.prompt = function(text, opts) {
-        buildModal(`<textarea class="form-control" rows="3">${text}</textarea>`, Object.assign({
+        buildModal(`<textarea class="form-control" placeholder="${opts.placeholder || ''}" rows="3">${text}</textarea>`, Object.assign({
             id: 'modal_prompt',
             title: '请输入',
             onBtnClick: (config, btn) => {
@@ -167,50 +208,66 @@ $(function() {
             var self = $(this);
             var pos = self.data('pos');
             var popup = $('#preview_video_popup');
-
             var target = $(this.parentNode);
             var offset = target.offset();
             var file = nodejs.files.getPath(target.data('file'));
             clearTimeout(g_cache.previewClip);
-            if (pos == 'self') {
-                fun = () => {
-                    popup.css({
-                        left: (event.pageX - popup.width() / 2) + 'px',
-                        top: (event.pageY - popup.height() / 2) + 'px',
-                        display: 'unset',
-                    })
-                }
-            } else {
-                fun = () => {
-                    popup.css({
-                        left: (offset.left - 10 - popup.width()) + 'px',
-                        top: (offset.top - popup.height() / 2) + 'px',
-                        display: 'unset',
-                    })
-                }
+            switch(pos){
+                case 'self': // todo
+                     fun = () => {
+                        popup.css({
+                            left: (event.pageX - popup.width() / 2) + 'px',
+                            top: (event.pageY - popup.height() / 2) + 'px',
+                            display: 'unset',
+                        })
+                    }
+                    break;
+
+                case 'right-bottom':
+                     fun = () => {
+                        popup.css({
+                            bottom: '10px',
+                            right: '10px',
+                            top: 'unset',
+                            left: 'unset',
+                            display: 'unset',
+                        })
+                    }
+                    break;
+
+                default:
+                     fun = () => {
+                         popup.css({
+                            left: (offset.left - 10 - popup.width()) + 'px',
+                            top: Math.max(0, offset.top - popup.height() / 2) + 'px',
+                            display: 'unset',
+                        })
+                     };
             }
             g_cache.previewClip = setTimeout(() => {
                 g_player.tryStop();
                 // 如果video全屏，则插入到video内部 反之插入body内部
                 popup.prependTo(g_cache.fullScreen ? '#player' : 'body');
                 fun();
-                popup.find('video').attr('src', file);
-            }, 250);
+                popup.find('video').attr('src', file+'?t='+new Date().getTime());
+            }, parseInt(self.data('time')) || 250);
         })
         .on('mouseout', '[data-preview]', function(event) {
-            if (this.dataset.pos == 'self') return;
+            //if (this.dataset.pos == 'self') return;
             hidePreview();
         })
         .on('mouseout', '#preview_video_popup', function(event) {
             hidePreview();
         })
         .on('shown.bs.modal', function(event) {
+            g_player.tryStop();
             var i = 4;
             for (var modal of $('.modal.show')) {
                 modal.style.backgroundColor = 'rgba(0, 0, 0, ' + (++i / 10) + ')';
             }
         })
         .on('hidden.bs.modal', function(event) {
+            g_player.tryStart();
             var modal = event.target;
             if (modal.dataset.destroy) {
                 modal.remove();
@@ -241,11 +298,6 @@ $(function() {
         .on('shown.bs.collapse', '.collapse', function(event) {
             g_config.lastFolder = this.id.substring(7);
             local_saveJson('config', g_config);
-            if (g_cache.folderShow) clearTimeout(g_cache.folderShow);
-            g_cache.folderShow = setTimeout(() => {
-                var d = $(this.children);
-                d.css('height', 'calc(100vh - ' + d.offset().top + 'px)');
-            }, 1000);
         })
         .on('keyup', function(e) {
             // console.log(e.code.toLowerCase());
@@ -330,12 +382,68 @@ var g_cache = {
     fullScreen: false,
 }
 
+function setConfig(k, v) {
+    g_config[k] = v;
+    local_saveJson('config', g_config);
+}
+
 function doAction(dom, action, event) {
     var action = action.split(',');
-    // if (g_actions[action[0]]) {
-    //     g_actions[action[0]](dom, action, event);
-    // }
+    if (g_actions[action[0]]) {
+        g_actions[action[0]](dom, action, event);
+    }
     switch (action[0]) {
+        case 'aboutMe':
+            confirm(`
+                <img src="res/payment.jpg" draggable="false" style="width: 100%;">
+                <h6 class="text-right">2022年4月30日 21点01分</h6>
+            `, {title: '关于'});
+            break;
+        case 'config':
+            setConfig(action[1], action[2]);
+            break;
+        case 'folder_sort':
+        case 'folder_style':
+        case 'folder_sort_reverse':
+            const fun = () => {
+                setConfig(action[0], action[1]);
+            g_video.initVideos();
+            }
+            if(action[0] == 'folder_sort'){
+                switch(action[1]){
+                    case '替换文本':
+                        return prompt(g_config.folder_sort_replace || '', {
+                            title: '替换文件名(用,分开)',
+                            placeholder: '请输入',
+                            html: `%html%
+                            <p>如: 文件名为 [mp4.com]天道20集.mp4, 可以设置值为 [mp4.com]天道,.mp4 </br>取出来的就是 20</p>
+                            `,
+                            callback: str => {
+                                setConfig('folder_sort_replace', str);
+                                fun();
+                            }
+                        })
+                    case '自定义':
+                        return prompt(g_config.folder_sort_fun || `
+                            var last_a = a1.last || 0;
+                            var last_b = b1.last || 0;
+                            last_b - last_a;
+                            `, {
+                            title: '自定义排序代码',
+                            placeholder: '请输入',
+                            html: `%html%
+                            <p>a=前者键值(md5) b=后者键值(md5) a1=前者影片数据(object) b1=后者影片数据(object)</p>
+                            `,
+                            callback: code => {
+                                setConfig('folder_sort_fun', code);
+                                fun();
+                            }
+                        });
+
+                }
+            }
+            fun();
+            break;
         case 'openURL':
             ipc_send('url', dom.dataset.url);
             break;
@@ -396,31 +504,32 @@ function doAction(dom, action, event) {
             }
             break;
         case 'filter_addFolder':
-            if (g_video.filter_get('folder').length) {
+            if (g_filter.filter_get('local', 'folder').length) {
                 return toast('目录过滤器已经存在!', 'alert-danger');
             }
             g_video.modal_folder('', folder => {
-                g_video.filter_add('目录: ' + folder[0], `d.folder == '${folder[0]}'`, 'folder');
+                g_filter.filter_add('local','目录: ' + folder[0], `d.folder == '${folder[0]}'`, 'folder');
             });
             break;
         case 'filter_addTag':
             g_video.modal_tag(g_cache.searchTags, tags => {
+                console.log(tags);
                 for (var tag of tags) {
-                    g_video.filter_add('标签: ' + tag, `clip.tags.includes('${tag}')`, 'tag');
+                    g_filter.filter_add('local','标签: ' + tag, `clip.tags.includes('${tag}')`, 'tag');
                 }
             });
             break;
         case 'filter_addTime':
             g_video.modal_time(res => {
                 var t = res.date.getTime();
-                g_video.filter_add(`创建日期: ${res.symbol}${res.date.format('yyyy/MM/dd'), 'date'}`, `time ${res.symbol} ${t}`);
+                g_filter.filter_add('local',`创建日期: ${res.symbol}${res.date.format('yyyy/MM/dd'), 'date'}`, `time ${res.symbol} ${t}`);
             });
             break;
         case 'filter_addSize':
             g_video.modal_size(res => {
                 var w1 = unescapeHTML(res.w1);
                 var h1 = unescapeHTML(res.h1);
-                g_video.filter_add(`尺寸: 宽 ${w1} ${res.w} & 高 ${h1} ${res.h}`, `d.meta && d.meta.width ${w1} ${res.w} && d.meta.height ${h1} ${res.h}`, 'size');
+                g_filter.filter_add('local',`尺寸: 宽 ${w1} ${res.w} & 高 ${h1} ${res.h}`, `d.meta && d.meta.width ${w1} ${res.w} && d.meta.height ${h1} ${res.h}`, 'size');
             });
             break;
         case 'data_export':
@@ -461,91 +570,10 @@ function doAction(dom, action, event) {
         case 'setVideoCover':
             var k = g_video.key;
             if (!k) return;
-            ipc_send('deleteFile', [`%path%/cover/${k}.jpg`]);
+            ipc_send('deleteFile', [`*path*/cover/${k}.jpg`]);
             g_video.videoCover(k, true, g_player.getCurrentTime());
             break;
-        case 'folder_rename':
-            var folder = g_menu.target.parents('[data-folder]').data('folder');
-            prompt(folder, {
-                title: '重命名',
-                callback: newFolder => {
-                    if (newFolder != folder) {
-                        for (var time in g_video.getFolders()[folder]) {
-                            g_video.getVideo(time).folder = newFolder;
-                        }
-                        local_saveJson('_videos', g_video);
-                        g_video.initVideos();
-                    }
-                }
-            });
-            g_menu.hideMenu('folder_item');
-            break;
-        case 'video_cover':
-        case 'video_delete':
-        case 'video_openFolder':
-        case 'video_setFolder':
 
-            var p = $(dom).parents('[data-key]');
-            var k = p.attr('data-key');
-            var d = g_video.getVideo(k);
-            switch (action[0]) {
-                case 'video_setFolder':
-                    var folder = d.folder || '';
-                    g_video.modal_folder(folder, newFolder => {
-                        console.log(newFolder, folder);
-                        if (newFolder != folder) {
-                            d.folder = newFolder;
-                            g_video.saveVideos();
-                        }
-                    });
-                    break;
-
-                case 'video_openFolder':
-                    ipc_send('openFolder', d.file)
-                    break;
-                case 'video_cover':
-                    g_video.videoCover(k);
-                    break;
-
-                case 'video_delete':
-                    g_video.removeVideo(k);
-                    confirm('是否同时删除文件?', {
-                        title: '<b class="text-danger">删除文件</b>',
-                        callback: id => {
-                            if (id == 'ok') ipc_send('deleteFile', [d.file]);
-                        }
-                    });
-                    break;
-            }
-            g_menu.hideMenu('video_item');
-            break;
-        case 'clip_delete':
-        case 'clip_cover':
-        case 'clip_cut':
-        case 'clip_openFolder':
-            var p = $(dom).parents('[data-key]');
-            var k = p.attr('data-key');
-            var d = g_video.data.clips[k];
-
-            switch (action[0]) {
-                case 'clip_openFolder':
-                    ipc_send('openFolder', `%path%/cuts/${k}.mp4`)
-                    break;
-                case 'clip_cut':
-                    //  -c:v libx264 -c:a aac
-                    g_video.cut(k, d.start, d.end - d.start, g_video.data.file, `%path%/cuts/${k}.mp4`);
-                    break;
-                case 'clip_cover':
-                    g_video.cover(k, d.start, g_video.data.file, `%path%/cover/${k}.jpg`);
-                    break;
-
-                case 'clip_delete':
-                    ipc_send('deleteFile', [`%path%/cover/${k}.jpg`, `%path%/cuts/${k}.mp4`]);
-                    g_video.removeClip(g_video.key, k);
-                    break;
-            }
-            g_menu.hideMenu('clip_item');
-            break;
         case 'btn_file_selectAll':
             var a = $('[data-action="files_select"].active');
             if (a.length) {
@@ -594,7 +622,13 @@ function doAction(dom, action, event) {
             if (d.hasClass('card_active')) {
                 return doAction(null, 'resetPos');
             }
-            g_video.loadClip($(dom).attr('data-clip'));
+            var clip = d.data('clip');
+            if (g_cache.lastClip == clip) {
+                g_video.loadClip(clip);
+            } else {
+                g_player.setCurrentTime(d.data('start'));
+                g_cache.lastClip = clip;
+            }
             break;
         case 'toggleSideBar':
             toggleSidebar();
@@ -613,17 +647,13 @@ function doAction(dom, action, event) {
             break;
         case 'site_add':
             g_site.editSite();
-
             break;
-
         case 'minSize':
             ipc_send('min');
             break;
-
         case 'maxSize':
             ipc_send('max');
             break;
-
         case 'close':
             ipc_send('close');
             break;

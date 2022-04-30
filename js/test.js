@@ -5,7 +5,6 @@ $(function() {
     // $('#modal_addFiles').modal({
     //   keyboard: false
     // });
-
     //                         g_video.modal_search();
     // g_video.onSearchClip();
     // g_video.modal_time((tags) => {
