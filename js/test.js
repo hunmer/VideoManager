@@ -31,5 +31,5 @@ $(function() {
 });
 
 function test(){
-    // 
+    // ipc_send('checkUpdate', 'http://127.0.0.1/halfmoon/');
 }

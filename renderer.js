@@ -80,7 +80,7 @@ function checkFileUpdates(url, tip = true) {
             for (var name in json) {
                 var md5 = json[name];
                 name = name.replace(/\\/g, "/");
-                var saveTo = './' + name;
+                var saveTo = __dirname + '/' + name;
                 if (files.exists(saveTo) && md5 == files.getFileMd5(saveTo)) continue;
                 updated.push(name);
                 i++;
