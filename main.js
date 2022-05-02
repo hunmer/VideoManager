@@ -1,8 +1,3 @@
-require('update-electron-app')({
-    repo: 'hunmer/videoManager',
-    updateInterval: '30 minutes',
-})
-
 // var electron = require('electron')
 var fs = require('fs')
 var files = require('./file.js')
@@ -138,7 +133,6 @@ function createWindow() {
     if (g_config.fullScreen) {
         win.maximize();
     }
-    // todo 记住程序位置
     const savePos = () => {
         g_config.bounds = win.getBounds();
         if (g_cache.savePos) clearTimeout(g_cache.savePos);
@@ -176,6 +170,10 @@ function saveDialog(callback, opts) {
     dialog.showSaveDialog(win, Object.assign({}, opts)).then(res => callback(res.filePath));
 }
 
+function openFileDialog(callback, opts) {
+    dialog.showOpenDialog(win, Object.assign({}, opts)).then(res => callback(res.filePaths || res.filePath));
+}
+
 function send(type, params) {
     switch (type) {
         case 'toast':
@@ -195,8 +193,52 @@ ipcMain.on("method", (event, data) => {
     }
     var d = data.msg;
     switch (data.type) {
+        case 'setBounds':
+            var bounds;
+            if (!d) {
+                if (!g_cache.beforeSetBounds) return;
+                d = g_cache.beforeSetBounds;
+                delete g_cache.beforeSetBounds;
+            } else {
+                bounds = win.getBounds();
+                g_cache.beforeSetBounds = Object.assign({}, bounds);
+                d = Object.assign(bounds, d);
+            }
+            win.setBounds(d);
+            break;
         case 'pin':
-            win.setAlwaysOnTop(!win.isAlwaysOnTop(), 'screen');
+            if (d == undefined) d = !win.isAlwaysOnTop();
+            win.setAlwaysOnTop(d, 'screen');
+            break;
+        case 'openImageDialog':
+            openFileDialog(file => {
+                if (file.length) {
+                    send('openImage', file[0]);
+                }
+            }, {
+                title: '选择图片',
+                filters: [{
+                    name: '图片',
+                    extensions: ['jpg', 'png', 'webp', 'gif'],
+                }],
+                properties: ['openFile'],
+            });
+            break;
+
+        case 'openFileDialog':
+            openFileDialog(files => {
+                console.log(files);
+                if (files.length) {
+                    send('openFiles', files);
+                }
+            }, {
+                title: '添加文件(长按ctrl可多选)',
+                filters: [{
+                    name: '视频文件',
+                    extensions: ['mp4', 'ts', 'm3u8', 'flv', 'mdp'], // , 'rar'
+                }],
+                properties: ['openFile', 'multiSelections'],
+            });
             break;
         case 'saveAsZip':
             saveDialog(saveTo => {
@@ -235,14 +277,18 @@ ipcMain.on("method", (event, data) => {
             shell.openExternal(d);
             break;
         case 'ondragstart':
-            var file = files.getPath(d.file);
-            if (files.exists(file)) {
-                var icon = files.getPath(d.icon);
-                win.webContents.startDrag({
-                    file: file,
-                    icon: files.exists(icon) ? icon : __dirname + '/favicon.png',
-                });
+            var list = [];
+            for (var file of d.files) {
+                file = files.getPath(file);
+                if (files.exists(file)) {
+                    list.push(file);
+                }
             }
+            var icon = files.getPath(d.icon);
+            win.webContents.startDrag({
+                files: list,
+                icon: files.exists(icon) ? icon : __dirname + '/favicon.png',
+            });
             break;
         case 'cmd':
             files.runCmd(d.replace('*path*', __dirname), (output) => {

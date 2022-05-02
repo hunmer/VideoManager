@@ -2,8 +2,31 @@ var _player;
 var g_player = {
     url: '',
     video: undefined,
+    init: function(){
+        this.reset();
+    },
+    reset: function(){
+        $('#player').html(`
+             <div class="card text-center rounded" data-action="addfiles" style="width: 18rem;margin: 0 auto;top: 25%;">
+                <i class="bi bi-plus" style="font-size: 4rem;"></i>
+                <div class="card-body">
+                    <p class="card-text">拖放视频文件到此完成导入</p>
+                    <p style="font-size: 12px;">支持 mp4 flv ts m3u8 mdp 等文件</p>
+                </div>
+            </div>
+        `);
+    },
     getUrl: function() {
         return this.url;
+    },
+    destrory: function(){
+        if(_player){
+            _player.destroy();
+            _player = undefined;
+        }
+        g_video.clearInput();
+        this.reset();
+
     },
     load: function(opts, key, start = 0) {
         if (typeof(opts) == 'string') opts = {
@@ -28,7 +51,7 @@ var g_player = {
 
         opts.thumbnails = thumbnails;
         const fun = () => {
-            if (_player) _player.destroy();
+            g_player.destrory();
             var config = {
                 hotkey: false,
                 autoplay: true,
@@ -111,6 +134,12 @@ var g_player = {
                         text: '生成进度条预览图',
                         click: player => {
                             doAction(null, 'videoThumb');
+                        },
+                    },
+                     {
+                        text: '关闭文件',
+                        click: player => {
+                            g_player.destrory();
                         },
                     },
                 ],
@@ -205,6 +234,7 @@ var g_player = {
     },
     onFullscreen: function(full) {
         g_cache.fullScreen = full;
+        domSelector({action: 'showlist'}).toggleClass('hide', full);
         var div = $('#layout_video_range').toggleClass('hide', !full);
         if (full) {
             if (!$('#alert_video').length) {
@@ -256,3 +286,4 @@ var g_player = {
     }
 
 }
+g_player.init();

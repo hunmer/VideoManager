@@ -1,3 +1,4 @@
+const APP_VERSION = 'v1.2.1';
 var g_localKey = 'vm_';
 var g_config = local_readJson('config', {
     tags_rent: [],
@@ -26,7 +27,19 @@ var MODAL_HTML = (id, opts) => {
  `
 }
 
-
+function inputFocus(ele) {
+    ele.blur();
+    ele.focus();
+    var len = ele.value.length;
+    if(document.selection){
+        var sel = ele.createTextRange();
+        sel.moveStart('character', len);
+        sel.collapse();
+        sel.select();
+    }else {
+        ele.selectionStart = ele.selectionEnd = len;
+    }
+}
 
 function parseFile(input) {
     var reader = new FileReader();
@@ -306,8 +319,10 @@ function getVal(value, defaultV) {
 }
 
 
-function getFileName(s) {
-    return typeof(s) == 'string' ? s.split('\\').pop().split('.')[0] : '';
+function getFileName(s, ext = false) {
+    var name = typeof(s) == 'string' ? s.split('\\').pop() : '';
+    if(!ext) name = name.split('.')[0];
+    return name;
 }
 
 function randNum(min, max) {
@@ -378,3 +393,160 @@ var PF_SRT = function() {
     parse: parse
   }
 }();
+
+function srcollVideo(e, video) {
+    if ($('input:focus').length) return;
+    var d = $(e.target);
+    if (d.parents('.dropdown-menu').length) return; // 裁剪列表
+    if (!video) video = e.currentTarget;
+    var duration = video.duration;
+    if (!isNaN(duration)) {
+        var i = e.deltaY;
+        var add;
+        if (e.altKey) {
+            add = 1;
+        } else
+        if (e.ctrlKey) {
+            add = 5;
+        } else {
+            add = duration * 0.01; // 视频的1%
+        }
+        if (add < 1) add = 1;
+        add = i > 0 ? 0 - add : add;
+        video.currentTime += add;
+        clearEventBubble(e);
+    }
+}
+
+function nextScrollTime(e) {
+    var d = domSelector({ action: 'setScrollAddTime' }, '.active');
+    if(!d.length){
+        return setScrollAddTime(1);
+    }
+    var n = e.deltaY > 0 ? d.prev() : d.next();
+    if (n.length) {
+        return n[0].click();
+    }
+}
+
+function setScrollAddTime(time, save = true) {
+    if (save) {
+        g_config.scrollAdd = time;
+        local_saveJson('config', g_config);
+    }
+    $('#scrollAddTime').html(time);
+    domSelector({ action: 'setScrollAddTime' }, '.active').removeClass('active');
+    domSelector({ action: 'setScrollAddTime', time: time }).addClass('active');
+}
+
+function loadConfig() {
+    setScrollAddTime(g_config.scrollAdd || 1, false);
+}
+
+
+function insertStyle(cssText) {
+    var head = document.getElementsByTagName("head")[0];
+    var style = document.createElement("style");
+    var rules = document.createTextNode(cssText);
+    style.type = "text/css";
+    if (style.styleSheet) {
+        style.styleSheet.cssText = rules.nodeValue;
+    } else {
+        style.appendChild(rules);
+    }
+    head.appendChild(style);
+    return style;
+}
+
+function hidePreview() {
+    clearTimeout(g_cache.previewClip);
+    $('#preview_video_popup').css({
+        display: 'none',
+        position: 'fixed',
+    }).find('video').attr('src', '');
+    g_player.tryStart();
+}
+
+
+
+
+var g_cache = {
+    searchedClip: {},
+    previewClip: -1,
+    searchTags: [],
+    filters: [],
+    fullScreen: false,
+}
+
+function setConfig(k, v) {
+    g_config[k] = v;
+    local_saveJson('config', g_config);
+}
+
+
+function loadTab(id) {
+    $('#_' + id + '-tab').click();
+}
+
+function domSelector(opts, s = '') {
+    if(typeof(opts) != 'object') opts = {action: opts};
+    for (var key in opts) {
+        s += '[data-' + key;
+        if (opts[key] != '') {
+            s += '="' + opts[key] + '"';
+        }
+        s += ']';
+    }
+    return $(s);
+}
+
+function uniqueArr(arr){
+  return Array.from(new Set(arr));
+}
+
+function dragFile(ev, src) {
+    g_player.playVideo(false);
+
+    var target = $(ev.currentTarget);
+    ev.preventDefault();
+    var files = [];
+    var icon = '';
+    if(ev.ctrlKey){
+        if(!target.hasClass('card_active')) return;
+        // 获取所有同样class的元素
+        for(var selected of $('.'+target.attr('class').replaceAll(' ', '.'))){
+            files.push(selected.dataset.file);
+        }
+    }else{
+        files = [target.attr('data-file')];
+        icon = target.attr('data-icon') || src || '';
+        if(icon.substr(0, 1) == '.') icon = icon.replace('.', '*path*');
+    }
+    g_cache.dragFile = files;
+    ipc_send('ondragstart', {
+        files: files,
+        icon: icon,
+    });
+}
+
+function ipc_send(type, msg) {
+    var data = {
+        type: type,
+        msg: msg
+    }
+    if (typeof(_api) != 'undefined') {
+        _api.method(data); // ELECTRON
+    } else {
+        console.log(JSON.stringify(data));
+    }
+}
+
+function toast(msg, style = 'alert-info', time = 3000) {
+    var dom = $('.alert');
+    dom.removeClass(dom.attr('data-style')).addClass(style).attr('data-style', style);
+    dom.removeClass('hide').find('.text').html(msg);
+    if (g_cache.toastTimer) clearInterval(g_cache.toastTimer);
+    g_cache.toastTimer = setInterval(() => {
+        dom.addClass('hide');
+    }, time);
+}

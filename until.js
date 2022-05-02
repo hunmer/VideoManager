@@ -14,7 +14,6 @@ function runCmd(cmd, callback, onClose) {
 }
 
 
-
 function replaceAll_once(str, search, replace, start = 0) {
     while (true) {
         var i = str.indexOf(search, start);

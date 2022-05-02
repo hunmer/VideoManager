@@ -12,6 +12,25 @@ var nsg = require('node-sprite-generator');
 var Jimp = require('jimp');
 var os = require('os');
 
+// ffmpeg.getAvailableFormats(function(err, formats) {
+//   console.log('Available formats:');
+//   console.dir(formats);
+// });
+
+// ffmpeg.getAvailableCodecs(function(err, codecs) {
+//   console.log('Available codecs:');
+//   console.dir(codecs);
+// });
+
+// ffmpeg.getAvailableEncoders(function(err, encoders) {
+//   console.log('Available encoders:');
+//   console.dir(encoders);
+// });
+
+// ffmpeg.getAvailableFilters(function(err, filters) {
+//   console.log("Available filters:");
+//   console.dir(filters);
+// });
 
 function replaceAll_once(str, search, replace, start = 0) {
     while (true) {
@@ -71,9 +90,25 @@ ipcRenderer.on('toast', (event, arg) => {
     toast(arg.text, arg.class);
 });
 ipcRenderer.on('onTop', (event, arg) => {
-    domSelector({action: 'pin'}).toggleClass('text-primary', arg);
+    domSelector({ action: 'pin' }).toggleClass('text-primary', arg);
 });
-
+ipcRenderer.on('openFiles', (event, arg) => {
+    var r = [];
+    for (var file of arg) {
+        r.push({
+            path: file,
+            type: files.isDir(file) ? '' : path.extname(file),
+            name: path.basename(file)
+        })
+    }
+    parseFiles(r);
+});
+ipcRenderer.on('openImage', (event, arg) => {
+    g_setting.setBg(arg, true);
+});
+ipcRenderer.on('log', (event, arg) => {
+    console.log(arg);
+});
 
 
 function doFFMPEG(opts, callback) {
@@ -121,13 +156,13 @@ function doFFMPEG(opts, callback) {
 }
 
 window._api = {
-    
+
 
     method: function(data) {
         console.log(data);
         var d = data.msg;
         switch (data.type) {
-           
+
             case 'share_resetDB':
                 return;
                 if (g_share.db) {

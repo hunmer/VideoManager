@@ -1,110 +1,3 @@
-function srcollVideo(e, video) {
-    if ($('input:focus').length) return;
-    var d = $(e.target);
-    if (d.parents('.dropdown-menu').length) return; // 裁剪列表
-    if (!video) video = e.currentTarget;
-    var duration = video.duration;
-    if (!isNaN(duration)) {
-        var i = e.deltaY;
-        var add;
-        if (e.altKey) {
-            add = 1;
-        } else
-        if (e.ctrlKey) {
-            add = 5;
-        } else {
-            add = duration * 0.01; // 视频的1%
-        }
-        if (add < 1) add = 1;
-        add = i > 0 ? 0 - add : add;
-        video.currentTime += add;
-        clearEventBubble(e);
-    }
-}
-
-function nextScrollTime() {
-    var next = domSelector({ action: 'setScrollAddTime' }, '.active').next();
-    if (next.length) {
-        return next.click();
-    }
-    setScrollAddTime('0.1');
-}
-
-
-function setScrollAddTime(time, save = true) {
-    if (save) {
-        g_config.scrollAdd = time;
-        local_saveJson('config', g_config);
-    }
-    $('#scrollAddTime').html(time);
-    domSelector({ action: 'setScrollAddTime' }, '.active').removeClass('active');
-    domSelector({ action: 'setScrollAddTime', time: time }).addClass('active');
-}
-
-function loadConfig() {
-    setScrollAddTime(g_config.scrollAdd || 1, false);
-}
-
-function bindModalEvent(modal, opts) {
-    modal
-        .on('shown.bs.modal', function(event) {
-            if(opts.autoFocus){
-                $(this).find('textarea').focus()
-                $(this).find('input').focus()
-            }
-            opts.onShow && opts.onShow(modal);
-        })
-        .on('hidden.bs.modal', function(event) {
-            opts.onClose && opts.onClose(modal);
-        });
-    return modal;
-}
-
-function buildModal(text, opts) {
-    opts = Object.assign({
-        id: 'modal_confirm',
-        title: '弹出窗口',
-        autoFocus: true,
-        btns: [{
-            id: 'ok',
-            text: '确定',
-            class: 'btn-primary',
-        }, {
-            id: 'cancel',
-            text: '取消',
-            class: 'btn-secondary',
-        }],
-        html: '%html%',
-        onShow: () => {},
-        callback: (id) => {},
-        onBtnClick: (config, btn) => {},
-    }, opts);
-    var modal = $('#' + opts.id);
-    if (!modal.length) {
-        // 临时
-        modal = $(MODAL_HTML(opts.id, '')).appendTo('body');
-    }
-    modal.find('.modal-title').html(opts.title);
-    modal.find('.modal-body').html(opts.html.replace('%html%', text));
-    var footer = modal.find('.modal-footer').html('');
-    for (var btn of opts.btns) {
-        $(`<button id="btn_${btn.id}" type="button" class="btn ${btn.class}">${btn.text}</button>`)
-            .prependTo(footer)
-            .on('click', function() {
-                opts.onBtnClick(opts, this);
-            });
-    }
-    bindModalEvent(modal, opts).modal('show');
-}
-
-function hidePreview() {
-    clearTimeout(g_cache.previewClip);
-    $('#preview_video_popup').css({
-        display: 'none',
-        position: 'fixed',
-    }).find('video').attr('src', '');
-    g_player.tryStart();
-}
 $(function() {
     $.fn.tooltip.Constructor.Default.whiteList['*'].push(/^data-[\w-]*$/i);
     loadConfig();
@@ -123,22 +16,29 @@ $(function() {
         trigger: 'focus',
         content: function() {
             switch (this.dataset.originalTitle) {
+                case '搜索视图':
+                    var h = '敬请期待';
+                    // for (var type of ['image', 'text']) {
+                    //     h += `<a data-action="search_style,${type}" href="#" class="badge badge-${type == g_config.search_style ? 'primary' : 'secondary'} mr-2">${type}</a>`;
+                    // }
+                    return h;
+
                 case '视图':
                     var h = '';
-                    for(var type of ['image', 'text']){
-                        h+=`<a data-action="folder_style,${type}" href="#" class="badge badge-${type == g_config.folder_style ? 'primary' : 'secondary'} mr-2">${type == 'image' ? '背景图' : '文本'}</a>`;
+                    for (var type of ['image', 'text']) {
+                        h += `<a data-action="folder_style,${type}" href="#" class="badge badge-${type == g_config.folder_style ? 'primary' : 'secondary'} mr-2">${type == 'image' ? '背景图' : '文本'}</a>`;
                     }
                     return h;
 
                 case '排序':
                     var h = '';
                     var sort = g_config.folder_sort || '名称';
-                    for(var type of ['名称', '时长', '片段数', '替换文本', '自定义']){
-                        h+=`<a data-action="folder_sort,${type}" href="#" class="badge badge-${type == sort ? 'primary' : 'secondary'} mr-2">${type}</a>`;
+                    for (var type of ['名称', '时长', '片段数', '替换文本', '自定义']) {
+                        h += `<a data-action="folder_sort,${type}" href="#" class="badge badge-${type == sort ? 'primary' : 'secondary'} mr-2">${type}</a>`;
                     }
                     h += '<hr class="border-bottom">';
-                    for(var k of [0, 1]){
-                         h+=`<a data-action="folder_sort_reverse,${k}" href="#" class="badge badge-${k == g_config.folder_sort_reverse ? 'primary' : 'secondary'} mr-2">${k == 0 ? '正序' : '反序'}</a>`;
+                    for (var k of [0, 1]) {
+                        h += `<a data-action="folder_sort_reverse,${k}" href="#" class="badge badge-${k == g_config.folder_sort_reverse ? 'primary' : 'secondary'} mr-2">${k == 0 ? '正序' : '反序'}</a>`;
                     }
                     return h;
             }
@@ -147,10 +47,12 @@ $(function() {
     });
 
     $(window).on('DOMContentLoaded', event => {
-            const sidebarToggle = document.body.querySelector('#sidebarToggle');
-            if (sidebarToggle) {
-                if (localStorage.getItem('sb|sidebar-toggle') === 'true') {
-                    document.body.classList.toggle('sb-sidenav-toggled');
+            if (g_config.sidebar) {
+                const sidebarToggle = document.body.querySelector('#sidebarToggle');
+                if (sidebarToggle) {
+                    if (localStorage.getItem('sb|sidebar-toggle') === 'true') {
+                        document.body.classList.toggle('sb-sidenav-toggled');
+                    }
                 }
             }
         })
@@ -163,34 +65,27 @@ $(function() {
             if (g_cache.playing) g_player.playVideo(true);
         });
 
-
-    window.prompt = function(text, opts) {
-        buildModal(`<textarea class="form-control" placeholder="${opts.placeholder || ''}" rows="3">${text}</textarea>`, Object.assign({
-            id: 'modal_prompt',
-            title: '请输入',
-            onBtnClick: (config, btn) => {
-                var par = $(btn).parents('.modal');
-                if (config.callback(par.find('textarea').val()) === false) return;
-                par.modal('hide');
-            }
-        }, opts));
-    }
-
-    window.confirm = function(text, opts) {
-        buildModal(text, Object.assign({
-            id: 'modal_confirm',
-            title: '询问',
-            onBtnClick: (config, btn) => {
-                if (config.callback(btn.id.substring(4)) === false) return;
-                $(btn).parents('.modal').modal('hide');
-            }
-        }, opts));
-    }
+    // bug 位置错误
+    //     $('#myTab').on('shown.bs.tab', function(e){
+    //      if(e.target.id == '_list-tab'){
+    //         g_video.initedCliplist = true;
+    //         var d = $('#_list');
+    //         var top = d.position().top;
+    //         g_select.register('_list', {
+    //             childrens: 'li',
+    //             activeClass: 'seled',
+    //             onEnd: () => {},
+    //             top: top,
+    //             bottom: top + d[0].offsetHeight,
+    //             scrollEl: d[0],
+    //         });
+    //      }
+    // });
 
     $(document)
         .on('dragstart', '[data-file]', function(e) {
             g_cache.draging = true;
-            dragFile(e, $(this).find('img').attr('src'));
+            dragFile(e, $(this).find('img').attr('src') || this.dataset.icon);
         })
         .on('dragend', '[data-file]', function(e) {
             g_cache.draging = false;
@@ -208,13 +103,20 @@ $(function() {
             var self = $(this);
             var pos = self.data('pos');
             var popup = $('#preview_video_popup');
-            var target = $(this.parentNode);
+            var file = self.attr('data-file');
+            var target;
+            if(file){
+                target = self;
+            }else{
+                target = file = self.parents('[data-file]');
+                file = target.attr('data-file');
+            }
             var offset = target.offset();
-            var file = nodejs.files.getPath(target.data('file'));
+            file = nodejs.files.getPath(file);
             clearTimeout(g_cache.previewClip);
-            switch(pos){
+            switch (pos) {
                 case 'self': // todo
-                     fun = () => {
+                    fun = () => {
                         popup.css({
                             left: (event.pageX - popup.width() / 2) + 'px',
                             top: (event.pageY - popup.height() / 2) + 'px',
@@ -224,7 +126,7 @@ $(function() {
                     break;
 
                 case 'right-bottom':
-                     fun = () => {
+                    fun = () => {
                         popup.css({
                             bottom: '10px',
                             right: '10px',
@@ -236,20 +138,20 @@ $(function() {
                     break;
 
                 default:
-                     fun = () => {
-                         popup.css({
+                    fun = () => {
+                        popup.css({
                             left: (offset.left - 10 - popup.width()) + 'px',
                             top: Math.max(0, offset.top - popup.height() / 2) + 'px',
                             display: 'unset',
                         })
-                     };
+                    };
             }
             g_cache.previewClip = setTimeout(() => {
                 g_player.tryStop();
                 // 如果video全屏，则插入到video内部 反之插入body内部
                 popup.prependTo(g_cache.fullScreen ? '#player' : 'body');
                 fun();
-                popup.find('video').attr('src', file+'?t='+new Date().getTime());
+                popup.find('video').attr('src', file + '?t=' + new Date().getTime());
             }, parseInt(self.data('time')) || 250);
         })
         .on('mouseout', '[data-preview]', function(event) {
@@ -308,6 +210,9 @@ $(function() {
                     clearEventBubble(e);
                     g_player.playVideo();
                     return;
+                 case 'backquote':
+                 if (e.altKey) inputFocus($('#clip_note')[0]);
+                    return;
                 case 'digit1':
                     if (e.altKey) g_video.setStart();
                     return;
@@ -317,7 +222,7 @@ $(function() {
                 case 'digit3':
                     if (e.altKey) {
                         loadTab('tags');
-                        $('#input_tag').focus();
+                        inputFocus($('#input_tag')[0]);
                     }
                     return;
                 case 'digit4':
@@ -331,7 +236,7 @@ $(function() {
                     return;
                 case 'keyf':
                     if (e.ctrlKey) {
-                        g_video.modal_search();
+                        doAction(null, 'modal_search')
                     }
                     return;
                 case 'keyr':
@@ -360,31 +265,34 @@ $(function() {
             if (this.classList.contains('disabled')) return;
             doAction(this, this.dataset.action, event);
         })
+        .on('dblclick', '[data-dbaction]', function(event) {
+            if (this.classList.contains('disabled')) return;
+            doAction(this, this.dataset.dbaction, event);
+        })
         .on('contextmenu', '[data-contenx]', function(event) {
             if (this.classList.contains('disabled')) return;
             doAction(this, this.dataset.contenx, event);
             clearEventBubble(event);
         });
+
+    $('#wrapper').removeClass('hide');
+
 });
 
-
-function toggleSidebar() {
-    document.body.classList.toggle('sb-sidenav-toggled');
-    localStorage.setItem('sb|sidebar-toggle', document.body.classList.contains('sb-sidenav-toggled'));
-}
-
-var g_cache = {
-    selectedClips: [],
-    searchedClip: {},
-    previewClip: -1,
-    searchTags: [],
-    filters: [],
-    fullScreen: false,
-}
-
-function setConfig(k, v) {
-    g_config[k] = v;
-    local_saveJson('config', g_config);
+function checkUpdate() {
+    fetch(`https://api.github.com/repos/hunmer/videoManager/releases/latest`)
+        .then(response => {
+            return response.ok ? response.json() : { "tag_name": "none" };
+        })
+        .then(data => {
+            // console.log(data);
+            if(data.tag_name == 'none'){
+                toast('检查更新失败,请去首页查看', 'alert-danger');
+            }else
+            if (data.tag_name != APP_VERSION) {
+                ipc_send('url', data.html_url);
+            }
+        });
 }
 
 function doAction(dom, action, event) {
@@ -393,15 +301,49 @@ function doAction(dom, action, event) {
         g_actions[action[0]](dom, action, event);
     }
     switch (action[0]) {
+        case 'addfiles':
+            ipc_send('openFileDialog', { multi: true });
+            break;
         case 'pin':
             ipc_send('pin');
-            $(dom).toggleClass('text-primary');
             break;
         case 'aboutMe':
             confirm(`
-                <img src="res/payment.jpg" draggable="false" style="width: 100%;">
-                <h6 class="text-right">2022年4月30日 21点01分</h6>
-            `, {title: '关于'});
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <img src="res/payment.jpg" draggable="false" style="width: 100%;">
+                    </div>
+                    <div class="col-md-6 text-center">
+                        <img src="favicon.png" style="width: 100px">
+                        <h4><a class="badge badge-primary" style="font-size: 2rem">v1.2.1</a></h4>
+                        <div  style="margin-top: 20px">
+                            <h6 class="text-right">2022年5月2日 14点45分</h6>
+                            <h6 class="text-right">by @hunmer</h6>
+                            
+                        </div>
+                    </div>
+                </div>
+            `, {
+                title: '关于',
+                btns: [{
+                    id: 'checkUpdate',
+                    text: '<i class="bi bi-github mr-2"></i>检查更新',
+                    class: 'btn-primary',
+                }, {
+                    id: 'bbs',
+                    text: '52pojie@neysummer',
+                    class: 'btn-danger',
+                }],
+                callback: btn => {
+                    if(btn == 'checkUpdate'){
+                        toast('检查更新中...', 'alert-info');
+                        checkUpdate();
+                    }else{
+                        ipc_send('url', 'https://www.52pojie.cn/thread-1628845-1-1.html');
+                    }
+                        return false;
+                }
+            });
             break;
         case 'config':
             setConfig(action[1], action[2]);
@@ -411,10 +353,10 @@ function doAction(dom, action, event) {
         case 'folder_sort_reverse':
             const fun = () => {
                 setConfig(action[0], action[1]);
-            g_video.initVideos();
+                g_video.initVideos();
             }
-            if(action[0] == 'folder_sort'){
-                switch(action[1]){
+            if (action[0] == 'folder_sort') {
+                switch (action[1]) {
                     case '替换文本':
                         return prompt(g_config.folder_sort_replace || '', {
                             title: '替换文件名(用,分开)',
@@ -507,35 +449,6 @@ function doAction(dom, action, event) {
                 d.className = 'btn' + (d == dom ? ' btn-primary' : '');
             }
             break;
-        case 'filter_addFolder':
-            if (g_filter.filter_get('local', 'folder').length) {
-                return toast('目录过滤器已经存在!', 'alert-danger');
-            }
-            g_video.modal_folder('', folder => {
-                g_filter.filter_add('local','目录: ' + folder[0], `d.folder == '${folder[0]}'`, 'folder');
-            });
-            break;
-        case 'filter_addTag':
-            g_video.modal_tag(g_cache.searchTags, tags => {
-                console.log(tags);
-                for (var tag of tags) {
-                    g_filter.filter_add('local','标签: ' + tag, `clip.tags.includes('${tag}')`, 'tag');
-                }
-            });
-            break;
-        case 'filter_addTime':
-            g_video.modal_time(res => {
-                var t = res.date.getTime();
-                g_filter.filter_add('local',`创建日期: ${res.symbol}${res.date.format('yyyy/MM/dd'), 'date'}`, `time ${res.symbol} ${t}`);
-            });
-            break;
-        case 'filter_addSize':
-            g_video.modal_size(res => {
-                var w1 = unescapeHTML(res.w1);
-                var h1 = unescapeHTML(res.h1);
-                g_filter.filter_add('local',`尺寸: 宽 ${w1} ${res.w} & 高 ${h1} ${res.h}`, `d.meta && d.meta.width ${w1} ${res.w} && d.meta.height ${h1} ${res.h}`, 'size');
-            });
-            break;
         case 'data_export':
             var d = {};
             for (var key of local_getList()) {
@@ -589,15 +502,7 @@ function doAction(dom, action, event) {
             break;
 
             break;
-        case 'collection_add':
-            var a = $('[data-action="card_selected"].bg-primary');
-            for (var d of a) {
-                var key = d.dataset.key;
-                g_cache.selectedClips[key] = g_cache.searchedClip[key];
-            }
-            toast('成功添加了 ' + a.length + ' 个视频', 'alert-success');
-            g_video.clearSearchClip();
-            break;
+
         case 'btn_file_add':
             var files = [];
             var a = $('[data-action="files_select"].active');
@@ -610,29 +515,21 @@ function doAction(dom, action, event) {
             $(dom).toggleClass('active');
             g_video.onSelectFile();
             break;
-        case 'card_selected':
-            $(dom).toggleClass('bg-primary');
-            var cnt = $('[data-action="card_selected"].bg-primary').length;
-            $('#selected_cnt').html(cnt);
-            $('[data-action="collection_add"]').toggleClass('disabled', cnt == 0);
-            break;
+
         case 'tag_add':
             if (!$(dom).hasClass('badge-success')) { // 排除最近的已被添加的标签
-                g_video.tags.addTag($(dom).attr('data-tag'));
+                g_tag.addTag($(dom).attr('data-tag'));
             }
+            break;
+        case 'jumpClip':
+            g_player.setCurrentTime(dom.dataset.start);
             break;
         case 'loadClip':
             var d = $(dom);
             if (d.hasClass('card_active')) {
                 return doAction(null, 'resetPos');
             }
-            var clip = d.data('clip');
-            if (g_cache.lastClip == clip) {
-                g_video.loadClip(clip);
-            } else {
-                g_player.setCurrentTime(d.data('start'));
-                g_cache.lastClip = clip;
-            }
+            g_video.loadClip(d.data('clip'));
             break;
         case 'toggleSideBar':
             toggleSidebar();
@@ -644,7 +541,7 @@ function doAction(dom, action, event) {
             g_video.addPos();
             break;
         case 'tag_remove':
-            g_video.tags.removeTag($(dom).attr('data-tag'));
+            g_tag.removeTag($(dom).attr('data-tag'));
             break;
         case 'search':
             g_site.doSubmit();
@@ -662,55 +559,4 @@ function doAction(dom, action, event) {
             ipc_send('close');
             break;
     }
-}
-
-function loadTab(id) {
-    $('#_' + id + '-tab').click();
-}
-
-function domSelector(opts, s = '') {
-    for (var key in opts) {
-        s += '[data-' + key;
-        if (opts[key] != '') {
-            s += '="' + opts[key] + '"';
-        }
-        s += ']';
-    }
-    return $(s);
-}
-
-function dragFile(ev, src) {
-    g_player.playVideo(false);
-
-    var target = ev.currentTarget;
-    ev.preventDefault();
-
-    var file = target.dataset.file;
-    g_cache.dragFile = file;
-    ipc_send('ondragstart', {
-        file: file,
-        icon: (target.dataset.icon || src).replace('.', '*path*'),
-    });
-}
-
-function ipc_send(type, msg) {
-    var data = {
-        type: type,
-        msg: msg
-    }
-    if (typeof(_api) != 'undefined') {
-        _api.method(data); // ELECTRON
-    } else {
-        console.log(JSON.stringify(data));
-    }
-}
-
-function toast(msg, style = 'alert-info', time = 3000) {
-    var dom = $('.alert');
-    dom.removeClass(dom.attr('data-style')).addClass(style).attr('data-style', style);
-    dom.removeClass('hide').find('.text').html(msg);
-    if (g_cache.toastTimer) clearInterval(g_cache.toastTimer);
-    g_cache.toastTimer = setInterval(() => {
-        dom.addClass('hide');
-    }, time);
 }

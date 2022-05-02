@@ -100,7 +100,10 @@ var g_sub = {
         } else {
             subs = this.getSub(key);
         }
-        var h = '';
+
+        var h = `
+             <ul class="list-group list-group-flush" style="overflow-y: auto;padding-bottom: 50px;height: calc(100vh - 200px);" id="list_sub_item">                 
+        `;
         var i = 0;
         if (subs) {
             for (var sub of subs) {
@@ -112,12 +115,24 @@ var g_sub = {
             }
         }
         g_sub.lines = i;
-        if (h == '') {
-            h = `<li class="list-group-item">没有字幕</li>`;
-        } else {
-            $('[data-action="sub_saveSub"]').removeClass('hide');
+        if(i){
+            h += '</ul>';
+            $('#sub_content').html(h);
+        }else{
+            this.reset();
         }
-        $('#list_sub_item').html(h);
+        $('[data-action="sub_saveSub"]').removeClass('hide', i == 0);
+    },
+    reset: function(){
+        $('#sub_content').html(`
+             <div class="card text-center rounded none-select" draggable="true" data-file="${g_video.data.file}" data-icon="*path*/cover/${g_video.key}.jpg">
+                <i class="bi bi-video" style="font-size: 4rem;"></i>
+                <div class="card-body">
+                    <p class="card-text">把我拖到剪映识别文字</p>
+                    <p style="font-size: 12px;">多文件识别请添加到列表</p>
+                </div>
+            </div>
+        `);
     },
     unlinkTarget: function() {
         clearInterval(this.timer);

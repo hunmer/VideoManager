@@ -119,7 +119,7 @@ var g_list = {
 		v = this.list.clips;
 		for(var key in v){
 			h += `
-				<div class="col-4" style="position: relative;" data-key="${key}" data-file="*path*/cuts/${key}.mp4" draggable="true">
+				<div class="col-4" style="position: relative;margin-top: 20px;" data-key="${key}" data-file="*path*/cuts/${key}.mp4" draggable="true">
 					<img style="width: 100%;" src="./cover/${key}.jpg" alt="${v[key]}" draggable="false" data-pos="right-bottom" data-time=1000 data-preview>
 					<i class="bi bi-dash-circle" onclick="g_list.remove('clips', '${key}')" style="position: absolute;top: 0px;right: 20px;"></i>
 				</div>

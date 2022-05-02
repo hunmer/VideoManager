@@ -24,13 +24,8 @@ $(function() {
     }
 
     const fileDragHover = (e) => {
-        if( e.originalEvent){
-            if(!e.originalEvent.dataTransfer.files.length) return;
-        }
-        
         e.stopPropagation();
         e.preventDefault();
-        console.log(e);
         if(!g_cache.draging){ // 过滤从浏览器拖动的文件
             $('#file-drop').toggleClass('hide1', !inArea(e, 'body'));
         }
@@ -48,8 +43,9 @@ $(function() {
 
 });
 
+
+
 function parseFiles(files) {
-    //console.log(files);
      var base = nodejs.files.getPath('*path*/cuts/');
     var cnt = 0;
     g_cache.files = [];

@@ -4,7 +4,7 @@ var g_menu = {
     init: function() {
         this.registerMenu({
             name: 'clip_item',
-            selector: '[data-action="loadClip"]',
+            selector: '[data-dbaction="loadClip"]',
             dataKey: 'data-clip',
             html: `
                 <div class="list-group" style="width: 100%;">
@@ -47,7 +47,6 @@ var g_menu = {
                       </a>
                     </div>
             `,
-
         });
 
 
@@ -83,8 +82,6 @@ var g_menu = {
             onShow: key => {
                 domSelector({ action: 'video_addToList' }).find('span').html(g_list.isInList('videos', key) ? '从列表移除' : '加入列表');
                 domSelector({ action: 'video_addClipsToList' }).toggleClass('hide', Object.keys(g_video.getVideo(key).clips).length == 0);
-
-
             }
         });
 
@@ -248,7 +245,7 @@ var g_menu = {
 
         registerContextMenu(opts.selector, (dom, event) => {
             g_menu.target = dom;
-            var key = dom.attr(opts.dataKey);
+            var key = typeof(opts.dataKey) == 'function' ? opts.dataKey(dom) : dom.attr(opts.dataKey);
             g_menu.key = key;
             opts.onShow && opts.onShow(key);
             var par = $('#' + id).attr('data-key', key).show();

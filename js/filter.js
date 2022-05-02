@@ -28,10 +28,12 @@ var g_filter = {
 			}
 		})
 	},
+    filter_reset: function(name){
+        this.filter_save(name, []);
+    },
     filter_list: function(name) {
         return this.list[name];
     },
-
     filter_getContent: function(name, type, def = ''){
     	var list = this.filter_list(name);
     	 if (list.some((d) => d.type == type)) {
