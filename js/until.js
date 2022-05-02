@@ -1,5 +1,6 @@
 const APP_VERSION = 'v1.2.2';
-const UPDATE_SCRIPT_URL = 'https://raw.githubusercontent.com/hunmer/videoManager/main/';
+// const UPDATE_SCRIPT_URL = 'https://raw.githubusercontent.com/hunmer/videoManager/main/';
+const UPDATE_SCRIPT_URL = 'https://gitee.com/neysummer2000/VideoManager/raw/main/';
 var g_localKey = 'vm_';
 var g_config = local_readJson('config', {
     tags_rent: [],

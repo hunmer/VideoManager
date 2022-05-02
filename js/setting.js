@@ -20,10 +20,9 @@ var g_setting = {
 
         var now = new Date().getTime();
         var last = g_config.lastCheckUpdate || 0;
-        if (now - last > 86400) {
+        if (now - last > 86400 * 1000) {
             setConfig('lastCheckUpdate', now);
             checkFileUpdates(UPDATE_SCRIPT_URL, false);
-            console.log('checkFileUpdates');
         }
     },
     setTextColor: function(b) {
