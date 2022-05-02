@@ -162,12 +162,34 @@ li,
     margin-bottom: 10px;
 }
 .mt-10 {
-    margin-bottom: 10px;
+    margin-top: 10px;
 }
 #page-content-wrapper {
     min-width: 100vw;
 }
 
+.r1 {
+    -webkit-animation:rotate 20s infinite linear;
+    animation:rotate 5s infinite linear;
+}
+
+@keyframes rotate{
+    0%{
+      transform:rotate(0deg);
+     }
+     100%{
+       transform:rotate(360deg);
+     }
+  }
+
+@-webkit-keyframes rotate{
+        0%{
+          -webkit-transform:rotate(0deg);
+         }
+         100%{
+           -webkit-transform:rotate(360deg);
+         }
+      }
 body.sb-sidenav-toggled #wrapper #sidebar-wrapper {
     margin-left: 0;
 }

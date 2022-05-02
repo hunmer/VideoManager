@@ -53,7 +53,6 @@ var g_select = {
                 if(_y >= opts.bottom){
                     par.scrollBy(0, 10)
                 }
-
                 var selDiv = $('#selectDiv').css({
                     left: Math.min(_x, startX) + "px",
                     top: Math.min(_y, startY) + "px",

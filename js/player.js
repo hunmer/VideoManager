@@ -273,8 +273,24 @@ var g_player = {
             }
         }
     },
+    getDuration: function() {
+        return _player.video.duration || -1;
+    },
     getCurrentTime: function() {
         return _player.video.currentTime || -1;
+    },
+    addTime: function(time){
+        var t = this.getCurrentTime();
+        if(t != -1){
+            var duration =  this.getDuration();
+            if(typeof(time) == 'string' && time.substr(-1) ==  '%'){
+                time = time.replace('%', '') / 100 * duration;
+            }
+            t += time;
+            if(t < 0) t = 0;
+            t = Math.min(t, duration);
+            _player.seek(t);
+        }
     },
     setCurrentTime: function(time, play = false) {
         if(!_player) return;

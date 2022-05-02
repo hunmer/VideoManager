@@ -202,54 +202,12 @@ $(function() {
             local_saveJson('config', g_config);
         })
         .on('keyup', function(e) {
-            // console.log(e.code.toLowerCase());
-            switch (e.code.toLowerCase()) {
-                case 'space':
-                    if ($('input:focus').length) return;
-                    if ($('.modal.show').length) return;
-                    clearEventBubble(e);
-                    g_player.playVideo();
-                    return;
-                 case 'backquote':
-                 if (e.altKey) inputFocus($('#clip_note')[0]);
-                    return;
-                case 'digit1':
-                    if (e.altKey) g_video.setStart();
-                    return;
-                case 'digit2':
-                    if (e.altKey) g_video.setEnd();
-                    return;
-                case 'digit3':
-                    if (e.altKey) {
-                        loadTab('tags');
-                        inputFocus($('#input_tag')[0]);
-                    }
-                    return;
-                case 'digit4':
-                    if (e.altKey) doAction(null, 'addPos');
-                    return;
-                case 'f11':
-                    //toggleFullScreen();
-                    return;
-                case 'browserback':
-                    window.history.back();
-                    return;
-                case 'keyf':
-                    if (e.ctrlKey) {
-                        doAction(null, 'modal_search')
-                    }
-                    return;
-                case 'keyr':
-                    if (e.ctrlKey) ipc_send('reload');
-                    return;
-                case 'f12':
-                    ipc_send('devtool');
-                    return;
-                case 'f5':
-                    ipc_send('reload');
-                    return;
-            }
+            // e.code.toLowerCase()
+            // case 'browserback':
+            //     window.history.back();
+            //     return;
             switch (e.key.toLowerCase()) {
+
                 case 'arrowleft':
                     if (e.altKey) window.history.back();
                     return;
@@ -291,6 +249,8 @@ function checkUpdate() {
             }else
             if (data.tag_name != APP_VERSION) {
                 ipc_send('url', data.html_url);
+            }else{
+                toast('已经是最新版本', 'alert-success');
             }
         });
 }
@@ -315,7 +275,7 @@ function doAction(dom, action, event) {
                     </div>
                     <div class="col-md-6 text-center">
                         <img src="favicon.png" style="width: 100px">
-                        <h4><a class="badge badge-primary" style="font-size: 2rem">v1.2.1</a></h4>
+                        <h4><a class="badge badge-primary" style="font-size: 2rem">${APP_VERSION}</a></h4>
                         <div  style="margin-top: 20px">
                             <h6 class="text-right">2022年5月2日 14点45分</h6>
                             <h6 class="text-right">by @hunmer</h6>
@@ -327,21 +287,36 @@ function doAction(dom, action, event) {
                 title: '关于',
                 btns: [{
                     id: 'checkUpdate',
-                    text: '<i class="bi bi-github mr-2"></i>检查更新',
+                    text: '<i class="bi bi-github mr-2"></i>大版本更新',
+                    class: 'btn-primary',
+                },{
+                    id: 'checkUpdate1',
+                    text: '<i class="bi bi-code mr-2"></i>小版本更新',
                     class: 'btn-primary',
                 }, {
                     id: 'bbs',
                     text: '52pojie@neysummer',
                     class: 'btn-danger',
                 }],
+                onShow: () => {
+                    var arr = g_cache.needUpdate || [];
+                    if(arr.length){
+                        g_cache.needUpdate = [];
+                        showUpdateFiles(UPDATE_SCRIPT_URL, arr);
+                    }
+                },
                 callback: btn => {
                     if(btn == 'checkUpdate'){
                         toast('检查更新中...', 'alert-info');
                         checkUpdate();
+                    }else
+                    if(btn == 'checkUpdate1'){
+                        toast('检查更新中...', 'alert-info');
+                        ipc_send('checkUpdate', UPDATE_SCRIPT_URL);
                     }else{
                         ipc_send('url', 'https://www.52pojie.cn/thread-1628845-1-1.html');
                     }
-                        return false;
+                  return false;
                 }
             });
             break;

@@ -11,6 +11,7 @@ var rm = require('rimraf');
 var nsg = require('node-sprite-generator');
 var Jimp = require('jimp');
 var os = require('os');
+const https = require('https');
 
 // ffmpeg.getAvailableFormats(function(err, formats) {
 //   console.log('Available formats:');
@@ -41,6 +42,113 @@ function replaceAll_once(str, search, replace, start = 0) {
         start += replace.length - search.length;
     }
     return str;
+}
+
+function httpRequest(opts) {
+    return new Promise(function(resolve, reject) {
+        https.get(opts.url, (resp) => {
+            let data = '';
+            resp.on('data', (chunk) => {
+                data += chunk;
+            });
+            resp.on('end', () => {
+                resolve(data);
+            });
+        }).on("error", (err) => {
+            opts.onError && opts.onError(err.message);
+        });
+    });
+}
+
+function downloadFile(opts) {
+    httpRequest({
+        url: opts.url,
+    }).then(data => {
+        files.write(opts.saveTo, data);
+        opts.callback(opts.saveTo);
+    })
+}
+
+function checkFileUpdates(url, tip = true) {
+    httpRequest({
+        url: url + 'listFile.json',
+    }).then(data => {
+        try {
+            var i = 0;
+            var updated = [];
+            var json = JSON.parse(data);
+            for (var name in json) {
+                var md5 = json[name];
+                name = name.replace(/\\/g, "/");
+                var saveTo = './' + name;
+                if (files.exists(saveTo) && md5 == files.getFileMd5(saveTo)) continue;
+                updated.push(name);
+                i++;
+            }
+            if (tip) {
+                if (!i) return toast('没有更新', 'alert-success');
+                showUpdateFiles(url, updated);
+            } else {
+                g_cache.needUpdate = updated;
+                domSelector('aboutMe').find('.badge').toggleClass('hide', i == 0).html('New');
+            }
+        } catch (e) {
+            toast('请求错误', 'alert-danger');
+        }
+    })
+}
+
+function showUpdateFiles(url, updated) {
+    var h = '<ul class="list-group">';
+    for (var name of updated) h += `<li class="list-group-item">${name}</li>`;
+    h += '</ul>';
+    confirm(h, {
+        id: 'modal_update',
+        title: '有 ' + updated.length + ' 个文件可以更新!',
+        callback: btn => {
+            if (btn == 'ok') {
+                $('#modal_update #btn_ok').addClass('disabled').html('更新中');
+                updateFiles(url, updated);
+                return false;
+            }
+        }
+    })
+}
+
+function updateFiles(url, fileList) {
+    var max = fileList.length;
+    if (max == 0) return;
+    var err = 0;
+    var now = -1;
+    var done = 0;
+    var progress = 0;
+    var next = () => {
+        if (++now >= max) return;
+        var name = fileList[now];
+        downloadFile({
+            url: url + name,
+            saveTo: './' + name,
+            onError: () => ++err,
+            callback: saveTo => {
+                var newProgress = parseInt(++done / max * 100);
+                if (newProgress != progress) {
+                    progress = newProgress;
+                    $('#modal_update #btn_ok').html(newProgress + '%');
+                    if (progress == 100) {
+                        $('#modal_update').modal('hide');
+                        confirm(`成功更新 ${max - err} 个文件!${err ? err + '个文件处理失败!' : ''}是否重载页面?`, {
+                            title: '更新成功',
+                            callback: btn => {
+                                if (btn == 'ok') location.reload();
+                            }
+                        });
+                    }
+                }
+                next();
+            }
+        });
+    }
+    next();
 }
 
 window.nodejs = {
@@ -162,7 +270,9 @@ window._api = {
         console.log(data);
         var d = data.msg;
         switch (data.type) {
-
+            case 'checkUpdate':
+                checkFileUpdates(d);
+                break;
             case 'share_resetDB':
                 return;
                 if (g_share.db) {

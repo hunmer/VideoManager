@@ -1,4 +1,5 @@
-const APP_VERSION = 'v1.2.1';
+const APP_VERSION = 'v1.2.2';
+const UPDATE_SCRIPT_URL = 'https://raw.githubusercontent.com/hunmer/videoManager/main/';
 var g_localKey = 'vm_';
 var g_config = local_readJson('config', {
     tags_rent: [],
@@ -124,7 +125,6 @@ function downloadData(blob, fileName) {
 
 
 var g_actions = {};
-
 function registerAction(name, callback) {
     if(!Array.isArray(name)) name = [name];
     for(var alisa of name) g_actions[alisa] = callback;

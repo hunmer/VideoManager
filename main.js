@@ -49,6 +49,7 @@ function registerMethod(type, callback) {
     g_method[type] = callback;
 }
 
+
 function createWindow() {
     // Create the browser window.
     var opts = {
@@ -193,6 +194,7 @@ ipcMain.on("method", (event, data) => {
     }
     var d = data.msg;
     switch (data.type) {
+      
         case 'setBounds':
             var bounds;
             if (!d) {

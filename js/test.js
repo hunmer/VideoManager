@@ -27,4 +27,9 @@ $(function() {
     // doAction(null, 'view_fullSearch');
     // var modal = $('#modal_search');
     // fullModal(modal);
+    test();
 });
+
+function test(){
+    // 
+}

@@ -64,6 +64,7 @@ function bindModalEvent(modal, opts) {
         })
         .on('hidden.bs.modal', function(event) {
             opts.onClose && opts.onClose(modal);
+            opts.once && modal.remove();
         });
     return modal;
 }

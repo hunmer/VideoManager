@@ -49,8 +49,6 @@ var g_menu = {
             `,
         });
 
-
-
         this.registerMenu({
             name: 'video_item',
             selector: '[data-action="loadVideo"]',
@@ -220,7 +218,9 @@ var g_menu = {
     hideMenu: function(key) {
         $('#rm_' + key).hide();
     },
-
+    unregisterMenu: function(name){
+        //todo
+    },
     registerMenu: function(opts) {
         var id = 'rm_' + opts.name;
         //background-color: rgba(0, 0, 0, .5);

@@ -156,7 +156,7 @@
                             </div>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#" data-action="aboutMe">关于</a>
+                            <a class="nav-link" href="#" data-action="aboutMe">关于<span class="ml-2 badge badge-danger"></span></a>
                         </li>
                     </ul>
                 </div>
@@ -189,7 +189,7 @@
                             <input type="text" class="form-control time_start" placeholder="alt+1设置起点">
                             <input type="text" class="form-control time_end" placeholder="alt+2设置终点">
                         </div>
-                         <textarea rows="2" class="form-control" id='clip_note' placeholder="备注" onkeydown="if(event.keyCode == 13 && event.ctrlKey) doAction(null, 'addPos')"></textarea>
+                         <textarea rows="2" class="form-control" id='clip_note' placeholder="备注" onkeydown="if(event.keyCode == 13 && event.ctrlKey) doAction(null, 'addPos')" onfocus="g_player.playVideo(false)"></textarea>
                     </div>
                 </div>
                 <div class="col-md-4 col-sm-12" id="div_video_side" style="height:  100vh;">
@@ -298,6 +298,7 @@
     <script src="js/list.js"></script>
     <script src="js/filter.js"></script>
     <script src="js/share.js"></script>
+    <script src="js/hotkey.js"></script>
     <script src="js/test.js"></script>
 </body>
 

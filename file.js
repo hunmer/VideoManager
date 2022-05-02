@@ -64,15 +64,10 @@ const files = {
     },
     getAppData: () => process.env.APPDATA || (process.platform == 'darwin' ? process.env.HOME + '/Library/Preferences' : process.env.HOME + "/.local/share"),
     getFileMd5: (file) => {
-        //  const stream = fs.createReadStream(file);
-        // const hash = crypto.createHash('md5');
-        // stream.on('data', chunk => {
-        //   hash.update(chunk, 'utf8');
-        // });
-        // stream.on('end', () => {
-        //    hash.digest('hex');
-        // });
-        // return crypto.createHash('md5').update(s).digest("hex")
+        const buffer = fs.readFileSync(file);
+        const hash = crypto.createHash('md5');
+        hash.update(buffer, 'utf8');
+        return hash.digest('hex');
     },
     getMd5: (s) => {
         return crypto.createHash('md5').update(s).digest("hex")

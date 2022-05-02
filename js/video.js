@@ -1,3 +1,4 @@
+
 var _player;
 var _videos = local_readJson('videos', {});
 
@@ -401,7 +402,7 @@ var g_video = {
             // 如果是刚刚添加的 暂时不展示图片
             h += `
                  <div class="card col-md-12 col-lg-6 mb-10 text-white" style="border: unset;display: relative;" data-start="${d.start}" data-file="*path*/cuts/${time}.mp4" draggable="true" data-action="jumpClip" data-dbaction="loadClip" data-clip="${time}" data-preview>
-                      <img class="card-img lazyload" src="./res/loading.png" draggable="false" ${time != g_cache.lastAdded ? `data-src="./cover/${time}.jpg"` : ''}>
+                      <img style="width: 100%" class="card-img lazyload" src="./res/loading.png" draggable="false" ${time != g_cache.lastAdded ? `data-src="./cover/${time}.jpg"` : ''}>
                       <div class="card-img-overlay">
                         <h6 class="card-title scrollableText">${d.tags.join(' , ')}</h6>
                         <span class="badge badge-secondary mr-2" style="position: absolute;top:0;left:15px;">${getTime(d.start)} - ${getTime(d.end)}
