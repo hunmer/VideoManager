@@ -57,12 +57,16 @@ $(function() {
             }
         })
         .on('blur', event => {
-            g_cache.playing = g_player.isPlaying();
-            g_player.playVideo(false);
-            hidePreview();
+            if(getConfig('autoStopPlay')){
+                g_player.tryStop();
+            }
+            hidePreview(false);
         })
         .on('focus', event => {
-            if (g_cache.playing) g_player.playVideo(true);
+            if(getConfig('autoStopPlay')){
+                console.log('start');
+                g_player.tryStart();
+            }
         });
 
     // bug 位置错误
@@ -227,6 +231,10 @@ $(function() {
             if (this.classList.contains('disabled')) return;
             doAction(this, this.dataset.dbaction, event);
         })
+        .on('change', '[data-change]', function(event){
+            if (this.classList.contains('disabled')) return;
+            doAction(this, this.dataset.change, event);
+        })
         .on('contextmenu', '[data-contenx]', function(event) {
             if (this.classList.contains('disabled')) return;
             doAction(this, this.dataset.contenx, event);
@@ -277,8 +285,8 @@ function doAction(dom, action, event) {
                         <img src="favicon.png" style="width: 100px">
                         <h4><a class="badge badge-primary" style="font-size: 2rem">${APP_VERSION}</a></h4>
                         <div  style="margin-top: 20px">
-                            <h6 class="text-right">2022年5月2日 14点45分</h6>
-                            <h6 class="text-right">by @hunmer</h6>
+                            <h6 class="text-right">2022年5月9日 00点04分</h6>
+                            <h6 class="text-right">by <a href="javascript: ipc_send('url', 'https://github.com/hunmer/')">@hunmer</a></h6>
                             
                         </div>
                     </div>
@@ -377,36 +385,6 @@ function doAction(dom, action, event) {
         case 'singleSelect':
             $(action[1] + '.' + action[2]).removeClass(action[2]);
             dom.classList.add(action[2])
-            break;
-        case 'sub_item':
-            g_player.setCurrentTime(Number(dom.dataset.time));
-            break;
-        case 'sub_saveSub':
-            g_sub.saveSub();
-            break;
-        case 'sub_refresh':
-            g_sub.loadSub(g_video.key);
-        case 'sub_delete':
-            var file = './subs/' + g_video.key + '.vtt';
-            if (nodejs.files.exists(file)) {
-                confirm('字幕', {
-                    title: '<b class="text-danger">是否删除字幕?</b>',
-                    callback: id => {
-                        if (id == 'ok') {
-                            ipc_send('deleteFile', [file]);
-                            g_sub.loadSub(g_video.key);
-                        }
-                    }
-                });
-            }
-            break;
-        case 'sub_setTarget':
-            var key = g_video.key;
-            if (key) {
-                g_sub.modal(dir => {
-                    g_sub.setTarget(key, dir);
-                });
-            }
             break;
         case 'videoThumb':
             var key = g_video.key;

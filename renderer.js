@@ -13,12 +13,9 @@ var Jimp = require('jimp');
 var os = require('os');
 const https = require('https');
 
-// ffmpeg.getAvailableFormats(function(err, formats) {
-//   console.log('Available formats:');
-//   console.dir(formats);
-// });
 
-// ffmpeg.getAvailableCodecs(function(err, codecs) {
+
+// ffmpeg.getAvailableFormats(function(err, codecs) {
 //   console.log('Available codecs:');
 //   console.dir(codecs);
 // });
@@ -217,24 +214,70 @@ ipcRenderer.on('openImage', (event, arg) => {
 ipcRenderer.on('log', (event, arg) => {
     console.log(arg);
 });
+g_cache.waitFor = {};
+function waitForRespone(name, script, callback){
+    g_cache.waitFor[name] = callback;
+    ipc_send('getResult', {
+        name: name,
+        code: script
+    })
+}
+ipcRenderer.on('getResult', (event, arg) => {
+    if(g_cache.waitFor[arg.name]){
+        g_cache.waitFor[arg.name](arg.ret);
+        delete g_cache.waitFor[arg.name];
+    }
+});
 
+var g_taskList = []; // todo 放在主线程 避免刷新丢失
+
+g_cache.cutList = [];
 
 function doFFMPEG(opts, callback) {
     switch (opts.type) {
         case 'cut':
             if (!files.isDir(__dirname + '/cuts/')) files.mkdir(__dirname + '/cuts/')
+            if (!g_taskList.includes(opts.key)) g_taskList.push(opts.key);
             const setText = (text, style = 'badge-secondary') => g_video.setClipStatus(opts.key, text, style);
             setText('队列中');
-            ffmpeg(files.getPath(opts.input)).outputOptions(opts.params)
-                .videoCodec('libx264')
-                // .audioCodec('libmp3lame')
-                .on('start', function(cmd) {
+
+            var custom = typeof(opts.params) == 'string';
+            if (custom) {
+                opts.params = opts.params.replace('{start}', opts.start).replace('{time}', opts.duration).split(' ');
+            }
+            var run = ffmpeg(files.getPath(opts.input))
+                .outputOptions(opts.params);
+            if (!custom) {
+                run
+                .videoCodec(getConfig('outputVideo', 'libx264'))
+                .audioCodec(getConfig('outputAudio', 'copy'));
+            }
+
+            run.on('start', function(cmd) {
                     setText('准备中');
+                    console.log(cmd);
                 })
                 .on('progress', function(progress) {
                     setText(parseInt(toTime(progress.timemark) / opts.duration * 100) + '%', 'badge-primary');
                 })
+                .on('error', function(e) {
+                    toast(e, 'alert-danger');
+                    console.error(e);
+                    setText('错误', 'badge-danger');
+                })
                 .on('end', function(str) {
+                    var i = g_taskList.indexOf(opts.key);
+                    if (i != -1) {
+                        g_taskList.splice(i, 1);
+                        if (g_taskList.length == 0) {
+                            waitForRespone('clipTask', 'win.isFocused()', focus => {
+                                    if(!focus){
+                                        showMessage('任务完成', '已完成所有裁剪');
+                                    }
+                                }
+                            );
+                        }
+                    }
                     setText('任务完成', 'badge-success');
                     callback();
                 })
@@ -270,6 +313,10 @@ window._api = {
         console.log(data);
         var d = data.msg;
         switch (data.type) {
+            case 'supportedFormats':
+                return ffmpeg.getAvailableCodecs(function(err, formats) {
+                    d(formats);
+                });
             case 'checkUpdate':
                 checkFileUpdates(d);
                 break;
@@ -338,9 +385,39 @@ window._api = {
                 files.searchDirFiles(data.msg, list, ['mp4', 'ts', 'm3u8', 'flv', 'mpd'], 2);
                 window.revicePath(data.msg, list);
                 return;
+
+            default:
+                ipcRenderer.send('method', data);
         }
-        ipcRenderer.send('method', data);
     }
+}
+
+
+function notifiMsg(title, opts) {
+    var o = new Notification(title, {
+        body: opts.text || '',
+        icon: opts.icon || './favicon.png',
+        silent: opts.slient,
+    });
+    o.onclick = function(e) {
+        opts.onclick && opts.onclick(e);
+    }
+    o.onclose = function(e) {
+        opts.onclose && opts.onclose(e);
+    }
+    o.onshow = function(e) {
+        opts.onshow && opts.onshow(e);
+    }
+    return o;
+}
+// win.isMinimized()
+function showMessage(title, text) {
+    notifiMsg(title, {
+        text: text,
+        onclick: () => {
+            ipc_send('show');
+        }
+    });
 }
 
 // module.exports = {

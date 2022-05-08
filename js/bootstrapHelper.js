@@ -1,5 +1,5 @@
 window.prompt = function(text, opts) {
-    buildModal(`<textarea class="form-control" placeholder="${opts.placeholder || ''}" rows="3">${text}</textarea>`, Object.assign({
+    buildModal(`<textarea class="form-control" placeholder="${opts.placeholder || ''}" rows="10">${text}</textarea>`, Object.assign({
         id: 'modal_prompt',
         title: '请输入',
         onBtnClick: (config, btn) => {
@@ -69,11 +69,10 @@ function bindModalEvent(modal, opts) {
     return modal;
 }
 
-function toggleSidebar() {
-    document.body.classList.toggle('sb-sidenav-toggled');
-    localStorage.setItem('sb|sidebar-toggle', document.body.classList.contains('sb-sidenav-toggled'));
+function toggleSidebar(hide) {
+    var c = 'sb-sidenav-toggled';
+    localStorage.setItem('sb|sidebar-toggle', $('body').toggleClass(c, hide).hasClass(c));
 }
-
 
 function buildModal(text, opts) {
     opts = Object.assign({
@@ -116,4 +115,5 @@ function buildModal(text, opts) {
             });
     }
     bindModalEvent(modal, opts).modal('show');
+    return modal;
 }

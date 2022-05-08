@@ -146,7 +146,7 @@ var g_player = {
             }
 
 
-            var sub = '*path*/subs/' + key + '.vtt';
+            var sub = nodejs.files.getPath('*path*/subs/' + key + '.vtt');
             if (nodejs.files.exists(sub)) {
                 config.subtitle = {
                     url: sub,
@@ -156,7 +156,10 @@ var g_player = {
             _player.on('loadeddata', function(e) {
                 g_sub.loadSub(key);
                 if (start) _player.video.currentTime = start;
-                _player.video.play();
+                if(!g_cache.firstLoaded){
+                    g_cache.firstLoaded = true;
+                    if(getConfig('autoPlay')) _player.video.play();
+                }
                 // var self.autoSave = setInterval(() => {
                 // })
             });
@@ -172,8 +175,6 @@ var g_player = {
             _player.on('webfullscreen_cancel', function(e) {
                 g_player.onFullscreen(false);
             });
-
-
 
             /*
              <div class="dropup">
@@ -255,6 +256,7 @@ var g_player = {
         }
     },
     setVideothumbnails: function(url) {
+        toast('成功生成视频时间线缩略图,可以在进度条查看效果', 'alert-success');
         $('.dplayer-bar-preview').css('backgroundImage', 'unset').css('backgroundImage', 'url("' + url + '")')
         // _player && !_player.video.paused;
     },

@@ -22,10 +22,8 @@ var g_video = {
         })
         self.initVideos();
         if (g_config.lastVideo != undefined) {
-            self.loadVideo(g_config.lastVideo);
+            self.loadVideo(g_config.lastVideo, true);
         }
-
-
     },
 
     initTagsFolder: function() {
@@ -42,6 +40,10 @@ var g_video = {
             local_saveJson('videos', _videos);
             this.initVideos();
         }
+    },
+    focusSearch: function(){
+        toggleSidebar(false);
+        $('#searchVideo').focus();
     },
 
     removeClip: function(key, clip, save = true) {
@@ -314,16 +316,12 @@ var g_video = {
         ipc_send('cmd', {
             input: file,
             key: key,
+            start: start,
             duration: time,
-            params: [
+            params: getConfig('enable_customCmd') ? getConfig('customCmd') : [
                 '-y',
                 `-ss ${start}`,
                 `-t ${time}`,
-                // '-vcodec rawvideo',
-                // '-accurate_seek',
-                // '-codec copy',
-                // '-codec libx264',
-                // '-avoid_negative_ts 1',
             ],
             output: saveTo,
             type: 'cut',
@@ -479,16 +477,32 @@ var g_video = {
         this.clearInput();
     },
 
+    nextVideo: function(){
+       var target = domSelector({ action: 'loadVideo', video: this.key }, '.card_active').next();
+       if(target.length){
+        target.click();
+       }
+    },
+
+     prevVideo: function(){
+       var target = domSelector({ action: 'loadVideo', video: this.key }, '.card_active').prev();
+       if(target.length){
+        target.click();
+       }
+    },
+
     loadVideo: function(key, start = 0) {
         loadTab('list');
         g_sub.unlinkTarget();
+
         var d = this.getVideo(key);
-        if (d) {
+        if (!d) return;
             // g_sub.loadSub(key);
             this.clearInput();
 
-            var t = new Date().getTime();
             g_config.lastVideo = key;
+            // 记录最后播放时间
+            var t = new Date().getTime();
             if (!g_config.last) g_config.last = {};
             g_config.last[key] = t;
             for (var i = Object.keys(g_config.last).length; i > 20; i--) delete g_config.last[key];
@@ -510,7 +524,6 @@ var g_video = {
                 this.loadMeta(d.meta);
             }
             this.saveVideos(false);
-        }
     },
 
     getMeta: function(key, full = false) {

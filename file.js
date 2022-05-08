@@ -158,6 +158,12 @@ const files = {
         fs.copyFileSync(oldFile, newFile);
         return fs.existsSync(newFile);
     },
+    rename: (oldFile, newFile) => {
+        if(files.exists(oldFile)){
+            return fs.renameSync(oldFile, newFile);
+
+        }
+    },
     copyMove: (oldFile, newFile) => {
         fs.copyFileSync(oldFile, newFile);
         fs.unlinkSync(oldFile);

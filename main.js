@@ -78,7 +78,6 @@ function createWindow() {
                 }
           `);
         }
-
     });
 
     win.webContents.session.on('will-download', (event, item, webContents) => {
@@ -88,7 +87,7 @@ function createWindow() {
 
         // let prevReceivedBytes = 0;
         // var downloadItem = {};
-        var file = item.getFilename();
+        var file = '('+new Date().getTime()+')'+item.getFilename();
         item.setSavePath(dir + file);
         item.on('updated', (event, state) => {
             if (state === 'interrupted') {
@@ -158,7 +157,7 @@ function createWindow() {
 
 app.whenReady().then(() => {
     createWindow()
-
+   
     app.on('activate', function() {
         if (BrowserWindow.getAllWindows().length === 0) createWindow()
     })
@@ -186,15 +185,22 @@ function send(type, params) {
     }
     win.webContents.send(type, params);
 }
+// win.showInactive() 展示窗口但是不获得焦点.
 
-
-ipcMain.on("method", (event, data) => {
+ipcMain.on("method", async function(event, data){
     if (g_method[data.type]) {
         return g_method[data.type](event, data);
     }
     var d = data.msg;
     switch (data.type) {
-      
+        case 'getResult':
+            send('log', d);
+            send('getResult', {name: d.name, ret: eval(d.code)})
+            break;
+        case 'show':
+            win.restore();
+            win.show();
+            break;
         case 'setBounds':
             var bounds;
             if (!d) {

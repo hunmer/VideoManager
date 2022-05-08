@@ -86,6 +86,9 @@ var g_setting = {
             }
 
         `;
+        } else
+        if (g_config.textColor) { // 重置文字颜色
+            g_setting.setTextColor(false);
         }
         g_style.addStyle('bg', css);
     },
@@ -104,20 +107,20 @@ var g_setting = {
                   <div class="tab-pane fade show active" id="setting-pills-general" role="tabpanel" aria-labelledby="setting-pills-general-tab">
 
                   <div class="custom-control custom-switch">
-                      <input type="checkbox" class="custom-control-input" id="check_autoStopPlay">
+                      <input type="checkbox" class="custom-control-input" id="check_autoStopPlay" data-change="switch_option,autoStopPlay">
                       <label class="custom-control-label" for="check_autoStopPlay">失去焦点暂停播放</label>
                     </div>
                      <div class="custom-control custom-switch">
-                      <input type="checkbox" class="custom-control-input" id="check_autoPlay">
+                      <input type="checkbox" class="custom-control-input" id="check_autoPlay" data-change="switch_option,autoPlay">
                       <label class="custom-control-label" for="check_autoPlay">启动时自动播放</label>
                     </div>
                      <div class="custom-control custom-switch">
-                      <input type="checkbox" class="custom-control-input" id="check_notifition">
-                      <label class="custom-control-label" for="check_notifition">后台完成裁剪后提示</label>
+                      <input type="checkbox" class="custom-control-input" id="check_notificationWhenDone" data-change="switch_option,notificationWhenDone">
+                      <label class="custom-control-label" for="check_notificationWhenDone">后台完成裁剪后提示</label>
                     </div>
                     <div class="custom-control custom-switch">
-                      <input type="checkbox" class="custom-control-input"  id="check_darkMode">
-                      <label class="custom-control-label" for="check_darkMode">黑暗模式</label>
+                      <input type="checkbox" class="custom-control-input"  id="check_autoTheme" data-change="switch_option,darkTheme">
+                      <label class="custom-control-label" for="check_autoTheme">黑暗模式</label>
                     </div>
 
                   </div>
@@ -127,23 +130,30 @@ var g_setting = {
                    <div class="tab-pane fade" id="setting-pills-output" role="tabpanel" aria-labelledby="setting-pills-output-tab">
                    <form>
                         <div class="form-group col-md-6">
-                          <label for="inputState">导出视频编码</label>
-                          <select id="inputState" class="form-control">
-                            <option selected>选择</option>
-                            <option value="noVideo">无视频</option>
+                          <label for="select_codec_video">导出视频编码</label>
+                          <select id="select_codec_video" class="form-control" data-change="select_option,outputVideo">
+                          <option selected disabled>选择</option>
+                            <option value="copy">不转换(秒裁剪,但开头结尾会几秒黑屏，适合长片段裁剪)</option>
                             <option value="libx264">MP4</option>
-                            <option value="copy">复制</option>
                           </select>
                         </div>
                         <div class="form-group col-md-6">
-                          <label for="inputState">导出音频编码</label>
-                          <select id="inputState" class="form-control">
-                            <option selected>选择</option>
-                            <option value="noAudio">无声音</option>
-                            <option value="copy">复制</option>
-                            <option value="libmp3lame">MP3</option>
+                          <label for="select_codec_audio">导出音频编码</label>
+                          <select id="select_codec_audio" class="form-control" data-change="select_option,outputAudio">
+                           <option selected disabled>选择</option>
+                            <option value="copy">不转换</option>
                           </select>
                         </div>
+
+                        <div class="input-group">
+                            <label for="select_codec_audio"></label>
+                              <div class="input-group-prepend">
+                                <div class="input-group-text">
+                                  <input type="radio" data-change="select_option,enable_customCmd">
+                                </div>
+                              </div>
+                              <input type="text" class="form-control" id="input_customCmd" placeholder="自定义FFMPEG命令" value="-ss {start} -t {time}">
+                            </div>
                       </div>
                     </form>
 
@@ -153,26 +163,99 @@ var g_setting = {
             </div>
 
         `;
-        this.modal = buildModal(h, {
+        var modal = buildModal(h, {
             id: 'modal_setting',
-            title: '设置(无效,尚在开发中...)',
+            title: '设置',
             width: '80%',
-            btns: [{
+            btns: [/*{
                 id: 'ok',
                 text: '保存',
                 class: 'btn-primary',
-            }, {
-                id: 'cancel',
+            }, */{
+                id: 'reset',
                 text: '重置',
                 class: 'btn-secondary',
             }],
+            onShow: () => {
+                $('#input_customCmd').val(getConfig('customCmd'));
+                for (var d of modal.find('[data-change]')) {
+                    var nodeName = d.nodeName.toLowerCase();
+                    d = $(d);
+                    var key = d.attr('data-change').replace('switch_option,', '').replace('select_option,', '');
+                    var val = getConfig(key, false);
+                    if(nodeName == 'input'){
+                       d.prop('checked', val);
+                    }else
+                    if(nodeName == 'select'){
+                        d.find('option[value="'+val+'"]').prop('selected', true);
+                    }
+                }
+            },
+            onClose: () => {
+                setConfig('customCmd', $('#input_customCmd').val());
+            },
             onBtnClick: (config, btn) => {
-                if (btn.id == 'btn_ok') {}
+                if (btn.id == 'btn_reset') {
+                    toast('待完善');
+                    return false;
+                }
                 var par = $(btn).parents('.modal');
                 par.modal('hide');
             }
         });
+        this.modal = modal;
 
+        if (getConfig('darkTheme')) g_setting.toggleDarkMode(true);
+        registerAction('switch_option', (dom, action) => {
+            var key = action[1];
+            setConfig(key, !g_config[key]);
+            switch (action[1]) {
+                case 'darkTheme':
+                    g_setting.toggleDarkMode();
+            }
+        });
+        registerAction('select_option', (dom, action) => {
+            var key = action[1];
+            var val = $(dom).val();
+            if(key == 'enable_customCmd') val = val == 'on';
+            setConfig(key, val);
+        })
+
+    },
+
+    toggleDarkMode: function(enable) {
+        var id = '#page-content-wrapper';
+        var classes = 'dark-theme';
+        var s = id + '.' + classes;
+        var css = '';
+        if (enable == undefined) {
+            $(id).toggleClass(classes);
+        } else {
+            $(id).toggleClass(classes, enable);
+        }
+        enable = $(id).hasClass(classes);
+        if (enable) {
+            css = `
+                ${s} {
+                  color: #eee;
+                  background: #121212;
+                }
+
+                ${s} a {
+                  color: #809fff;
+                }
+                ${s} .form-control {
+                  background: #121212 !important;
+                }
+                ${s} .card {
+                  background: #121212 !important;
+                }
+                ${s} .list-group-item {
+                  background: #121212 !important;
+                }
+            `
+        }
+        g_style.addStyle('theme', css);
     }
 
 }

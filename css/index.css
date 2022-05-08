@@ -6,6 +6,9 @@ body {
     /*cursor: url('../res/default.ico'), pointer;*/
 }
 
+.show {
+    display: unset !important;
+}
 
 html, body { scroll-behavior:smooth; }
 
@@ -86,6 +89,8 @@ li,
     -webkit-touch-callout: none;
     -webkit-user-select: none;
 }
+
+
 
 * {
     touch-action: pan-y;
@@ -257,4 +262,6 @@ body.dplayer-web-fullscreen-fix #dragBar {
 .dplayer-web-fullscreen-fix .navbar {
     display: none;
 }
+
+
 

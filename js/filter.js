@@ -6,7 +6,6 @@ var g_filter = {
 	filters: {},
 	addFilter: function(name, opts){
 		this.filters[name] = opts;
-		return this;	
 	},
 	getFilter: function(name){
 		return this.filters[name];
@@ -21,7 +20,8 @@ var g_filter = {
 			    $('#search_fliters').html(html);
     			g_video.onSearchClip();
 			}
-		}).addFilter('share', {
+		})
+        self.addFilter('share', {
 			callback: html => {
 			    $('#share_fliters').html(html);
     			g_share.showSearch();

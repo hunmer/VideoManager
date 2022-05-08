@@ -1,7 +1,42 @@
 var g_sub = {
 
     init: function() {
+        registerAction('sub_toTxt', (dom, action) => {
+            g_sub.showTxt();
+        });
+        registerAction('sub_setTarget', (dom, action) => {
+              var key = g_video.key;
+            if (key) {
+                g_sub.modal(dir => {
+                    g_sub.setTarget(key, dir);
+                });
+            }
+        });
+        registerAction('sub_delete', (dom, action) => {
+             var file = '*path*/subs/' + g_video.key + '.vtt';
+            if (nodejs.files.exists(file)) {
+                confirm('字幕', {
+                    title: '<b class="text-danger">是否删除字幕?</b>',
+                    callback: id => {
+                        if (id == 'ok') {
+                            ipc_send('deleteFile', [file]);
+                            g_sub.loadSub(g_video.key);
+                        }
+                    }
+                });
+            }
+        });
+        registerAction('sub_refresh', (dom, action) => {
+            g_sub.loadSub(g_video.key);
 
+        });
+        registerAction('sub_saveSub', (dom, action) => {
+            g_sub.saveSub();
+        });
+        registerAction('sub_item', (dom, action) => {
+            g_player.setCurrentTime(Number(dom.dataset.time));
+
+        });
     },
     modal_setJianyin_path: function() {
         prompt(g_config.jianyin || nodejs.env.LOCALAPPDATA + '\\JianyingPro\\User Data\\Projects\\com.lveditor.draft\\', {
@@ -92,17 +127,19 @@ var g_sub = {
         }
     },
     loadSub: function(key, cache = true) {
-        var file = './subs/' + key + '.vtt';
+        var file = '*path*/subs/' + key + '.vtt';
         var subs;
-        if (cache && nodejs.files.exists(file)) {
+        var exists = cache && nodejs.files.exists(file);
+        if (exists) {
             // subs = PF_SRT.parse(nodejs.files.read(file));
             subs = _player.video.textTracks[0].cues;
         } else {
             subs = this.getSub(key);
         }
+        this.subs = subs;
 
         var h = `
-             <ul class="list-group list-group-flush" style="overflow-y: auto;padding-bottom: 50px;height: calc(100vh - 200px);" id="list_sub_item">                 
+             <ul class="list-group list-group-flush" style="overflow-y: auto;padding-bottom: 50px;height: calc(100vh - 250px);" id="list_sub_item">                 
         `;
         var i = 0;
         if (subs) {
@@ -116,12 +153,16 @@ var g_sub = {
         }
         g_sub.lines = i;
         if(i){
-            h += '</ul>';
+            h += `</ul>
+             <div style="text-align: right;">
+                <button type="button" data-action="sub_saveSub" class="btn btn-info hide">保存</button>
+            </div>
+                        `;
             $('#sub_content').html(h);
         }else{
             this.reset();
         }
-        $('[data-action="sub_saveSub"]').removeClass('hide', i == 0);
+        !exists && $('[data-action="sub_saveSub"]').removeClass('hide', i == 0);
     },
     reset: function(){
         $('#sub_content').html(`
@@ -154,8 +195,7 @@ var g_sub = {
     },
     saveSub: function() {
         var key = g_video.key;
-        if (!key) return;
-        if (!this.subs) return;
+       if (!key || !this.subs) return;
         var s = '';
         var i = 0;
         for (var sub of this.subs) {
@@ -165,11 +205,24 @@ var g_sub = {
         if (s == '') {
             toast('没有字幕内容', 'alert-danger');
         } else {
-            nodejs.files.write('./subs/' + key + '.vtt', `WEBVTT`+'\r\n\r\n'+s);
+            nodejs.files.write('*path*/subs/' + key + '.vtt', `WEBVTT`+'\r\n\r\n'+s);
             toast('保存成功', 'alert-success');
             $('[data-action="sub_saveSub"]').addClass('hide');
             this.unlinkTarget();
             g_video.loadVideo(g_video.key, g_player.getCurrentTime());
+        }
+    },
+     showTxt: function() {
+        var key = g_video.key;
+        if (!key || !this.subs) return;
+        var s = '';
+        for (var sub of this.subs) {
+            s += `${sub.text}\r\n`;
+        }
+        if (s == '') {
+            toast('没有字幕内容', 'alert-danger');
+        } else {
+           showCopy(s);
         }
     },
     getSub: function(key) {
@@ -203,8 +256,6 @@ var g_sub = {
                 console.error(e);
                 toast('错误json', 'alert-danger');
             }
-            this.subs = r;
-            console.log(r);
         }
         return r;
     },

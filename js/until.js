@@ -33,12 +33,12 @@ function inputFocus(ele) {
     ele.blur();
     ele.focus();
     var len = ele.value.length;
-    if(document.selection){
+    if (document.selection) {
         var sel = ele.createTextRange();
         sel.moveStart('character', len);
         sel.collapse();
         sel.select();
-    }else {
+    } else {
         ele.selectionStart = ele.selectionEnd = len;
     }
 }
@@ -126,9 +126,10 @@ function downloadData(blob, fileName) {
 
 
 var g_actions = {};
+
 function registerAction(name, callback) {
-    if(!Array.isArray(name)) name = [name];
-    for(var alisa of name) g_actions[alisa] = callback;
+    if (!Array.isArray(name)) name = [name];
+    for (var alisa of name) g_actions[alisa] = callback;
 }
 
 Date.prototype.format = function(fmt) {
@@ -151,9 +152,11 @@ Date.prototype.format = function(fmt) {
     }
     return fmt;
 }
-function popString(s, split){
+
+function popString(s, split) {
     return s.split(split).pop();
 }
+
 function getImgBase64(video, width, height) {
     return new Promise(function(resolve, reject) {
         var canvas = document.createElement("canvas");
@@ -248,15 +251,36 @@ function local_clearAll() {
     }
 }
 
-function copyText(text) {
-    const input = document.createElement('input');
-    document.body.appendChild(input);
-    input.setAttribute('value', text);
+function copyText(text, input) {
+    var remove;
+    if (!input){
+        remove = true;
+        input = $('<input value="' + text + '" hidden>').appendTo('body')[0];
+    }
     input.select();
     if (document.execCommand('copy')) {
         document.execCommand('copy');
     }
-    document.body.removeChild(input);
+    remove && input.remove();
+}
+
+function showCopy(s) {
+    prompt(s, {
+        id: 'modal_copy',
+        title: '复制文本',
+        btns: [{
+            id: 'copy',
+            text: '复制',
+            class: 'btn-primary',
+        }],
+        onBtnClick: (config, btn) => {
+            if (btn.id == 'btn_copy') {
+                copyText(s, $('#modal_copy textarea')[0]);
+                toast('复制成功', 'alert-success');
+                return false;
+            }
+        }
+    })
 }
 
 function getTime(s, sh = _l(':'), sm = _l(':'), ss = _l(''), hour = false, msFixed = 2) {
@@ -322,7 +346,7 @@ function getVal(value, defaultV) {
 
 function getFileName(s, ext = false) {
     var name = typeof(s) == 'string' ? s.split('\\').pop() : '';
-    if(!ext) name = name.split('.')[0];
+    if (!ext) name = name.split('.')[0];
     return name;
 }
 
@@ -332,7 +356,7 @@ function randNum(min, max) {
 
 function toTime(s) {
     var a = s.split(':');
-    if(a.length == 1) return s;
+    if (a.length == 1) return s;
     if (a.length == 1) return Number(s);
     if (a.length == 2) {
         a.unshift(0);
@@ -359,40 +383,40 @@ function _s2(s, j = '') {
 }
 
 var PF_SRT = function() {
-  //SRT format
-  var pattern = /(\d+)\n([\d:,]+)\s+-{2}\>\s+([\d:,]+)\n([\s\S]*?(?=\n{2}|$))/gm;
-  var _regExp;
+    //SRT format
+    var pattern = /(\d+)\n([\d:,]+)\s+-{2}\>\s+([\d:,]+)\n([\s\S]*?(?=\n{2}|$))/gm;
+    var _regExp;
 
-  var init = function() {
-    _regExp = new RegExp(pattern);
-  };
-  var parse = function(f) {
-    if (typeof(f) != "string")
-      throw "Sorry, Parser accept string only.";
-
-    var result = [];
-    if (f == null)
-      return _subtitles;
-
-    f = f.replace(/\r\n|\r|\n/g, '\n')
-
-    while ((matches = pattern.exec(f)) != null) {
-      result.push(toLineObj(matches));
-    }
-    return result;
-  }
-  var toLineObj = function(group) {
-    return {
-      line: group[1],
-      startTime: group[2],
-      endTime: group[3],
-      text: group[4]
+    var init = function() {
+        _regExp = new RegExp(pattern);
     };
-  }
-  init();
-  return {
-    parse: parse
-  }
+    var parse = function(f) {
+        if (typeof(f) != "string")
+            throw "Sorry, Parser accept string only.";
+
+        var result = [];
+        if (f == null)
+            return _subtitles;
+
+        f = f.replace(/\r\n|\r|\n/g, '\n')
+
+        while ((matches = pattern.exec(f)) != null) {
+            result.push(toLineObj(matches));
+        }
+        return result;
+    }
+    var toLineObj = function(group) {
+        return {
+            line: group[1],
+            startTime: group[2],
+            endTime: group[3],
+            text: group[4]
+        };
+    }
+    init();
+    return {
+        parse: parse
+    }
 }();
 
 function srcollVideo(e, video) {
@@ -421,7 +445,7 @@ function srcollVideo(e, video) {
 
 function nextScrollTime(e) {
     var d = domSelector({ action: 'setScrollAddTime' }, '.active');
-    if(!d.length){
+    if (!d.length) {
         return setScrollAddTime(1);
     }
     var n = e.deltaY > 0 ? d.prev() : d.next();
@@ -459,17 +483,14 @@ function insertStyle(cssText) {
     return style;
 }
 
-function hidePreview() {
+function hidePreview(playVideo = true) {
     clearTimeout(g_cache.previewClip);
     $('#preview_video_popup').css({
         display: 'none',
         position: 'fixed',
     }).find('video').attr('src', '');
-    g_player.tryStart();
+    playVideo && g_player.tryStart();
 }
-
-
-
 
 var g_cache = {
     searchedClip: {},
@@ -484,13 +505,18 @@ function setConfig(k, v) {
     local_saveJson('config', g_config);
 }
 
+function getConfig(k, def) {
+    var v = g_config[k];
+    if (v == undefined) v = def;
+    return v;
+}
 
 function loadTab(id) {
     $('#_' + id + '-tab').click();
 }
 
 function domSelector(opts, s = '') {
-    if(typeof(opts) != 'object') opts = {action: opts};
+    if (typeof(opts) != 'object') opts = { action: opts };
     for (var key in opts) {
         s += '[data-' + key;
         if (opts[key] != '') {
@@ -501,8 +527,8 @@ function domSelector(opts, s = '') {
     return $(s);
 }
 
-function uniqueArr(arr){
-  return Array.from(new Set(arr));
+function uniqueArr(arr) {
+    return Array.from(new Set(arr));
 }
 
 function dragFile(ev, src) {
@@ -512,16 +538,16 @@ function dragFile(ev, src) {
     ev.preventDefault();
     var files = [];
     var icon = '';
-    if(ev.ctrlKey){
-        if(!target.hasClass('card_active')) return;
+    if (ev.ctrlKey) {
+        if (!target.hasClass('card_active')) return;
         // 获取所有同样class的元素
-        for(var selected of $('.'+target.attr('class').replaceAll(' ', '.'))){
+        for (var selected of $('.' + target.attr('class').replaceAll(' ', '.'))) {
             files.push(selected.dataset.file);
         }
-    }else{
+    } else {
         files = [target.attr('data-file')];
         icon = target.attr('data-icon') || src || '';
-        if(icon.substr(0, 1) == '.') icon = icon.replace('.', '*path*');
+        if (icon.substr(0, 1) == '.') icon = icon.replace('.', '*path*');
     }
     g_cache.dragFile = files;
     ipc_send('ondragstart', {

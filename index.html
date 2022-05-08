@@ -115,7 +115,7 @@
     <div class="d-flex hide" id="wrapper">
         <div class="border-end bg-white" id="sidebar-wrapper">
             <div class="sidebar-heading border-bottom">
-                <input class="form-control mr-sm-2" type="search" placeholder="搜索影片" aria-label="Search" oninput="g_video.searchVideo(this.value)">
+                <input id="searchVideo" class="form-control mr-sm-2" type="search" placeholder="搜索影片" aria-label="Search" oninput="g_video.searchVideo(this.value)">
             </div>
             <div class="accordion" style="width: 250px;overflow-y: auto;height: calc(100vh - 150px);" id="accordionExample"></div>
 
@@ -153,6 +153,14 @@
 
                                 <a class="dropdown-item" data-action="bg">设置背景图</a>
                                 <a class="dropdown-item" data-action="textColor">文字颜色</a>
+                            </div>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-expanded="false">设置</a>
+                            <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                <a class="dropdown-item" data-action="modal_hotkey">快捷键</a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" data-action="setting">更多设置</a>
                             </div>
                         </li>
                         <li class="nav-item">
@@ -255,15 +263,15 @@
                                     <div class="dropdown-menu">
                                         <a class="dropdown-item" data-action="sub_setTarget">读取</a>
                                         <a class="dropdown-item" data-action="sub_refresh">刷新</a>
+                                        <a class="dropdown-item" data-action="sub_toTxt">导出纯文本</a>
                                         <div role="separator" class="dropdown-divider"></div>
                                         <a class="dropdown-item text-danger" data-action="sub_delete">删除</a>
                                     </div>
                                 </div>
                             </div>
                             
-                            <div id="sub_content" class="col-12 p-2" style="text-align: right;">
-                                <!--   <button type="button" data-action="resetPos" class="btn btn-dark hide">取消</button> -->
-                                <button type="button" data-action="sub_saveSub" class="btn btn-info hide">保存</button>
+                            <div id="sub_content" class="col-12 p-2" >
+
                             </div>
                         </div>
                     </div>
@@ -300,6 +308,7 @@
     <script src="js/share.js"></script>
     <script src="js/hotkey.js"></script>
     <script src="js/test.js"></script>
+    <script src="plugins/timeline/timeline.js"></script>
 </body>
 
 </html>

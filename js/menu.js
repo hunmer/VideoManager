@@ -1,6 +1,5 @@
 var g_menu = {
 
-
     init: function() {
         this.registerMenu({
             name: 'clip_item',
@@ -28,7 +27,7 @@ var g_menu = {
                       </a>
                     </div>
             `,
-             onShow: key => {
+            onShow: key => {
                 domSelector({ action: 'clip_addToList' }).find('span').html(g_list.isInList('clips', key) ? '从列表移除' : '加入列表');
             }
         });
@@ -58,25 +57,30 @@ var g_menu = {
                     <a data-action="video_addToList" class="list-group-item list-group-item-action" aria-current="true">
                         <i class="bi bi-plus mr-2"></i><span>加入列表</span>
                       </a>
-
                      <a data-action="video_addClipsToList" class="list-group-item list-group-item-action" aria-current="true">
                         <i class="bi bi-list-nested mr-2"></i><span>所有片段</span>
                       </a>
-
+                      <a data-action="video_checkClips" class="list-group-item list-group-item-action" aria-current="true">
+                        <i class="bi bi-bug-fill mr-2"></i><span>检查丢失</span>
+                      </a>
                     <a data-action="video_openFolder" class="list-group-item list-group-item-action text-warning" aria-current="true">
                         <i class="bi bi-folder mr-2"></i><span>定位</span>
                       </a>
                     <a data-action="video_setFolder" class="list-group-item list-group-item-action" aria-current="true">
                         <i class="bi bi-inbox mr-2"></i><span>分类</span>
                       </a>
-                     <a data-action="video_cover" class="list-group-item list-group-item-action text-success" aria-current="true">
-                        <i class="bi bi-scissors mr-2"></i><span>封面</span>
-                      </a>
+                    
                       <a data-action="video_delete" class="list-group-item list-group-item-action text-danger" aria-current="true">
                         <i class="bi bi-trash mr-2"></i><span>删除</span>
                       </a>
                     </div>
             `,
+
+            /*
+             <a data-action="video_cover" class="list-group-item list-group-item-action text-success" aria-current="true">
+                        <i class="bi bi-scissors mr-2"></i><span>封面</span>
+                      </a>
+            */
             onShow: key => {
                 domSelector({ action: 'video_addToList' }).find('span').html(g_list.isInList('videos', key) ? '从列表移除' : '加入列表');
                 domSelector({ action: 'video_addClipsToList' }).toggleClass('hide', Object.keys(g_video.getVideo(key).clips).length == 0);
@@ -167,14 +171,30 @@ var g_menu = {
             g_menu.hideMenu('folder_item');
         });
 
-        registerAction(['video_cover', 'video_addClipsToList', 'video_delete', 'video_openFolder', 'video_setFolder', 'video_addToList'], (dom, action) => {
+        registerAction(['video_cover', 'video_addClipsToList', 'video_delete', 'video_openFolder', 'video_setFolder', 'video_addToList', 'video_checkClips'], (dom, action) => {
             var p = $(dom).parents('[data-key]');
             var k = p.attr('data-key');
             var d = g_video.getVideo(k);
             switch (action[0]) {
+                case 'video_checkClips':
+                    for(var time in d.clips){
+                        var clip =  d.clips[time];
+                        var saveTo = '*path*/cover/'+time+'.jpg';
+                        if(!nodejs.files.exists(saveTo)){
+                            i++;
+                            g_video.cover(time, clip.start, d.file, saveTo, false);
+                        }
+                        var saveTo = '*path*/cuts/'+time+'.mp4';
+                        if(!nodejs.files.exists(saveTo)){
+                            i++;
+                             g_video.cover(time, clip.start, clip.end - clip.start, d.file, saveTo, false);
+                        }
+                    }
+                    toast(i ? `有${i}处正在修复` : '没有丢失');
+                    break;
                 case 'video_addClipsToList':
                     var i = 0
-                    for(var k in d.clips){
+                    for (var k in d.clips) {
                         g_list.addToList('clips', k, d.clips[k].tags.join(','));
                         i++;
                     }
@@ -218,10 +238,13 @@ var g_menu = {
     hideMenu: function(key) {
         $('#rm_' + key).hide();
     },
-    unregisterMenu: function(name){
+    unregisterMenu: function(name) {
         //todo
+        delete g_menu.list[name];
     },
+    list: {},
     registerMenu: function(opts) {
+        g_menu.list[opts.name] = opts;
         var id = 'rm_' + opts.name;
         //background-color: rgba(0, 0, 0, .5);
         $(`
@@ -244,34 +267,52 @@ var g_menu = {
         `).appendTo('body');
 
         registerContextMenu(opts.selector, (dom, event) => {
-            g_menu.target = dom;
-            var key = typeof(opts.dataKey) == 'function' ? opts.dataKey(dom) : dom.attr(opts.dataKey);
-            g_menu.key = key;
-            opts.onShow && opts.onShow(key);
-            var par = $('#' + id).attr('data-key', key).show();
-            var div = par.find('.menu');
-            var i = div.width() / 2;
-            var x = event.pageX;
-            var mw = $(window).width();
-            if (x + i > mw) {
-                x = mw - div.width();
-            } else {
-                x -= i;
-                if (x < 0) x = 0;
-            }
+            g_menu.showMenu(opts.name, dom, event);
+        });
+    },
 
-            // var y = event.pageY + 20;
-            var y = event.pageY;
-            var h = div.height();
-            var mh = $(window).height();
-            if (mh - y < h) {
-                y -= h;
-            }
+    getMenu: function(name) {
+        return g_menu.list[name];
+    },
 
-            div.css({
-                left: x + 'px',
-                top: y + 'px',
-            });
+    showMenu: function(name, dom, event) {
+        var opts = g_menu.getMenu(name);
+        var id = 'rm_' + opts.name;
+        var key;
+
+        g_menu.target = dom;
+        if(typeof(opts.dataKey) == 'function'){
+            key = opts.dataKey(dom)
+        }else
+        if(dom){
+            key = dom.attr(opts.dataKey);
+        }
+
+        g_menu.key = key;
+        opts.onShow && opts.onShow(key);
+        var par = $('#' + id).attr('data-key', key).show();
+        var div = par.find('.menu');
+        var i = div.width() / 2;
+        var x = event.pageX;
+        var mw = $(window).width();
+        if (x + i > mw) {
+            x = mw - div.width();
+        } else {
+            x -= i;
+            if (x < 0) x = 0;
+        }
+
+        // var y = event.pageY + 20;
+        var y = event.pageY;
+        var h = div.height();
+        var mh = $(window).height();
+        if (mh - y < h) {
+            y -= h;
+        }
+
+        div.css({
+            left: x + 'px',
+            top: y + 'px',
         });
     }
 

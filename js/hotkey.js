@@ -125,6 +125,9 @@ var g_hotkey = {
                     </div>
             `,
         });
+        registerAction('modal_hotkey', (dom, action) => {
+            this.modal_show();
+        });
         registerAction('hotkey_item_edit', (dom, action) => {
             g_hotkey.prompt_add(g_menu.key);
             g_menu.hideMenu('hotkey_item');
@@ -136,7 +139,7 @@ var g_hotkey = {
         registerAction('hotkey_edit', (dom, action) => {
             g_hotkey.prompt_add(dom.dataset.key);
         });
-        // this.modal_show();
+        // 
     },
     prompt_delete: function(key) {
         confirm('是否删除快捷键 【' + key + '】 ?', {
@@ -157,39 +160,39 @@ var g_hotkey = {
             type: '',
         }
         var h = `
-			<div class="input-group mb-3">
-			  <div class="input-group-prepend">
-			    <span class="input-group-text">标题</span>
-			  </div>
-			  <input type="text" id="input_hotkey_title" class="form-control" placeholder="输入名称" value="${d.title}">
-			</div>
+            <div class="input-group mb-3">
+              <div class="input-group-prepend">
+                <span class="input-group-text">标题</span>
+              </div>
+              <input type="text" id="input_hotkey_title" class="form-control" placeholder="输入名称" value="${d.title}">
+            </div>
 
-			<div class="input-group mb-3">
-			  <div class="input-group-prepend">
-			    <span class="input-group-text" >热键</span>
-			  </div>
-			  <input type="text"  id="input_hotkey_key" value="${key}" class="form-control" placeholder="在这里按下要设置的快捷键" onkeydown="this.value=g_hotkey.getInputCode(event);" readonly>
-			</div>
+            <div class="input-group mb-3">
+              <div class="input-group-prepend">
+                <span class="input-group-text" >热键</span>
+              </div>
+              <input type="text"  id="input_hotkey_key" value="${key}" class="form-control" placeholder="在这里按下要设置的快捷键" onkeydown="this.value=g_hotkey.getInputCode(event);" readonly>
+            </div>
 
-			<div class="input-group">
-			  <div class="input-group-prepend">
-			    <span class="input-group-text">代码</span>
-			  </div>
-			  <textarea  id="input_hotkey_content" class="form-control">${d.content}</textarea>
-			</div>
+            <div class="input-group">
+              <div class="input-group-prepend">
+                <span class="input-group-text">代码</span>
+              </div>
+              <textarea  id="input_hotkey_content" class="form-control">${d.content}</textarea>
+            </div>
 
-			<div class="input-group mt-10">
-			  <div class="input-group-prepend">
-			    <label class="input-group-text" for="select_hotkey_key">作用范围</label>
-			  </div>
-			  <select class="custom-select" id="select_hotkey_key">
-			    <option selected value=''>点击选择</option>
-			    <option value="1">普通</option>
-			    <option value="2">无视输入框</option>
-			    <option value="3">全局</option>
-			  </select>
-			</div>
-			`;
+            <div class="input-group mt-10">
+              <div class="input-group-prepend">
+                <label class="input-group-text" for="select_hotkey_key">作用范围</label>
+              </div>
+              <select class="custom-select" id="select_hotkey_key">
+                <option selected value=''>点击选择</option>
+                <option value="1">普通</option>
+                <option value="2">无视输入框</option>
+                <option value="3">全局</option>
+              </select>
+            </div>
+            `;
         buildModal(h, {
             id: 'modal_hotkey_edit',
             once: true,
@@ -312,29 +315,29 @@ var g_hotkey = {
         for (var key in this.list) {
             var d = this.list[key];
             h += `
-				<tr data-key="${key}" data-dbaction="hotkey_edit">
-			      <td>${d.title}</td>
-			      <td>${key}</td>
-			      <td>${d.content}</td>
-			    </tr>
-			`;
+                <tr data-key="${key}" data-dbaction="hotkey_edit">
+                  <td>${d.title}</td>
+                  <td>${key}</td>
+                  <td>${d.content}</td>
+                </tr>
+            `;
         }
         $('#modal_hotkey tbody').html(h);
     },
     modal_show: function() {
         var h = `
-		 	<table class="table">
-			  <thead>
-			    <tr>
-			      <th scope="col">说明</th>
-			      <th scope="col">按键</th>
-			      <th scope="col">动作</th>
-			    </tr>
-			  </thead>
-			  <tbody>
-			  </tbody>
-			</table>
-		`;
+            <table class="table">
+              <thead>
+                <tr>
+                  <th scope="col">说明</th>
+                  <th scope="col">按键</th>
+                  <th scope="col">动作</th>
+                </tr>
+              </thead>
+              <tbody>
+              </tbody>
+            </table>
+        `;
         this.modal = buildModal(h, {
             id: 'modal_hotkey',
             title: '快捷键列表',
@@ -348,10 +351,66 @@ var g_hotkey = {
                 id: 'reset',
                 text: '重置',
                 class: 'btn-secondary',
+            }, {
+                id: 'tip',
+                text: '常用代码',
+                class: 'btn-info',
             }],
 
             onBtnClick: (config, btn) => {
                 switch (btn.id) {
+                    case 'btn_tip':
+                        var h = `
+                            <table class="table user-select">
+                              <thead>
+                                <tr>
+                                  <th scope="col">说明</th>
+                                  <th scope="col">代码</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                        `;
+                        for (var item of [
+                                ['播放器网页全屏', `_player.fullScreen.request('web')`],
+                                ['播放器全屏', `_player.fullScreen.request('browser')`],
+                                ['1.5倍速', '_player.speed(1.5)'],
+                                ['截图', '$(".dplayer-camera-icon").click()'],
+                                ['静音', '_player.volume(0)'],
+                                ['50%音量', '_player.volume(0.5)'],
+                                ['切换侧边栏', 'toggleSidebar()'],
+                                ['设置滚轮滚动秒数1秒', 'setScrollAddTime(1)'],
+                                ['显示面板(tags=标签,detail=信息,list=裁剪列表,sub=字幕)', 'loadTab("detail")'],
+                                ['切换置顶', 'ipc_send("pin")'],
+                                ['最小化', 'ipc_send("min")'],
+                                ['切换最大化', 'ipc_send("max")'],
+                                ['结束程序', 'ipc_send("close")'],
+                                ['下一部影片', 'g_video.nextVideo()'],
+                                ['上一部影片', 'g_video.prevVideo()'],
+                                ['搜索影片', 'g_video.focusSearch()']
+                            ]) {
+                            h += `
+                                <tr>
+                                  <td>${item[0]}</td>
+                                  <td>${item[1]}</td>
+                                </tr>
+                            `;
+                        }
+                        h += `</tbody>
+                            </table>`;
+                        confirm(h, {
+                            title: '常用代码',
+                            btns: [{
+                                id: 'issure',
+                                text: '请求更多',
+                                class: 'btn-primary',
+                            }],
+                            onBtnClick: btn => {
+                                if(btn == 'issure'){
+                                    ipc_send('url', 'https://github.com/hunmer/VideoManager/issues');
+                                }
+                            }
+                        });
+                        break;
                     case 'btn_add':
                         g_hotkey.prompt_add();
                         return;
@@ -379,7 +438,7 @@ var g_hotkey = {
             if ([16, 17, 18, 91, 9, 27, 13, 8, 20, 93].includes(e.keyCode)) { // 忽略功能按键
                 return;
             }
-            if($('#modal_hotkey_edit.show').length) return;
+            if ($('#modal_hotkey_edit.show').length) return;
             var editing = $('input:focus,textarea:focus').length;
             var d = self.list[self.getInputCode(e, 'key')];
             if (d) {
