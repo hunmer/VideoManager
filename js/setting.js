@@ -17,6 +17,7 @@ var g_setting = {
         });
         if (g_config.bg) self.setBg('./res/bg.jpg');
         self.setTextColor(g_config.textColor);
+        if (getConfig('darkTheme')) g_setting.toggleDarkMode(true);
 
         var now = new Date().getTime();
         var last = g_config.lastCheckUpdate || 0;
@@ -98,8 +99,8 @@ var g_setting = {
               <div class="col-2">
                 <div class="nav flex-column nav-pills text-center" id="v-pills-tab" role="tablist" aria-orientation="vertical">
                   <a class="nav-link active" id="setting-pills-general-tab" data-toggle="pill" href="#setting-pills-general" role="tab" aria-controls="setting-pills-general" aria-selected="true">常规</a>
-                  <a class="nav-link" id="setting-pills-adven-tab" data-toggle="pill" href="#setting-pills-output" role="tab" aria-controls="setting-pills-output" aria-selected="false">输出</a>
-                  <a class="nav-link" id="setting-pills-adven-tab" data-toggle="pill" href="#setting-pills-adven" role="tab" aria-controls="setting-pills-adven" aria-selected="false">高级</a>
+                  <a class="nav-link" id="setting-pills-output-tab" data-toggle="pill" href="#setting-pills-output" role="tab" aria-controls="setting-pills-output" aria-selected="false">输出</a>
+                  <a class="nav-link" id="setting-pills-other-tab" data-toggle="pill" href="#setting-pills-other" role="tab" aria-controls="setting-pills-other" aria-selected="false">其他</a>
                 </div>
               </div>
               <div class="col-10">
@@ -112,7 +113,7 @@ var g_setting = {
                     </div>
                      <div class="custom-control custom-switch">
                       <input type="checkbox" class="custom-control-input" id="check_autoPlay" data-change="switch_option,autoPlay">
-                      <label class="custom-control-label" for="check_autoPlay">启动时自动播放</label>
+                      <label class="custom-control-label" for="check_autoPlay">启动时继续播放</label>
                     </div>
                      <div class="custom-control custom-switch">
                       <input type="checkbox" class="custom-control-input" id="check_notificationWhenDone" data-change="switch_option,notificationWhenDone">
@@ -124,11 +125,8 @@ var g_setting = {
                     </div>
 
                   </div>
-                  <div class="tab-pane fade" id="setting-pills-adven" role="tabpanel" aria-labelledby="setting-pills-adven-tab">
 
-                  </div>
                    <div class="tab-pane fade" id="setting-pills-output" role="tabpanel" aria-labelledby="setting-pills-output-tab">
-                   <form>
                         <div class="form-group col-md-6">
                           <label for="select_codec_video">导出视频编码</label>
                           <select id="select_codec_video" class="form-control" data-change="select_option,outputVideo">
@@ -149,20 +147,33 @@ var g_setting = {
                             <label for="select_codec_audio"></label>
                               <div class="input-group-prepend">
                                 <div class="input-group-text">
-                                  <input type="radio" data-change="select_option,enable_customCmd">
+                                  <input type="checkbox" data-change="select_option,enable_customCmd">
                                 </div>
                               </div>
                               <input type="text" class="form-control" id="input_customCmd" placeholder="自定义FFMPEG命令" value="-ss {start} -t {time}">
                             </div>
                       </div>
-                    </form>
 
+                    <div class="tab-pane fade" id="setting-pills-other" role="tabpanel" aria-labelledby="setting-pills-other-tab">
+                      <div class="form-row">
+                        <div class="form-group col-md-4">
+                          <label for="input_previewTime_clip">延迟预览</label>
+                          <input type="number" class="form-control" id="input_previewTime_clip"  data-input="input_option,previewMs_clip">
+                        </div>
+                        <div class="form-group col-md-4">
+                          <label for="input_previewTime_search">延迟预览(搜索)</label>
+                          <input type="number" class="form-control" id="input_previewTime_search" data-input="input_option,previewMs_search">
+                        </div>
+                      </div>
                   </div>
+
+                  
                 </div>
               </div>
             </div>
 
         `;
+
         var modal = buildModal(h, {
             id: 'modal_setting',
             title: '设置',
@@ -190,6 +201,12 @@ var g_setting = {
                         d.find('option[value="'+val+'"]').prop('selected', true);
                     }
                 }
+
+                for (var d of modal.find('[data-input]')) {
+                    var key = d.dataset.input.replace('input_option,', '');
+                    d.value = getConfig(key, '');
+                }
+
             },
             onClose: () => {
                 setConfig('customCmd', $('#input_customCmd').val());
@@ -205,7 +222,6 @@ var g_setting = {
         });
         this.modal = modal;
 
-        if (getConfig('darkTheme')) g_setting.toggleDarkMode(true);
         registerAction('switch_option', (dom, action) => {
             var key = action[1];
             setConfig(key, !g_config[key]);
@@ -216,8 +232,12 @@ var g_setting = {
         });
         registerAction('select_option', (dom, action) => {
             var key = action[1];
+            var val = $(dom).prop('checked');
+            setConfig(key, val);
+        });
+        registerAction('input_option', (dom, action) => {
+            var key = action[1];
             var val = $(dom).val();
-            if(key == 'enable_customCmd') val = val == 'on';
             setConfig(key, val);
         })
 
@@ -252,6 +272,10 @@ var g_setting = {
                 }
                 ${s} .list-group-item {
                   background: #121212 !important;
+                }
+
+                input[type="text"],textarea {
+                    color: #afafaf !important;
                 }
             `
         }

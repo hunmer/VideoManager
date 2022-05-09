@@ -21,7 +21,7 @@ var g_video = {
             g_tag.searchTag(this.value);
         })
         self.initVideos();
-        if (g_config.lastVideo != undefined) {
+        if (getConfig('autoPlay', true) && g_config.lastVideo != undefined) {
             self.loadVideo(g_config.lastVideo, true);
         }
     },
@@ -122,7 +122,7 @@ var g_video = {
                         </button>
                       </h2>
                     </div>
-                    <div id="${id}" class="collapse" aria-labelledby="${id}_header" data-parent="#accordionExample" >
+                    <div id="${id}" class="collapse" aria-labelledby="${id}_header" data-parent="#videoList" >
                       <div class="card-body p-0" style="overflow-y: auto;">
                        ` + (() => {
 
@@ -200,7 +200,7 @@ var g_video = {
             `;
 
         }
-        $('#sidebar-wrapper .accordion').html(h).find('.lazyload').lazyload();
+        $('#videoList').html(h).find('.lazyload').lazyload();
         if (g_config.lastFolder != undefined) {
             g_video.openFolder(g_config.lastFolder)
         }
@@ -246,14 +246,15 @@ var g_video = {
         this.pos1 = Math.min(this.pos1, this.pos2);
         this.pos2 = Math.max(this.pos1, this.pos2);
         if (this.pos1 == -1) {
-            return alert('未设置pos1');
+            return toast('未设置起点', 'alert-danger');
         }
         // if (this.pos2 == -1) {
         //     return alert('未设置pos2');
         // }
         if (this.pos2 != -1 && this.pos1 == this.pos2) {
-            return alert('至少要有1秒');
+            return toast('至少要有1秒', 'alert-danger');
         }
+
         loadTab('list');
         var tag = $('#input_tag').val();
         if (tag != '') {
@@ -380,18 +381,33 @@ var g_video = {
     },
 
     setClipStatus: function(clip, text, style = 'badge-primary') {
+        var empty = text == undefined || text == '';
+        if(g_cache.clipBadges[clip]){
+            if(empty){
+                delete g_cache.clipBadges[clip];
+            }else{
+                 g_cache.clipBadges[clip] = [text, style];
+            }
+        }
         var d = domSelector({ dbaction: 'loadClip', clip: clip });
         if (!d.length) return;
-        var empty = text == undefined || text == '';
+
         var badge = d.find('.staus');
         if (!badge.length) {
             if (empty) return;
             badge = $(`<span style="position: absolute;bottom:0;right:6px;"></span>`).appendTo(d.find('.card-img-overlay'));
         }
-        if (empty) return badge.remove();
+        if (empty){
+            delete g_cache.clipBadges[clip];
+            return badge.remove();
+        }
         badge.attr('class', `staus badge mr-2 ${style}`).html(text);
     },
-
+    reloadVideo: function(){
+        if(this.key){
+            this.loadVideo(this.key, g_player.getCurrentTime());
+        }
+    },
     initPos: function() {
         var h = '<div class="row">';
         var i = 0;
@@ -409,19 +425,6 @@ var g_video = {
                         </h6>
                       </div>
                     </div>`;
-                     //
-            // h += `
-            //     <li data-start="${d.start}" data-file="*path*/cuts/${time}.mp4" draggable="true" class="media p-2" data-action="jumpClip" data-dbaction="loadClip" data-clip="${time}">
-            //         <img  class="mr-3 lazyload" src="./res/loading.png" draggable="false" ${time != g_cache.lastAdded ? `data-src="./cover/${time}.jpg"` : ''} data-preview >
-            //         <div class="media-body">
-            //             <h5 class="mt-0 mb-1">
-            //             ${getTime(d.start)} - ${getTime(d.end)}
-            //             </h5>
-            //             <p>${d.tags.join(' , ')}</p>
-            //             ${d.note ? `<span>${d.note}</p>` : ''}
-            //         </div>
-            //     </li>
-            // `;
             i++;
         }
         if (i == 0){
@@ -433,8 +436,13 @@ var g_video = {
         $('#_list-tab span').html(i).toggleClass('hide', i == 0);
         $('.div_video_side_list').html(h).find('.lazyload').lazyload();
 
-            
-            
+        // 恢复badge
+        setTimeout(() => {
+             for(var time in g_cache.clipBadges){
+                var d = g_cache.clipBadges[time];
+                g_video.setClipStatus(time, d[0], d[1]);
+            }
+        }, 200);
     },
 
     onTimeInputScroll: function(e) {
@@ -540,7 +548,6 @@ var g_video = {
                         width: v.width,
                         height: v.height,
                         duration: f.duration,
-                        quickly: v.pix_fmt,
                         size: f.size,
                     }
                     self.saveVideos(false);
@@ -557,16 +564,16 @@ var g_video = {
         if(meta.duration){
             var card = $('[data-video].card_active');
             card.find('.badge-primary').html(getTime(meta.duration)).removeClass('hide');
-            card.find('.badge-success').html(meta.quickly.replace('yuv', '')).removeClass('hide');
+            card.find('.badge-success').html(meta.width+'x'+meta.height).removeClass('hide');
              h =  `<ul class="list-group list-group-flush">
-              <li class="list-group-item">分辨率: ${meta.width + 'x' + meta.height}(${meta.quickly})</li>
+              <li class="list-group-item">分辨率: ${meta.width + 'x' + meta.height}</li>
               <li class="list-group-item">时长: ${getTime(parseInt(meta.duration), '小时', '分', '秒', false)}</li>
               <li class="list-group-item">大小: ${renderSize(meta.size)}</li>
             </ul>
             <a class="btn btn-link text-center btn-block" onclick="g_video.getMeta(g_video.key, true)">加载更多</a>
             `;
         }else{
-            h = '<pre>'+JSON.stringify(meta, null, 1)+'</pre>';
+            h = '<pre style="height: calc(100vh - 150px);overflow-y: auto;">'+JSON.stringify(meta, null, 1)+'</pre>';
         }
         $('#_detail').html(h);
     },

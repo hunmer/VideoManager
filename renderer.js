@@ -13,8 +13,6 @@ var Jimp = require('jimp');
 var os = require('os');
 const https = require('https');
 
-
-
 // ffmpeg.getAvailableFormats(function(err, codecs) {
 //   console.log('Available codecs:');
 //   console.dir(codecs);
@@ -102,11 +100,38 @@ function showUpdateFiles(url, updated) {
     confirm(h, {
         id: 'modal_update',
         title: '有 ' + updated.length + ' 个文件可以更新!',
+        btns: [{
+            id: 'ok',
+            text: '更新',
+            class: 'btn-primary',
+        }, {
+            id: 'cancel',
+            text: '取消',
+            class: 'btn-secondary',
+        }, {
+            id: 'pack',
+            text: '打包改动文件',
+            class: 'btn-danger',
+        }],
         callback: btn => {
             if (btn == 'ok') {
                 $('#modal_update #btn_ok').addClass('disabled').html('更新中');
                 updateFiles(url, updated);
                 return false;
+            } else
+            if (btn == 'pack') {
+                confirm('此功能用于打包自己改动过的代码，并不适用于所有人.你确定要继续操作吗?', {
+                    callback: btn => {
+                        if (btn == 'ok') {
+                            var paths = {};
+                            for (var name of updated) paths[__dirname + '\\' + name] = getFileName(name);
+                            ipc_send('saveAsZip', {
+                                fileName: 'scripts.zip',
+                                files: paths,
+                            });
+                        }
+                    }
+                });
             }
         }
     })
@@ -124,7 +149,7 @@ function updateFiles(url, fileList) {
         var name = fileList[now];
         downloadFile({
             url: url + name,
-            saveTo: './' + name,
+            saveTo: __dirname + '\\' + name,
             onError: () => ++err,
             callback: saveTo => {
                 var newProgress = parseInt(++done / max * 100);
@@ -215,7 +240,8 @@ ipcRenderer.on('log', (event, arg) => {
     console.log(arg);
 });
 g_cache.waitFor = {};
-function waitForRespone(name, script, callback){
+
+function waitForRespone(name, script, callback) {
     g_cache.waitFor[name] = callback;
     ipc_send('getResult', {
         name: name,
@@ -223,7 +249,7 @@ function waitForRespone(name, script, callback){
     })
 }
 ipcRenderer.on('getResult', (event, arg) => {
-    if(g_cache.waitFor[arg.name]){
+    if (g_cache.waitFor[arg.name]) {
         g_cache.waitFor[arg.name](arg.ret);
         delete g_cache.waitFor[arg.name];
     }
@@ -249,8 +275,8 @@ function doFFMPEG(opts, callback) {
                 .outputOptions(opts.params);
             if (!custom) {
                 run
-                .videoCodec(getConfig('outputVideo', 'libx264'))
-                .audioCodec(getConfig('outputAudio', 'copy'));
+                    .videoCodec(getConfig('outputVideo', 'libx264'))
+                    .audioCodec(getConfig('outputAudio', 'copy'));
             }
 
             run.on('start', function(cmd) {
@@ -269,13 +295,12 @@ function doFFMPEG(opts, callback) {
                     var i = g_taskList.indexOf(opts.key);
                     if (i != -1) {
                         g_taskList.splice(i, 1);
-                        if (g_taskList.length == 0) {
+                        if (g_taskList.length == 0 && getConfig('notificationWhenDone')) {
                             waitForRespone('clipTask', 'win.isFocused()', focus => {
-                                    if(!focus){
-                                        showMessage('任务完成', '已完成所有裁剪');
-                                    }
+                                if (!focus) {
+                                    showMessage('任务完成', '已完成所有裁剪');
                                 }
-                            );
+                            });
                         }
                     }
                     setText('任务完成', 'badge-success');

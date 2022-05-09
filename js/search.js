@@ -14,7 +14,7 @@ g_cache.hideAdded = false;
             return toast('目录过滤器已经存在!', 'alert-danger');
         }
         g_video.modal_folder('', folder => {
-            g_filter.filter_add('local', '目录: ' + folder[0], `d.folder == '${folder[0]}'`, 'folder');
+            g_filter.filter_add('local', '目录: ' + folder[0], (folder[0] == '未分组' ? `d.folder == undefined || d.folder == ''` : `d.folder == '${folder[0]}'`), 'folder');
         });
     });
 
@@ -22,11 +22,11 @@ g_cache.hideAdded = false;
         if (g_filter.filter_get('local', 'currentVideo').length) {
             return toast('此过滤器已经存在!', 'alert-danger');
         }
-        var file = g_video.data.file;
-        if (!file) {
+        var key = g_video.key;
+        if (!key) {
             return toast('当前没有播放视频!', 'alert-danger');
         }
-        g_filter.filter_add('local', '当前视频: ' + getFileName(file, true), `d.file == '${file}'`, 'currentVideo');
+        g_filter.filter_add('local', '当前视频: ' + getFileName(g_video.key.file, true), `key == '${key}'`, 'currentVideo');
     });
     registerAction('filter_addTag', (dom, action) => {
         g_video.modal_tag(g_cache.searchTags, tags => {
@@ -39,7 +39,7 @@ g_cache.hideAdded = false;
         prompt('', {
             title: '输入要包含的备注',
             callback: text => {
-                 g_filter.filter_add('local', '备注: ' + text, `typeof(clip.note) == 'string' && clip.note.indexOf('${text}') != -1`, 'note');
+                g_filter.filter_add('local', '备注: ' + text, `typeof(clip.note) == 'string' && clip.note.indexOf('${text}') != -1`, 'note');
             }
         })
     });
@@ -107,7 +107,7 @@ g_cache.hideAdded = false;
         g_player.playVideo(false);
 
         if (!g_video.search_modal) {
-
+            g_filter.filter_add('local', '今日新增', 'time >= ' + new Date().setHours(0, 0, 0, 0), 'default');
             g_video.search_modal = buildModal(`
         <div class="card mb-2">
             <div class="card-header">
@@ -127,7 +127,7 @@ g_cache.hideAdded = false;
             </div>
         </div>
         <div class="container-fluid"  style="min-height: 300px;">
-            <div class="card-columns" id="search_result">
+            <div class="row" id="search_result">
             </div>
         </div>
     `, {
@@ -191,41 +191,44 @@ g_cache.hideAdded = false;
 g_video.searchVideo = function(s) {
     var py = PinYinTranslate.start(s);
     var sz = PinYinTranslate.sz(s);
-    var f;
-    for (var d of domSelector({ action: "loadVideo", video: "" })) {
-        d = $(d);
-        var t = d.attr('data-name');
+    var h = ``;
+    var i = 0;
+    for (var md5 in _videos) {
+        var t = getFileName(_videos[md5].file, true);
         var b = t.indexOf(s) != -1 || PinYinTranslate.start(t).indexOf(py) != -1 || PinYinTranslate.sz(t).indexOf(sz) != -1;
-        d.toggleClass('hide', !b);
-        if (b && !f) {
-            if (s == '' && !d.hasClass('card_active')) continue; // 默认展示正在播放的视频
-            var folder = d.parents('.card').data('folder');
-            g_video.openFolder(folder);
-            f = true;
+        if (b) {
+            h += `<li data-action="search_result_item" data-video="${md5}" class="list-group-item${md5 == g_video.key ? ' active' : ''}">${t}</li>`;
+            i++;
         }
     }
+    if (!i) {
+        h = `<h6 class="text-center mt-10">没有结果</h6>`;
+    } else {
+        h = `<ul class="list-group" >${h}</ul>`;
+    }
+    var searching = s != '';
+    $('#searchResults').html(h).toggleClass('hide', !searching);
+    $('#videoList').toggleClass('hide', searching);
 }
 
 g_video.searchClip = function(filters) {
     var r = {};
-    if (!filters || filters.length == 0) {
-        var today = new Date().setHours(0, 0, 0, 0);
-        g_filter.filter_add('local', '今日新增', 'time >= ' + today, 'default');
-    }
-    for (var key in _videos) {
-        var d = _videos[key];
-        for (var time in d.clips) {
-            var clip = d.clips[time];
-            var b = true;
-            for (var filter of filters) {
-                b = eval(filter.content);
-                if (!b) break;
-            }
-            if (b) {
-                r[time] = Object.assign({
-                    file: d.file,
-                    key: key
-                }, clip);
+    if (filters && filters.length) {
+        for (var key in _videos) {
+            var d = _videos[key];
+            for (var time in d.clips) {
+                var clip = d.clips[time];
+                var b = true;
+                for (var filter of filters) {
+                    b = eval(filter.content);
+                    if (!b) break;
+                }
+                if (b) {
+                    r[time] = Object.assign({
+                        file: d.file,
+                        key: key
+                    }, clip);
+                }
             }
         }
     }
@@ -233,7 +236,7 @@ g_video.searchClip = function(filters) {
 }
 
 g_video.onSearchClip = function() {
-    var h = '';
+    var h = ``;
     var skip = 0;
     var r = this.searchClip(g_filter.filter_list('local'));
     for (var time in r) {
@@ -245,7 +248,7 @@ g_video.onSearchClip = function() {
         var d = r[time];
         var n = getFileName(d.file);
         h += `
-            <div class="card search_item ${classes}" data-action="card_active" data-key="${time}"  data-file="*path*/cuts/${time}.mp4" draggable="true">
+            <div class="card col-12 col-sm-6 col-md-4 col-lg-3 col-xl-2 mb-10 search_item ${classes}" data-action="card_active" data-key="${time}"  data-file="*path*/cuts/${time}.mp4" draggable="true">
               <img draggable="false" src="./res/loading.gif" data-src="./cover/${time}.jpg" class="card-img-top lazyload" data-preview data-pos='right-bottom' data-time="1000">
                 <div class="card-body">
                    <h6 class="card-title scrollableText">${d.tags.join(' , ')}</h6>

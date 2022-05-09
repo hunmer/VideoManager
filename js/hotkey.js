@@ -107,7 +107,7 @@ var g_hotkey = {
         },
     },
     init: function() {
-        this.list = g_config.hotkeys || this.defaultList;
+        this.list = local_readJson('hotkeys',this.defaultList);
         this.initEvent();
         this.initData();
         g_menu.registerMenu({
@@ -280,18 +280,15 @@ var g_hotkey = {
     },
     saveData: function(save = true) {
         if (save) {
-            g_config.hotkeys = this.list;
-            local_saveJson('config', g_config);
+            local_saveJson('hotkeys', this.list);
         }
-        if ($('#modal_hotkey').length) {
-            this.rendererList();
-        }
+        if ($('#modal_hotkey').length) this.rendererList();
         this.initData();
     },
     initData: function() {
         // 正确排序按键
         var self = this;
-        var list = [];
+        var list = {};
         for (var key in self.list) {
             const getPrimary = s => {
                 if (s == 'ctrl') return 4;
@@ -304,7 +301,6 @@ var g_hotkey = {
             }).join('+').toLowerCase()] = self.list[key];
         }
         self.list = list;
-
     },
     setHotKey: function(key, value, save = true) {
         this.list[key] = value;
@@ -465,16 +461,3 @@ var g_hotkey = {
 }
 
 g_hotkey.init();
-// function getSeekValue(e, name){
-//           var t = 0;
-//           if(e.altKey){
-//               t += g_config.seek[name+'_alt'] || 0;
-//           }
-//           if(e.ctrlKey){
-//               t += g_config.seek[name+'_ctrl'] || 0;
-//           }
-//           if(e.shiftKey){
-//               t += g_config.seek[name+'_shift'] || 0;
-//           }
-//           return t;
-//       }

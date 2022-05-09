@@ -1,9 +1,11 @@
-const APP_VERSION = 'v1.2.2';
+const APP_VERSION = 'v1.2.5';
 // const UPDATE_SCRIPT_URL = 'https://raw.githubusercontent.com/hunmer/videoManager/main/';
 const UPDATE_SCRIPT_URL = 'https://gitee.com/neysummer2000/VideoManager/raw/main/';
 var g_localKey = 'vm_';
 var g_config = local_readJson('config', {
     tags_rent: [],
+    previewMs_clip: 500,
+    previewMs_search: 2000,
 });
 var MODAL_HTML = (id, opts) => {
     opts = Object.assign({
@@ -426,7 +428,6 @@ function srcollVideo(e, video) {
     if (!video) video = e.currentTarget;
     var duration = video.duration;
     if (!isNaN(duration)) {
-        var i = e.deltaY;
         var add;
         if (e.altKey) {
             add = 1;
@@ -437,7 +438,7 @@ function srcollVideo(e, video) {
             add = duration * 0.01; // 视频的1%
         }
         if (add < 1) add = 1;
-        add = i > 0 ? 0 - add : add;
+        add = e.originalEvent.deltaY > 0 ? 0 - add : add;
         video.currentTime += add;
         clearEventBubble(e);
     }
@@ -484,6 +485,7 @@ function insertStyle(cssText) {
 }
 
 function hidePreview(playVideo = true) {
+            delete g_cache.previewFile;
     clearTimeout(g_cache.previewClip);
     $('#preview_video_popup').css({
         display: 'none',
@@ -498,6 +500,7 @@ var g_cache = {
     searchTags: [],
     filters: [],
     fullScreen: false,
+    clipBadges: {},
 }
 
 function setConfig(k, v) {
@@ -532,14 +535,14 @@ function uniqueArr(arr) {
 }
 
 function dragFile(ev, src) {
+    hidePreview();
     g_player.playVideo(false);
-
     var target = $(ev.currentTarget);
     ev.preventDefault();
     var files = [];
     var icon = '';
     if (ev.ctrlKey) {
-        if (!target.hasClass('card_active')) return;
+        // if (!target.hasClass('card_active')) return;
         // 获取所有同样class的元素
         for (var selected of $('.' + target.attr('class').replaceAll(' ', '.'))) {
             files.push(selected.dataset.file);

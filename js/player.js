@@ -158,7 +158,7 @@ var g_player = {
                 if (start) _player.video.currentTime = start;
                 if(!g_cache.firstLoaded){
                     g_cache.firstLoaded = true;
-                    if(getConfig('autoPlay')) _player.video.play();
+                    _player.video.play();
                 }
                 // var self.autoSave = setInterval(() => {
                 // })
@@ -257,7 +257,8 @@ var g_player = {
     },
     setVideothumbnails: function(url) {
         toast('成功生成视频时间线缩略图,可以在进度条查看效果', 'alert-success');
-        $('.dplayer-bar-preview').css('backgroundImage', 'unset').css('backgroundImage', 'url("' + url + '")')
+        g_video.reloadVideo();
+        //$('.dplayer-bar-preview').css('backgroundImage', '').css('backgroundImage', 'url("' + url + '")')
         // _player && !_player.video.paused;
     },
     isPlaying: function() {

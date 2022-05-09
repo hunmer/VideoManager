@@ -6,15 +6,26 @@ body {
     /*cursor: url('../res/default.ico'), pointer;*/
 }
 
+.card_selected {
+    border: 2px solid red !important;
+}
+
 .show {
     display: unset !important;
 }
 
-html, body { scroll-behavior:smooth; }
+html,
+body {
+    scroll-behavior: smooth;
+}
 
 @font-face {
     font-family: customFont;
     src: url(NotoSansSC-Regular.otf);
+}
+
+textarea {
+    resize: none;
 }
 
 /*
@@ -157,59 +168,77 @@ li,
 
 }
 
-.scrollableText::-webkit-scrollbar { width: 0 !important }
+.scrollableText::-webkit-scrollbar {
+    width: 0 !important
+}
+
 #sidebar-wrapper .sidebar-heading {
     width: 250px;
     padding: 0.875rem 1.25rem;
     font-size: 1.2rem;
 }
+
 .mb-10 {
     margin-bottom: 10px;
 }
+
 .mt-10 {
     margin-top: 10px;
 }
+
 #page-content-wrapper {
     min-width: 100vw;
 }
 
 .r1 {
-    -webkit-animation:rotate 20s infinite linear;
-    animation:rotate 5s infinite linear;
+    -webkit-animation: rotate 20s infinite linear;
+    animation: rotate 5s infinite linear;
 }
 
-@keyframes rotate{
-    0%{
-      transform:rotate(0deg);
-     }
-     100%{
-       transform:rotate(360deg);
-     }
-  }
+@keyframes rotate {
+    0% {
+        transform: rotate(0deg);
+    }
 
-@-webkit-keyframes rotate{
-        0%{
-          -webkit-transform:rotate(0deg);
-         }
-         100%{
-           -webkit-transform:rotate(360deg);
-         }
-      }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@-webkit-keyframes rotate {
+    0% {
+        -webkit-transform: rotate(0deg);
+    }
+
+    100% {
+        -webkit-transform: rotate(360deg);
+    }
+}
+
 body.sb-sidenav-toggled #wrapper #sidebar-wrapper {
     margin-left: 0;
 }
 
 
+.modal-dialog {
+    margin: 0 auto;
+}
+
 @media (max-width: 540px) {
-    body,#wrapper {
+
+    body,
+    #wrapper {
         overflow-y: unset;
     }
 
     .modal-dialog {
+        width: unset !important;
+        min-width: unset !important;
         max-width: unset !important;
     }
 
 }
+
 @media (min-width: 1200px) {
     #sidebar-wrapper {
         margin-left: 0;
@@ -243,7 +272,7 @@ body.sb-sidenav-toggled #wrapper #sidebar-wrapper {
     top: 0;
 }*/
 
-.dplayer-web-fullscreen-fix{
+.dplayer-web-fullscreen-fix {
     width: 100%;
     /*-webkit-app-region: drag;*/
 }
@@ -259,9 +288,7 @@ body.dplayer-web-fullscreen-fix #dragBar {
 .dplayer-web-fullscreen-fix #div_video_toolBar {
     display: none;
 }
+
 .dplayer-web-fullscreen-fix .navbar {
     display: none;
 }
-
-
-

@@ -64,7 +64,6 @@ $(function() {
         })
         .on('focus', event => {
             if(getConfig('autoStopPlay')){
-                console.log('start');
                 g_player.tryStart();
             }
         });
@@ -102,11 +101,11 @@ $(function() {
         .on('mousewheel', '[data-preview]', function(event) {
             srcollVideo(event, $('#preview_video_popup video')[0])
         })
-        .on('mouseenter', '[data-preview]', function(event) {
+        // mouseenter 太快有bug
+        .on('mousemove', '[data-preview]', function(event) {
             //if(!event.altKey) return;
+
             var self = $(this);
-            var pos = self.data('pos');
-            var popup = $('#preview_video_popup');
             var file = self.attr('data-file');
             var target;
             if(file){
@@ -115,6 +114,10 @@ $(function() {
                 target = file = self.parents('[data-file]');
                 file = target.attr('data-file');
             }
+            if(file == g_cache.previewFile) return;
+            g_cache.previewFile = file;
+            var pos = self.data('pos');
+            var popup = $('#preview_video_popup');
             var offset = target.offset();
             file = nodejs.files.getPath(file);
             clearTimeout(g_cache.previewClip);
@@ -156,7 +159,7 @@ $(function() {
                 popup.prependTo(g_cache.fullScreen ? '#player' : 'body');
                 fun();
                 popup.find('video').attr('src', file + '?t=' + new Date().getTime());
-            }, parseInt(self.data('time')) || 250);
+            }, parseInt(getConfig('previewMs_' + (self.data('action') == 'jumpClip' ? 'clip' : 'search')) || self.data('time')));
         })
         .on('mouseout', '[data-preview]', function(event) {
             //if (this.dataset.pos == 'self') return;
@@ -235,6 +238,10 @@ $(function() {
             if (this.classList.contains('disabled')) return;
             doAction(this, this.dataset.change, event);
         })
+         .on('input', '[data-input]', function(event){
+            if (this.classList.contains('disabled')) return;
+            doAction(this, this.dataset.input, event);
+        })
         .on('contextmenu', '[data-contenx]', function(event) {
             if (this.classList.contains('disabled')) return;
             doAction(this, this.dataset.contenx, event);
@@ -269,6 +276,10 @@ function doAction(dom, action, event) {
         g_actions[action[0]](dom, action, event);
     }
     switch (action[0]) {
+        case 'search_result_item':
+            $('#searchResults li.active').removeClass('active');
+            g_video.loadVideo($(dom).addClass('active').attr('data-video'));
+            break;
         case 'addfiles':
             ipc_send('openFileDialog', { multi: true });
             break;
@@ -276,16 +287,18 @@ function doAction(dom, action, event) {
             ipc_send('pin');
             break;
         case 'aboutMe':
+            var arr = g_cache.needUpdate || [];
+            if(arr.length){
+                g_cache.needUpdate = [];
+                return showUpdateFiles(UPDATE_SCRIPT_URL, arr);
+            }
             confirm(`
                 <div class="row align-items-center">
-                    <div class="col-md-6">
-                        <img src="res/payment.jpg" draggable="false" style="width: 100%;">
-                    </div>
-                    <div class="col-md-6 text-center">
+                    <div class="col-md-12 text-center">
                         <img src="favicon.png" style="width: 100px">
                         <h4><a class="badge badge-primary" style="font-size: 2rem">${APP_VERSION}</a></h4>
                         <div  style="margin-top: 20px">
-                            <h6 class="text-right">2022年5月9日 00点04分</h6>
+                            <h6 class="text-right">2022年5月10日 03点32分</h6>
                             <h6 class="text-right">by <a href="javascript: ipc_send('url', 'https://github.com/hunmer/')">@hunmer</a></h6>
                             
                         </div>
@@ -306,13 +319,7 @@ function doAction(dom, action, event) {
                     text: '52pojie@neysummer',
                     class: 'btn-danger',
                 }],
-                onShow: () => {
-                    var arr = g_cache.needUpdate || [];
-                    if(arr.length){
-                        g_cache.needUpdate = [];
-                        showUpdateFiles(UPDATE_SCRIPT_URL, arr);
-                    }
-                },
+                onShow: () => {},
                 callback: btn => {
                     if(btn == 'checkUpdate'){
                         toast('检查更新中...', 'alert-info');
@@ -426,7 +433,6 @@ function doAction(dom, action, event) {
             break;
         case 'setScrollAddTime':
             setScrollAddTime(dom.dataset.time);
-
             break;
         case 'toStart':
             if (g_video.pos1 >= 0) g_player.setCurrentTime(g_video.pos1);
@@ -475,6 +481,9 @@ function doAction(dom, action, event) {
             }
             break;
         case 'jumpClip':
+            if(event.ctrlKey){
+                return $(dom).toggleClass('card_selected');
+            }
             g_player.setCurrentTime(dom.dataset.start);
             break;
         case 'loadClip':

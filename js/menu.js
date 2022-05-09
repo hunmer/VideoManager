@@ -7,6 +7,14 @@ var g_menu = {
             dataKey: 'data-clip',
             html: `
                 <div class="list-group" style="width: 100%;">
+                     <a data-action="clip_selectAll" class="list-group-item list-group-item-action" aria-current="true">
+                        <i class="bi bi-check-square mr-2"></i><span>全选</span>
+                      </a>
+
+                    <a data-action="clip_startAtEnd" class="list-group-item list-group-item-action" aria-current="true">
+                        <i class="bi bi-arrow-return-right mr-2"></i><span>从终点开始</span>
+                      </a>
+
                     <a data-action="clip_addToList" class="list-group-item list-group-item-action" aria-current="true">
                         <i class="bi bi-plus mr-2"></i><span>加入列表</span>
                       </a>
@@ -19,7 +27,7 @@ var g_menu = {
                       </a>
 
                      <a data-action="clip_cover" class="list-group-item list-group-item-action text-success" aria-current="true">
-                        <i class="bi bi-scissors mr-2"></i><span>封面</span>
+                        <i class="bi bi-image mr-2"></i><span>封面</span>
                       </a>
 
                       <a data-action="clip_delete" class="list-group-item list-group-item-action text-danger" aria-current="true">
@@ -29,6 +37,8 @@ var g_menu = {
             `,
             onShow: key => {
                 domSelector({ action: 'clip_addToList' }).find('span').html(g_list.isInList('clips', key) ? '从列表移除' : '加入列表');
+                domSelector({ action: 'clip_selectAll' }).find('span').html($('.div_video_side_list .card_selected').length ? '全不选' : '全选');
+
             }
         });
 
@@ -58,7 +68,7 @@ var g_menu = {
                         <i class="bi bi-plus mr-2"></i><span>加入列表</span>
                       </a>
                      <a data-action="video_addClipsToList" class="list-group-item list-group-item-action" aria-current="true">
-                        <i class="bi bi-list-nested mr-2"></i><span>所有片段</span>
+                        <i class="bi bi-list-nested mr-2"></i><span>片段加入列表</span>
                       </a>
                       <a data-action="video_checkClips" class="list-group-item list-group-item-action" aria-current="true">
                         <i class="bi bi-bug-fill mr-2"></i><span>检查丢失</span>
@@ -69,18 +79,15 @@ var g_menu = {
                     <a data-action="video_setFolder" class="list-group-item list-group-item-action" aria-current="true">
                         <i class="bi bi-inbox mr-2"></i><span>分类</span>
                       </a>
+                        <a data-action="video_cover" class="list-group-item list-group-item-action text-success" aria-current="true">
+                        <i class="bi bi-scissors mr-2"></i><span>封面</span>
+                      </a>
                     
                       <a data-action="video_delete" class="list-group-item list-group-item-action text-danger" aria-current="true">
                         <i class="bi bi-trash mr-2"></i><span>删除</span>
                       </a>
                     </div>
             `,
-
-            /*
-             <a data-action="video_cover" class="list-group-item list-group-item-action text-success" aria-current="true">
-                        <i class="bi bi-scissors mr-2"></i><span>封面</span>
-                      </a>
-            */
             onShow: key => {
                 domSelector({ action: 'video_addToList' }).find('span').html(g_list.isInList('videos', key) ? '从列表移除' : '加入列表');
                 domSelector({ action: 'video_addClipsToList' }).toggleClass('hide', Object.keys(g_video.getVideo(key).clips).length == 0);
@@ -107,12 +114,26 @@ var g_menu = {
 
         });
 
-        registerAction(['clip_delete', 'clip_cover', 'clip_cut', 'clip_openFolder', 'clip_addToList'], (dom, action) => {
+        registerAction('clip_selectAll', (dom, action) => {
+            var selected = $('.div_video_side_list .card_selected');
+            if(selected.length){
+                selected.removeClass('card_selected');
+            }else{
+                $('.div_video_side_list .card').addClass('card_selected')
+            }
+            g_menu.hideMenu('clip_item');
+        });
+
+        registerAction(['clip_delete', 'clip_cover', 'clip_cut', 'clip_openFolder', 'clip_addToList', 'clip_startAtEnd'], (dom, action) => {
             var p = $(dom).parents('[data-key]');
             var k = p.attr('data-key');
             var d = g_video.data.clips[k];
 
             switch (action[0]) {
+                case 'clip_startAtEnd':
+                    if(!d.end) return toast('此片段没有设置终点');
+                    g_player.setCurrentTime(d.end);
+                    break;
                 case 'clip_addToList':
                     g_list.addToList('clips', k, d.tags.join(','))
                     break;
@@ -187,7 +208,7 @@ var g_menu = {
                         var saveTo = '*path*/cuts/'+time+'.mp4';
                         if(!nodejs.files.exists(saveTo)){
                             i++;
-                             g_video.cover(time, clip.start, clip.end - clip.start, d.file, saveTo, false);
+                             g_video.cut(time, clip.start, clip.end - clip.start, d.file, saveTo, false);
                         }
                     }
                     toast(i ? `有${i}处正在修复` : '没有丢失');

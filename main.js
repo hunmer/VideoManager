@@ -194,7 +194,6 @@ ipcMain.on("method", async function(event, data){
     var d = data.msg;
     switch (data.type) {
         case 'getResult':
-            send('log', d);
             send('getResult', {name: d.name, ret: eval(d.code)})
             break;
         case 'show':
@@ -212,6 +211,7 @@ ipcMain.on("method", async function(event, data){
                 g_cache.beforeSetBounds = Object.assign({}, bounds);
                 d = Object.assign(bounds, d);
             }
+            if(win.isMaximized()) win.unmaximize();
             win.setBounds(d);
             break;
         case 'pin':
@@ -267,13 +267,16 @@ ipcMain.on("method", async function(event, data){
                     archive.on('error', err => showErr(err));
                     archive.pipe(output);
                     for (var file in d.files) {
-                        var name = files.safePath(d.files[file]);
-                        archive.file(file, { name: name + path.extname(file) });
+                        if(files.exists(file)){
+                            //var name = files.safePath(d.files[file]);
+                            var name = d.files[file];
+                            archive.file(file, { name: name + path.extname(file) });
+                        }
                     }
                     archive.finalize();
                 }
             }, {
-                title: '保存视频压缩包',
+                title: d.title || '选择保存位置',
                 defaultPath: d.fileName,
                 filters: [{
                     name: '压缩文件',
