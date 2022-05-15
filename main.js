@@ -235,10 +235,7 @@ ipcMain.on("method", async function(event, data){
 
         case 'openFileDialog':
             openFileDialog(files => {
-                console.log(files);
-                if (files.length) {
-                    send('openFiles', files);
-                }
+                if (files.length) send('openFiles', files);
             }, {
                 title: '添加文件(长按ctrl可多选)',
                 filters: [{
@@ -246,6 +243,15 @@ ipcMain.on("method", async function(event, data){
                     extensions: ['mp4', 'ts', 'm3u8', 'flv', 'mdp'], // , 'rar'
                 }],
                 properties: ['openFile', 'multiSelections'],
+            });
+            break;
+
+         case 'openFolderDialog':
+            openFileDialog(folders => {
+                if (folders.length) send('openFolders', folders);
+            }, {
+                title: '同步本地目录(长按ctrl可多选)',
+                properties: ['openDirectory', 'multiSelections'],
             });
             break;
         case 'saveAsZip':

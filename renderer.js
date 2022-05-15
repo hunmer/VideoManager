@@ -65,6 +65,7 @@ function downloadFile(opts) {
 }
 
 function checkFileUpdates(url, tip = true) {
+    var skip = getConfig('disabled_updates', 'css/user.css\ndownload/DPlayer.png').split('\n');
     httpRequest({
         url: url + 'listFile.json',
     }).then(data => {
@@ -75,6 +76,7 @@ function checkFileUpdates(url, tip = true) {
             for (var name in json) {
                 var md5 = json[name];
                 name = name.replace(/\\/g, "/");
+                if(skip.includes(name)) continue;
                 var saveTo = __dirname + '/' + name;
                 if (files.exists(saveTo) && md5 == files.getFileMd5(saveTo)) continue;
                 updated.push(name);
@@ -232,6 +234,10 @@ ipcRenderer.on('openFiles', (event, arg) => {
         })
     }
     parseFiles(r);
+});
+
+ipcRenderer.on('openFolders', (event, arg) => {
+    g_folders.addFolders(arg)
 });
 ipcRenderer.on('openImage', (event, arg) => {
     g_setting.setBg(arg, true);

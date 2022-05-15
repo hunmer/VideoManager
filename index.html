@@ -33,6 +33,7 @@
     <link rel="stylesheet" href="css/bootstrap-multiselect.min.css">
     <link rel="stylesheet" href="plugins/datepicker/tempusdominus-bootstrap-4.min.css">
     <link rel="stylesheet" href="css/index.css">
+    <link rel="stylesheet" href="css/user.css">
     <title>视频管理</title>
 </head>
 <body >
@@ -83,47 +84,36 @@
             <span aria-hidden="true">&times;</span>
         </button>
     </div>
-   
-    <div class="modal fade" id="modal_addFiles" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-scrollable">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLabel">添加文件</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class="input-group mb-3">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text">合集名称</span>
-                        </div>
-                        <input type="text" class="form-control" placeholder="" aria-label="" id="input_folderName" aria-describedby="input_folderName">
-                        <button type="button" data-action="modal_folders,#input_folderName" class="btn btn-outline-secondary"><i class="bi bi-list"></i></button>
-                    </div>
-                    <ul class="list-group" id="files_add">
-                        <!-- <li class="list-group-item"></li> -->
-                    </ul>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-action="btn_file_selectAll">全选</button>
-                    <button type="button" class="btn btn-primary disabled" data-action="btn_file_add"><span class="badge badge-success mr-2" id="selected_file_cnt">0</span>添加文件</button>
-                </div>
-            </div>
-        </div>
-    </div>
+
     <div class="d-flex hide" id="wrapper">
         <div class="border-end bg-white" id="sidebar-wrapper">
             <div class="sidebar-heading border-bottom">
                 <input id="searchVideo" class="form-control mr-sm-2" type="search" placeholder="搜索影片" aria-label="Search" oninput="g_video.searchVideo(this.value)">
+<<<<<<< HEAD
+                <div class="d-flex justify-content-around">
+                    <a  type="button" data-action="profile_list" title="切换用户" class="btn">
+                      <i class="bi bi-people"></i>
+                    </a>
+                    <a  type="button" data-action="folders_show" title="本地目录" class="btn">
+                      <i class="bi bi-folder"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="accordion" style="width: 250px;overflow-y: auto;min-height: calc(100vh - 150px);max-height: calc(100vh - 150px);" id="videoList"></div>
+            <div class="hide" style="width: 250px;overflow-y: auto;min-height: calc(100vh - 150px);max-height: calc(100vh - 150px);" id="searchResults"></div>
+=======
             </div>
             <div class="accordion" style="width: 250px;overflow-y: auto;min-height: calc(100vh - 150px);" id="videoList"></div>
             <div class="hide" style="width: 250px;overflow-y: auto;min-height: calc(100vh - 150px);" id="searchResults"></div>
+>>>>>>> a44b4bfbf8a7864186f647daef0a7bdf219a2e1a
 
             <div class="d-flex justify-content-around">
                 <a  type="button" data-action="addfiles" title="添加" class="btn">
                   <i class="bi bi-plus"></i>
                 </a>
+                <!-- <a  type="button" data-action="addfolders" title="添加目录" class="btn">
+                  <i class="bi bi-folder-plus"></i>
+                </a> -->
                 <a  tabindex="0" type="button" title="视图" class="btn" data-toggle="popover" data-placement="top" data-content="">
                   <i class="bi bi-grid-1x2"></i>
                 </a>
@@ -229,11 +219,11 @@
                                 </div>
                                 <div id="tags_rent" class="p-10 col-12"></div>
                                 <div class="row" style="height: calc(100vh - 400px);overflow-y: auto;">
-                                    <div id="tags_all" class="col-6 col-lg-12" style="height: 50%;">
+                                    <div id="tags_all" class="col-6 col-lg-12" style="height: 50%;overflow-y: scroll;">
                                         <button class="btn btn-block btn-link text-center">所有</button>
                                         <div class="tags_content"></div>
                                     </div>
-                                    <div id="tags" class="col-6 col-lg-12"  style="height: 50%;">
+                                    <div id="tags" class="col-6 col-lg-12"  style="height: 50%;overflow-y: scroll;">
                                         <button class="btn btn-block btn-link text-center"  data-toggle="dropdown">标签</button>
                                     <div class="dropdown-menu">
                                         <a class="dropdown-item" data-action="tag_resetSelected">清空</a>
@@ -306,8 +296,10 @@
     <script src="js/event.js"></script>
     <script src="js/list.js"></script>
     <script src="js/filter.js"></script>
-    <script src="js/share.js"></script>
+    <!-- <script src="js/share.js"></script> -->
     <script src="js/hotkey.js"></script>
+    <script src="js/folders.js"></script>
+    <script src="js/profile.js"></script>
     <script src="js/test.js"></script>
     <!-- <script src="plugins/timeline/timeline.js"></script> -->
 </body>
