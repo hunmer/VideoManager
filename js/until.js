@@ -1,4 +1,8 @@
 const APP_VERSION = 'v1.2.5';
+<<<<<<< HEAD
+ const SUPPORTED_FORMAT = ['mp4', 'ts', 'm3u8', 'mdp'];
+=======
+>>>>>>> a44b4bfbf8a7864186f647daef0a7bdf219a2e1a
 // const UPDATE_SCRIPT_URL = 'https://raw.githubusercontent.com/hunmer/videoManager/main/';
 const UPDATE_SCRIPT_URL = 'https://gitee.com/neysummer2000/VideoManager/raw/main/';
 var g_localKey = 'vm_';
@@ -209,6 +213,7 @@ function unescapeHTML(a) {
 }
 
 function clearEventBubble(evt) {
+
     if (evt.stopPropagation) evt.stopPropagation();
     else evt.cancelBubble = true;
     if (evt.preventDefault) evt.preventDefault();
@@ -422,9 +427,13 @@ var PF_SRT = function() {
 }();
 
 function srcollVideo(e, video) {
+    if(e.originalEvent) e = originalEvent;
     if ($('input:focus').length) return;
+    if(!e.ctrlKey && !e.shiftKey && !e.altKey) return;
+
     var d = $(e.target);
     if (d.parents('.dropdown-menu').length) return; // 裁剪列表
+
     if (!video) video = e.currentTarget;
     var duration = video.duration;
     if (!isNaN(duration)) {
@@ -438,9 +447,13 @@ function srcollVideo(e, video) {
             add = duration * 0.01; // 视频的1%
         }
         if (add < 1) add = 1;
+<<<<<<< HEAD
+        add = e.deltaY > 0 ? 0 - add : add;
+=======
         add = e.originalEvent.deltaY > 0 ? 0 - add : add;
+>>>>>>> a44b4bfbf8a7864186f647daef0a7bdf219a2e1a
         video.currentTime += add;
-        clearEventBubble(e);
+       clearEventBubble(e);
     }
 }
 
@@ -501,6 +514,10 @@ var g_cache = {
     filters: [],
     fullScreen: false,
     clipBadges: {},
+<<<<<<< HEAD
+    zIndex: 1050,
+=======
+>>>>>>> a44b4bfbf8a7864186f647daef0a7bdf219a2e1a
 }
 
 function setConfig(k, v) {

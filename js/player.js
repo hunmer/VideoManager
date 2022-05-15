@@ -54,7 +54,7 @@ var g_player = {
             g_player.destrory();
             var config = {
                 hotkey: false,
-                autoplay: true,
+                autoplay: false,
                 volume: 1,
                 container: $('#player')[0],
                 screenshot: true,
@@ -155,7 +155,11 @@ var g_player = {
             _player = new DPlayer(config)
             _player.on('loadeddata', function(e) {
                 g_sub.loadSub(key);
+<<<<<<< HEAD
+                g_player.setCurrentTime(start, getConfig('autoPlayVideo', true));
+=======
                 if (start) _player.video.currentTime = start;
+>>>>>>> a44b4bfbf8a7864186f647daef0a7bdf219a2e1a
                 if(!g_cache.firstLoaded){
                     g_cache.firstLoaded = true;
                     _player.video.play();

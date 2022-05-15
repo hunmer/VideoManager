@@ -1,4 +1,3 @@
-
 var _player;
 var _videos = local_readJson('videos', {});
 
@@ -35,13 +34,20 @@ var g_video = {
 
     },
     removeVideo: function(key, save = true) {
+        if(key == g_video.key){
+            g_player.destrory();
+        }
         delete _videos[key];
         if (save) {
             local_saveJson('videos', _videos);
             this.initVideos();
         }
     },
+<<<<<<< HEAD
+    focusSearch: function() {
+=======
     focusSearch: function(){
+>>>>>>> a44b4bfbf8a7864186f647daef0a7bdf219a2e1a
         toggleSidebar(false);
         $('#searchVideo').focus();
     },
@@ -148,8 +154,10 @@ var g_video = {
                             return parseInt(b1.file.replace(/[^0-9]/ig, '')) - parseInt(a1.file.replace(/[^0-9]/ig, ''));
                         case '片段数':
                             return Object.keys(b1.clips).length - Object.keys(a1.clips).length;
+                        case '时长':
+                            return getVal(b1.meta.duration, 0) - getVal(a1.meta.duration, 0);
                         case '添加日期':
-                            return d1.add - a1.add;
+                            return b1.add - a1.add;
                     }
                 });
 
@@ -175,7 +183,7 @@ var g_video = {
                                 `;
                             r += `<span class="badge badge-danger mr-2${ !c ? ' hide' : ''}">${c}个片段</span>`;
                             r += `<span class="badge badge-primary mr-2${ !d.meta ? ' hide' : ''}">${d.meta ? getTime(d.meta.duration) : ''}</span>`;
-                            r += `<span class="badge badge-success mr-2${ !d.meta ? ' hide' : ''}">${d.meta ? d.meta.quickly.replace('yuv', '') : ''}</span>`;
+                            r += `<span class="badge badge-success mr-2${ !d.meta ? ' hide' : ''}">${d.meta ? d.meta.width+'x'+d.meta.height : ''}</span>`;
                             r += `<p class="card-text">${new Date(d.add).format('yyyy/MM/dd')}</p>
                               </div>
                             </div>`;
@@ -220,7 +228,7 @@ var g_video = {
     },
 
     setStart: function(time, jump = false) {
-        var t = (Number(time) || g_player.getCurrentTime()).toFixed(2);
+        var t = Number(time || g_player.getCurrentTime()).toFixed(2);
         if (t < 0) t = 0;
         this.pos1 = t;
         this.onSetPos();
@@ -228,7 +236,7 @@ var g_video = {
     },
 
     setEnd: function(time, jump = false) {
-        var t = (Number(time) || g_player.getCurrentTime()).toFixed(2);
+        var t = Number(time || g_player.getCurrentTime()).toFixed(2);
         if (t < 0) t = 0;
         this.pos2 = t;
         this.onSetPos();
@@ -243,8 +251,10 @@ var g_video = {
     addPos: function() {
         var self = this;
         if (!this.key) return;
-        this.pos1 = Math.min(this.pos1, this.pos2);
-        this.pos2 = Math.max(this.pos1, this.pos2);
+        if (this.pos2 > -1) {
+            this.pos1 = Math.min(this.pos1, this.pos2);
+            this.pos2 = Math.max(this.pos1, this.pos2);
+        }
         if (this.pos1 == -1) {
             return toast('未设置起点', 'alert-danger');
         }
@@ -275,7 +285,7 @@ var g_video = {
         var time = this.clip;
         if (!_videos[this.key]['clips']) _videos[this.key]['clips'] = {};
         var note = $('#clip_note').val();
-        if(note == '') note = undefined;
+        if (note == '') note = undefined;
         _videos[this.key]['clips'][time] = {
             start: this.pos1,
             end: this.pos2,
@@ -313,7 +323,7 @@ var g_video = {
     },
 
     cut: function(key, start, time, file, saveTo, tip = true) {
-        if (isNaN(time) || time <= 0) return;
+        if (isNaN(time) || time <= 0) return toast('未设置终点');
         ipc_send('cmd', {
             input: file,
             key: key,
@@ -373,7 +383,7 @@ var g_video = {
     },
 
     setClipCover: function(time, url) {
-        domSelector({dbaction: 'loadClip', clip: time}).find('.lazyload').attr('data-src', url).lazyload();
+        domSelector({ dbaction: 'loadClip', clip: time }).find('.lazyload').attr('data-src', url).lazyload();
     },
 
     setVideoCover: function(time, url) {
@@ -382,11 +392,19 @@ var g_video = {
 
     setClipStatus: function(clip, text, style = 'badge-primary') {
         var empty = text == undefined || text == '';
+<<<<<<< HEAD
+        if (g_cache.clipBadges[clip]) {
+            if (empty) {
+                delete g_cache.clipBadges[clip];
+            } else {
+                g_cache.clipBadges[clip] = [text, style];
+=======
         if(g_cache.clipBadges[clip]){
             if(empty){
                 delete g_cache.clipBadges[clip];
             }else{
                  g_cache.clipBadges[clip] = [text, style];
+>>>>>>> a44b4bfbf8a7864186f647daef0a7bdf219a2e1a
             }
         }
         var d = domSelector({ dbaction: 'loadClip', clip: clip });
@@ -397,14 +415,23 @@ var g_video = {
             if (empty) return;
             badge = $(`<span style="position: absolute;bottom:0;right:6px;"></span>`).appendTo(d.find('.card-img-overlay'));
         }
+<<<<<<< HEAD
+        if (empty) {
+=======
         if (empty){
+>>>>>>> a44b4bfbf8a7864186f647daef0a7bdf219a2e1a
             delete g_cache.clipBadges[clip];
             return badge.remove();
         }
         badge.attr('class', `staus badge mr-2 ${style}`).html(text);
     },
+<<<<<<< HEAD
+    reloadVideo: function() {
+        if (this.key) {
+=======
     reloadVideo: function(){
         if(this.key){
+>>>>>>> a44b4bfbf8a7864186f647daef0a7bdf219a2e1a
             this.loadVideo(this.key, g_player.getCurrentTime());
         }
     },
@@ -427,9 +454,9 @@ var g_video = {
                     </div>`;
             i++;
         }
-        if (i == 0){
+        if (i == 0) {
             h = '<h5 class="text-center" style="margin-top: 100px;">还没有任何片段</h5>';
-        }else{
+        } else {
             h += '</div>'
         }
         $('[data-video].card_active').find('.badge-danger').html(i + '个片段').toggleClass('hide', i == 0);
@@ -438,7 +465,11 @@ var g_video = {
 
         // 恢复badge
         setTimeout(() => {
+<<<<<<< HEAD
+            for (var time in g_cache.clipBadges) {
+=======
              for(var time in g_cache.clipBadges){
+>>>>>>> a44b4bfbf8a7864186f647daef0a7bdf219a2e1a
                 var d = g_cache.clipBadges[time];
                 g_video.setClipStatus(time, d[0], d[1]);
             }
@@ -485,6 +516,20 @@ var g_video = {
         this.clearInput();
     },
 
+<<<<<<< HEAD
+    nextVideo: function() {
+        var target = domSelector({ action: 'loadVideo', video: this.key }, '.card_active').next();
+        if (target.length) {
+            target.click();
+        }
+    },
+
+    prevVideo: function() {
+        var target = domSelector({ action: 'loadVideo', video: this.key }, '.card_active').prev();
+        if (target.length) {
+            target.click();
+        }
+=======
     nextVideo: function(){
        var target = domSelector({ action: 'loadVideo', video: this.key }, '.card_active').next();
        if(target.length){
@@ -497,6 +542,7 @@ var g_video = {
        if(target.length){
         target.click();
        }
+>>>>>>> a44b4bfbf8a7864186f647daef0a7bdf219a2e1a
     },
 
     loadVideo: function(key, start = 0) {
@@ -505,6 +551,19 @@ var g_video = {
 
         var d = this.getVideo(key);
         if (!d) return;
+<<<<<<< HEAD
+        // g_sub.loadSub(key);
+        this.clearInput();
+
+        g_config.lastVideo = key;
+        // 记录最后播放时间
+        var t = new Date().getTime();
+        if (!g_config.last) g_config.last = {};
+        g_config.last[key] = t;
+        for (var i = Object.keys(g_config.last).length; i > 20; i--) delete g_config.last[key];
+        local_saveJson('config', g_config);
+        d.last = t;
+=======
             // g_sub.loadSub(key);
             this.clearInput();
 
@@ -516,13 +575,25 @@ var g_video = {
             for (var i = Object.keys(g_config.last).length; i > 20; i--) delete g_config.last[key];
             local_saveJson('config', g_config);
             d.last = t;
+>>>>>>> a44b4bfbf8a7864186f647daef0a7bdf219a2e1a
 
-            this.key = key;
-            this.data = d;
-            g_player.load(d.file, key, start);
-            $('#sidebar-wrapper').find('.card_active').removeClass('card_active');
-            domSelector({ action: 'loadVideo', video: key }).addClass('card_active');
+        this.key = key;
+        this.data = d;
+        g_player.load(d.file, key, start);
+        $('#sidebar-wrapper').find('.card_active').removeClass('card_active');
+        domSelector({ action: 'loadVideo', video: key }).addClass('card_active');
 
+<<<<<<< HEAD
+        $('[data-action="resetPos"]').addClass('hide');
+        this.initPos();
+        setHeight($('.div_video_side_list'));
+        if (!d.meta) {
+            this.getMeta(key);
+        } else {
+            this.loadMeta(d.meta);
+        }
+        this.saveVideos(false);
+=======
             $('[data-action="resetPos"]').addClass('hide');
             this.initPos();
             setHeight($('.div_video_side_list'));
@@ -532,6 +603,7 @@ var g_video = {
                 this.loadMeta(d.meta);
             }
             this.saveVideos(false);
+>>>>>>> a44b4bfbf8a7864186f647daef0a7bdf219a2e1a
     },
 
     getMeta: function(key, full = false) {
@@ -541,7 +613,7 @@ var g_video = {
             input: d.file,
             key: key,
             callback: (k, data) => {
-                if(!full){
+                if (!full) {
                     var f = data.format;
                     var v = data.streams[0];
                     d.meta = {
@@ -552,7 +624,7 @@ var g_video = {
                     }
                     self.saveVideos(false);
                     self.loadMeta(d.meta);
-                }else{
+                } else {
                     // 完整信息展示
                     self.loadMeta(data);
                 }
@@ -561,19 +633,29 @@ var g_video = {
     },
 
     loadMeta: function(meta) {
-        if(meta.duration){
+        if (meta.duration) {
             var card = $('[data-video].card_active');
             card.find('.badge-primary').html(getTime(meta.duration)).removeClass('hide');
+<<<<<<< HEAD
+            card.find('.badge-success').html(meta.width + 'x' + meta.height).removeClass('hide');
+            h = `<ul class="list-group list-group-flush">
+=======
             card.find('.badge-success').html(meta.width+'x'+meta.height).removeClass('hide');
              h =  `<ul class="list-group list-group-flush">
+>>>>>>> a44b4bfbf8a7864186f647daef0a7bdf219a2e1a
               <li class="list-group-item">分辨率: ${meta.width + 'x' + meta.height}</li>
               <li class="list-group-item">时长: ${getTime(parseInt(meta.duration), '小时', '分', '秒', false)}</li>
               <li class="list-group-item">大小: ${renderSize(meta.size)}</li>
             </ul>
             <a class="btn btn-link text-center btn-block" onclick="g_video.getMeta(g_video.key, true)">加载更多</a>
             `;
+<<<<<<< HEAD
+        } else {
+            h = '<pre style="height: calc(100vh - 150px);overflow-y: auto;">' + JSON.stringify(meta, null, 1) + '</pre>';
+=======
         }else{
             h = '<pre style="height: calc(100vh - 150px);overflow-y: auto;">'+JSON.stringify(meta, null, 1)+'</pre>';
+>>>>>>> a44b4bfbf8a7864186f647daef0a7bdf219a2e1a
         }
         $('#_detail').html(h);
     },
@@ -584,14 +666,54 @@ var g_video = {
 
     reviceFiles: function(files, overwrite = false) {
         $('#file-drop').toggleClass('hide', true);
-        var modal = $('#modal_addFiles').modal('show');
-        modal.find('input').focus();
-        modal.find('.modal-title').html(overwrite ? '覆盖文件' : '添加文件')
+
         var h = '';
         for (var file of files) {
-            h += `<li data-action="files_select" class="list-group-item" data-file="${file}">${file}</li>`;
+            h += `<li data-action="files_select" class="list-group-item active" data-file="${file}">${file}</li>`;
         }
-        $('#files_add').html(h).find('input').focus();
+
+        buildModal(`
+             <div class="input-group mb-3">
+                <div class="input-group-prepend">
+                    <span class="input-group-text">合集名称</span>
+                </div>
+                <input type="text" class="form-control" placeholder="" aria-label="" id="input_folderName" aria-describedby="input_folderName">
+                <button type="button" data-action="modal_folders,#input_folderName" class="btn btn-outline-secondary"><i class="bi bi-list"></i></button>
+            </div>
+            <ul class="list-group" id="files_add">
+            ${h}
+            </ul>
+            `, {
+            id: 'modal_addFiles',
+            title: '添加文件',
+            once: true,
+            width: '80%',
+            btns: [{
+                id: 'add',
+                text: '<span class="badge badge-success mr-2" id="selected_file_cnt">0</span>添加文件</button>',
+                class: 'disabled btn-primary',
+            },{
+                id: 'selectAll',
+                text: '全选',
+                class: 'btn-warning',
+            }],
+            onBtnClick: (config, btn) => {
+                switch (btn.id) {
+                    case 'btn_selectAll':
+                        doAction(null, 'btn_file_selectAll');
+                    break;
+
+                    case 'btn_add':
+                        doAction(null, 'btn_file_add')
+                        break;
+                }
+            },
+            onShow: modal => {
+                modal.find('input').focus();
+                g_video.onSelectFile();
+            }
+        });
+
     },
     onSelectFile: function() {
         var cnt = $('[data-action="files_select"].active').length;
@@ -599,33 +721,33 @@ var g_video = {
         $('[data-action="btn_file_add"]').toggleClass('disabled', cnt == 0);
     },
 
-    addFiles: function(files, folder = '') {
+    addFiles: function(files, folder = '', props = {}) {
         var exists = [];
         var saved = 0;
+        var h = '';
         for (var file of files) {
             var key = SparkMD5.hash(file);
-            if (_videos[key]) {
+            var existed = _videos[key];
+            if (existed) {
                 exists.push(file);
             } else {
                 saved++;
-                _videos[key] = {
+                _videos[key] = Object.assign(props, {
                     file: file,
                     tags: [],
                     folder: folder,
                     add: new Date().getTime(),
                     clips: {},
-                }
+                });
                 // TODO 队列
                 this.videoCover(key, false);
             }
+            h += `<a href="javascript: g_video.loadVideo('${key}')" class="text-${existed ? 'danger' : 'primary'}">${getFileName(file, true)}</a></br>`;
         }
         if (saved) {
             this.saveVideos();
         }
-        if (exists.length) {
-            //this.reviceFiles(exists, true);
-            toast('有 ' + exists.length + ' 个文件已经存在', 'alert-danger');
-        }
+        toast(`成功添加了${saved}个视频${exists.length ? `,【${exists.length}】个文件已经存在!` : ''}</br>${h}`, 'alert-success', 6000);
     },
     saveVideos: function(init = true) {
         local_saveJson('videos', _videos);

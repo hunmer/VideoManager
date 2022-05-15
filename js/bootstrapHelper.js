@@ -1,5 +1,9 @@
 window.prompt = function(text, opts) {
+<<<<<<< HEAD
+    return buildModal(`<textarea class="form-control" placeholder="${opts.placeholder || ''}" rows="10">${text}</textarea>`, Object.assign({
+=======
     buildModal(`<textarea class="form-control" placeholder="${opts.placeholder || ''}" rows="10">${text}</textarea>`, Object.assign({
+>>>>>>> a44b4bfbf8a7864186f647daef0a7bdf219a2e1a
         id: 'modal_prompt',
         title: '请输入',
         onBtnClick: (config, btn) => {
@@ -11,7 +15,7 @@ window.prompt = function(text, opts) {
 }
 
 window.confirm = function(text, opts) {
-    buildModal(text, Object.assign({
+    return buildModal(text, Object.assign({
         id: 'modal_confirm',
         title: '询问',
         onBtnClick: (config, btn) => {

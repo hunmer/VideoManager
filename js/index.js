@@ -33,7 +33,7 @@ $(function() {
                 case '排序':
                     var h = '';
                     var sort = g_config.folder_sort || '名称';
-                    for (var type of ['名称', '时长', '片段数', '替换文本', '自定义']) {
+                    for (var type of ['名称', '时长', '添加日期', '片段数', '替换文本', '自定义']) {
                         h += `<a data-action="folder_sort,${type}" href="#" class="badge badge-${type == sort ? 'primary' : 'secondary'} mr-2">${type}</a>`;
                     }
                     h += '<hr class="border-bottom">';
@@ -168,6 +168,9 @@ $(function() {
         .on('mouseout', '#preview_video_popup', function(event) {
             hidePreview();
         })
+        .on('show.bs.modal', function(event) {
+            event.target.style.zIndex = ++g_cache.zIndex; // 显示之前置顶
+        })
         .on('shown.bs.modal', function(event) {
             g_player.tryStop();
             var i = 4;
@@ -180,6 +183,8 @@ $(function() {
             var modal = event.target;
             if (modal.dataset.destroy) {
                 modal.remove();
+            }else{
+                modal.zIndex = 1050; // 取消置顶
             }
         })
         .on('show.bs.collapse', '.collapse', function(event) {
@@ -283,6 +288,9 @@ function doAction(dom, action, event) {
         case 'addfiles':
             ipc_send('openFileDialog', { multi: true });
             break;
+        case 'addfolders':
+            ipc_send('openFolderDialog', { multi: true });
+            break;
         case 'pin':
             ipc_send('pin');
             break;
@@ -298,7 +306,12 @@ function doAction(dom, action, event) {
                         <img src="favicon.png" style="width: 100px">
                         <h4><a class="badge badge-primary" style="font-size: 2rem">${APP_VERSION}</a></h4>
                         <div  style="margin-top: 20px">
+<<<<<<< HEAD
+                            <h6 class="text-right text-danger">有bug按F12截图红色文字的错误信息(Console)</h6>
+                            <h6 class="text-right">2022年5月15日 18点33分</h6>
+=======
                             <h6 class="text-right">2022年5月10日 03点32分</h6>
+>>>>>>> a44b4bfbf8a7864186f647daef0a7bdf219a2e1a
                             <h6 class="text-right">by <a href="javascript: ipc_send('url', 'https://github.com/hunmer/')">@hunmer</a></h6>
                             
                         </div>
@@ -400,6 +413,7 @@ function doAction(dom, action, event) {
                 ipc_send('videoThumb', { file: g_player.getUrl(), key: key });
             }
             break;
+
         case 'openFile':
         case 'openFolder':
             ipc_send('openFile', dom.dataset.file)
@@ -424,7 +438,7 @@ function doAction(dom, action, event) {
                 title: '确定删除吗?',
                 callback: (id) => {
                     if (id == 'ok') {
-                        local_saveJson('videos', {});
+                        local_clearAll();
                         location.reload();
                     }
                     return true;
@@ -466,7 +480,6 @@ function doAction(dom, action, event) {
             var files = [];
             var a = $('[data-action="files_select"].active');
             for (var d of a) files.push(d.dataset.file);
-            toast('成功添加了 ' + a.length + ' 个视频', 'alert-success');
             g_video.addFiles(files, $('#input_folderName').val());
             $('#modal_addFiles').modal('hide');
             break;
