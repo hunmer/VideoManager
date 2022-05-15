@@ -27,11 +27,7 @@ var g_sub = {
             }
         });
         registerAction('sub_refresh', (dom, action) => {
-<<<<<<< HEAD
             g_sub.loadSub(g_video.key, false);
-=======
-            g_sub.loadSub(g_video.key);
->>>>>>> a44b4bfbf8a7864186f647daef0a7bdf219a2e1a
 
         });
         registerAction('sub_saveSub', (dom, action) => {

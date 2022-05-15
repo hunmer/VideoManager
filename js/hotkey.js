@@ -394,13 +394,9 @@ var g_hotkey = {
                         h += `</tbody>
                             </table>`;
                         confirm(h, {
-<<<<<<< HEAD
                             id: 'modal_codes',
                             title: '常用代码',
                             once: true,
-=======
-                            title: '常用代码',
->>>>>>> a44b4bfbf8a7864186f647daef0a7bdf219a2e1a
                             btns: [{
                                 id: 'issure',
                                 text: '请求更多',

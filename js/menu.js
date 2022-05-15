@@ -209,11 +209,7 @@ var g_menu = {
                              g_video.cut(time, clip.start, clip.end - clip.start, d.file, saveTo, false);
                         }
                     }
-<<<<<<< HEAD
                     toast(i > 0? `有${i}处正在修复` : '没有丢失');
-=======
-                    toast(i ? `有${i}处正在修复` : '没有丢失');
->>>>>>> a44b4bfbf8a7864186f647daef0a7bdf219a2e1a
                     break;
                 case 'video_addClipsToList':
                     var i = 0
@@ -315,13 +311,9 @@ var g_menu = {
         }
 
         g_menu.key = key;
-<<<<<<< HEAD
         if(opts.onShow){
             if(opts.onShow(key, dom) === false) return;
         }
-=======
-        opts.onShow && opts.onShow(key);
->>>>>>> a44b4bfbf8a7864186f647daef0a7bdf219a2e1a
         var par = $('#' + id).attr('data-key', key).show();
         var div = par.find('.menu');
         var i = div.width() / 2;

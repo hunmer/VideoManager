@@ -43,11 +43,7 @@ var g_video = {
             this.initVideos();
         }
     },
-<<<<<<< HEAD
     focusSearch: function() {
-=======
-    focusSearch: function(){
->>>>>>> a44b4bfbf8a7864186f647daef0a7bdf219a2e1a
         toggleSidebar(false);
         $('#searchVideo').focus();
     },
@@ -264,7 +260,6 @@ var g_video = {
         if (this.pos2 != -1 && this.pos1 == this.pos2) {
             return toast('至少要有1秒', 'alert-danger');
         }
-
         loadTab('list');
         var tag = $('#input_tag').val();
         if (tag != '') {
@@ -392,19 +387,11 @@ var g_video = {
 
     setClipStatus: function(clip, text, style = 'badge-primary') {
         var empty = text == undefined || text == '';
-<<<<<<< HEAD
         if (g_cache.clipBadges[clip]) {
             if (empty) {
                 delete g_cache.clipBadges[clip];
             } else {
                 g_cache.clipBadges[clip] = [text, style];
-=======
-        if(g_cache.clipBadges[clip]){
-            if(empty){
-                delete g_cache.clipBadges[clip];
-            }else{
-                 g_cache.clipBadges[clip] = [text, style];
->>>>>>> a44b4bfbf8a7864186f647daef0a7bdf219a2e1a
             }
         }
         var d = domSelector({ dbaction: 'loadClip', clip: clip });
@@ -415,23 +402,14 @@ var g_video = {
             if (empty) return;
             badge = $(`<span style="position: absolute;bottom:0;right:6px;"></span>`).appendTo(d.find('.card-img-overlay'));
         }
-<<<<<<< HEAD
         if (empty) {
-=======
-        if (empty){
->>>>>>> a44b4bfbf8a7864186f647daef0a7bdf219a2e1a
             delete g_cache.clipBadges[clip];
             return badge.remove();
         }
         badge.attr('class', `staus badge mr-2 ${style}`).html(text);
     },
-<<<<<<< HEAD
     reloadVideo: function() {
         if (this.key) {
-=======
-    reloadVideo: function(){
-        if(this.key){
->>>>>>> a44b4bfbf8a7864186f647daef0a7bdf219a2e1a
             this.loadVideo(this.key, g_player.getCurrentTime());
         }
     },
@@ -465,11 +443,7 @@ var g_video = {
 
         // 恢复badge
         setTimeout(() => {
-<<<<<<< HEAD
             for (var time in g_cache.clipBadges) {
-=======
-             for(var time in g_cache.clipBadges){
->>>>>>> a44b4bfbf8a7864186f647daef0a7bdf219a2e1a
                 var d = g_cache.clipBadges[time];
                 g_video.setClipStatus(time, d[0], d[1]);
             }
@@ -516,7 +490,6 @@ var g_video = {
         this.clearInput();
     },
 
-<<<<<<< HEAD
     nextVideo: function() {
         var target = domSelector({ action: 'loadVideo', video: this.key }, '.card_active').next();
         if (target.length) {
@@ -529,20 +502,6 @@ var g_video = {
         if (target.length) {
             target.click();
         }
-=======
-    nextVideo: function(){
-       var target = domSelector({ action: 'loadVideo', video: this.key }, '.card_active').next();
-       if(target.length){
-        target.click();
-       }
-    },
-
-     prevVideo: function(){
-       var target = domSelector({ action: 'loadVideo', video: this.key }, '.card_active').prev();
-       if(target.length){
-        target.click();
-       }
->>>>>>> a44b4bfbf8a7864186f647daef0a7bdf219a2e1a
     },
 
     loadVideo: function(key, start = 0) {
@@ -551,7 +510,6 @@ var g_video = {
 
         var d = this.getVideo(key);
         if (!d) return;
-<<<<<<< HEAD
         // g_sub.loadSub(key);
         this.clearInput();
 
@@ -563,19 +521,6 @@ var g_video = {
         for (var i = Object.keys(g_config.last).length; i > 20; i--) delete g_config.last[key];
         local_saveJson('config', g_config);
         d.last = t;
-=======
-            // g_sub.loadSub(key);
-            this.clearInput();
-
-            g_config.lastVideo = key;
-            // 记录最后播放时间
-            var t = new Date().getTime();
-            if (!g_config.last) g_config.last = {};
-            g_config.last[key] = t;
-            for (var i = Object.keys(g_config.last).length; i > 20; i--) delete g_config.last[key];
-            local_saveJson('config', g_config);
-            d.last = t;
->>>>>>> a44b4bfbf8a7864186f647daef0a7bdf219a2e1a
 
         this.key = key;
         this.data = d;
@@ -583,7 +528,6 @@ var g_video = {
         $('#sidebar-wrapper').find('.card_active').removeClass('card_active');
         domSelector({ action: 'loadVideo', video: key }).addClass('card_active');
 
-<<<<<<< HEAD
         $('[data-action="resetPos"]').addClass('hide');
         this.initPos();
         setHeight($('.div_video_side_list'));
@@ -593,17 +537,6 @@ var g_video = {
             this.loadMeta(d.meta);
         }
         this.saveVideos(false);
-=======
-            $('[data-action="resetPos"]').addClass('hide');
-            this.initPos();
-            setHeight($('.div_video_side_list'));
-            if (!d.meta) {
-                this.getMeta(key);
-            } else {
-                this.loadMeta(d.meta);
-            }
-            this.saveVideos(false);
->>>>>>> a44b4bfbf8a7864186f647daef0a7bdf219a2e1a
     },
 
     getMeta: function(key, full = false) {
@@ -636,26 +569,16 @@ var g_video = {
         if (meta.duration) {
             var card = $('[data-video].card_active');
             card.find('.badge-primary').html(getTime(meta.duration)).removeClass('hide');
-<<<<<<< HEAD
             card.find('.badge-success').html(meta.width + 'x' + meta.height).removeClass('hide');
             h = `<ul class="list-group list-group-flush">
-=======
-            card.find('.badge-success').html(meta.width+'x'+meta.height).removeClass('hide');
-             h =  `<ul class="list-group list-group-flush">
->>>>>>> a44b4bfbf8a7864186f647daef0a7bdf219a2e1a
               <li class="list-group-item">分辨率: ${meta.width + 'x' + meta.height}</li>
               <li class="list-group-item">时长: ${getTime(parseInt(meta.duration), '小时', '分', '秒', false)}</li>
               <li class="list-group-item">大小: ${renderSize(meta.size)}</li>
             </ul>
             <a class="btn btn-link text-center btn-block" onclick="g_video.getMeta(g_video.key, true)">加载更多</a>
             `;
-<<<<<<< HEAD
         } else {
             h = '<pre style="height: calc(100vh - 150px);overflow-y: auto;">' + JSON.stringify(meta, null, 1) + '</pre>';
-=======
-        }else{
-            h = '<pre style="height: calc(100vh - 150px);overflow-y: auto;">'+JSON.stringify(meta, null, 1)+'</pre>';
->>>>>>> a44b4bfbf8a7864186f647daef0a7bdf219a2e1a
         }
         $('#_detail').html(h);
     },
