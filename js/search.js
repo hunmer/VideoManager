@@ -264,27 +264,38 @@ g_video.onSearchClip = function() {
 }
 
 g_video.modal_tag = function(selected, callback) {
+    modal_listSelector({
+        title: '选择标签',
+        source: g_tag.all,
+        selected: selected,
+        callback: tags => callback(tags)
+    });
+
+   
+}
+
+function modal_listSelector(opts){
     var h = `
     <div class="input-group mb-3">
       <div class="input-group-prepend">
         <span class="input-group-text">搜索</span>
       </div>
-      <input type="text" class="form-control" placeholder="搜索标签(支持【首字/全拼】拼音" aria-label="" id="input_searchTag">
+      <input type="text" class="form-control" placeholder="搜索(支持【首字/全拼】拼音" aria-label="" id="input_searchTag">
     </div>
 
     <ul class="list-group">`;
-    for (var tag in g_tag.all) {
+    for (var tag in opts.source) {
         h += `
-                <li onclick="this.classList.toggle('active')" class="list-group-item d-flex justify-content-between align-items-center${selected.includes(tag) ? ' active' : ''}"  data-value="${tag}">
-                    ${tag}
-                    <span class="badge badge-warning badge-pill">${g_tag.all[tag]}</span>
-                  </li>
-                `;
+            <li onclick="this.classList.toggle('active')" class="list-group-item d-flex justify-content-between align-items-center${opts.selected.includes(tag) ? ' active' : ''}"  data-value="${tag}">
+                ${tag}
+                <span class="badge badge-warning badge-pill">${opts.source[tag]}</span>
+              </li>
+            `;
     }
     h += '</ul>';
     confirm(h, {
         id: 'modal_tags',
-        title: '选择标签',
+        title: opts.title,
         callback: (id) => {
             if (id == 'ok') {
                 var tags = [];
@@ -293,7 +304,7 @@ g_video.modal_tag = function(selected, callback) {
                 }
                 var s = $('#modal_tags input').val();
                 if (s != '') tags.push(s);
-                callback(tags);
+                opts.callback(tags);
             }
             return true;
         },
@@ -302,7 +313,7 @@ g_video.modal_tag = function(selected, callback) {
                 var s = this.value;
                 var py = PinYinTranslate.start(s);
                 var sz = PinYinTranslate.sz(s);
-                for (var d of $('#modal_confirm .list-group-item')) {
+                for (var d of $('#modal_tags .list-group-item')) {
                     var t = d.dataset.value;
                     var b = t.indexOf(s) != -1 || PinYinTranslate.start(t).indexOf(py) != -1 || PinYinTranslate.sz(t).indexOf(sz) != -1;
                     $(d).removeClass('active').toggleClass('hide', !b);

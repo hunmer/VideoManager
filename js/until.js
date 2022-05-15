@@ -8,6 +8,24 @@ var g_config = local_readJson('config', {
     previewMs_clip: 500,
     previewMs_search: 2000,
 });
+
+function playSound(src){
+    $('#soundTip').attr('src', src)[0].play();
+}
+
+ function triggerEvent(type, data, callback) {
+    // console.log(type, data);
+    g_plugin.callEvent(type, data, callback);
+}
+
+
+function guid() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+        var r = Math.random() * 16 | 0,
+            v = c == 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+}
 var MODAL_HTML = (id, opts) => {
     opts = Object.assign({
         autoDestroy: false,
@@ -350,7 +368,11 @@ function getVal(value, defaultV) {
 
 function getFileName(s, ext = false) {
     var name = typeof(s) == 'string' ? s.split('\\').pop() : '';
-    if (!ext) name = name.split('.')[0];
+    if (!ext){
+        var a = name.split('.');
+        a.pop();
+        name = a.join('.');
+    }
     return name;
 }
 
@@ -579,11 +601,18 @@ function ipc_send(type, msg) {
 }
 
 function toast(msg, style = 'alert-info', time = 3000) {
-    var dom = $('.alert');
-    dom.removeClass(dom.attr('data-style')).addClass(style).attr('data-style', style);
-    dom.removeClass('hide').find('.text').html(msg);
-    if (g_cache.toastTimer) clearInterval(g_cache.toastTimer);
-    g_cache.toastTimer = setInterval(() => {
-        dom.addClass('hide');
-    }, time);
+     triggerEvent('onToastMessage', {
+        msg: msg,
+        style: style,
+        time: time,
+     }, data => {
+        var {msg, style, time} = data;
+        var dom = $('.alert');
+        dom.removeClass(dom.attr('data-style')).addClass(style).attr('data-style', style);
+        dom.removeClass('hide').find('.text').html(msg);
+        if (g_cache.toastTimer) clearInterval(g_cache.toastTimer);
+        g_cache.toastTimer = setInterval(() => {
+            dom.addClass('hide');
+        }, time);
+     });
 }

@@ -309,6 +309,10 @@ function doFFMPEG(opts, callback) {
                             });
                         }
                     }
+
+                    triggerEvent('afterCutVideo', {
+                        opts: opts
+                    });
                     setText('任务完成', 'badge-success');
                     callback();
                 })

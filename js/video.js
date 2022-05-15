@@ -10,6 +10,7 @@ var g_video = {
         var self = this;
         if (self.inited) return;
         self.inited = true;
+        self.initEvent();
         g_tag.preInit();
         $('#input_tag').on('keydown', function(e) {
             if (e.keyCode == 13) {
@@ -24,7 +25,10 @@ var g_video = {
             self.loadVideo(g_config.lastVideo, true);
         }
     },
-
+    initEvent: function() {
+        var self = this;
+        
+    },
     initTagsFolder: function() {
         var h = ``;
         for (var name of []) {
@@ -34,7 +38,7 @@ var g_video = {
 
     },
     removeVideo: function(key, save = true) {
-        if(key == g_video.key){
+        if (key == g_video.key) {
             g_player.destrory();
         }
         delete _videos[key];
@@ -224,19 +228,29 @@ var g_video = {
     },
 
     setStart: function(time, jump = false) {
-        var t = Number(time || g_player.getCurrentTime()).toFixed(2);
-        if (t < 0) t = 0;
-        this.pos1 = t;
-        this.onSetPos();
-        jump && g_player.setCurrentTime(t);
+        triggerEvent('onSetPosStart', {
+            val: Number(time || g_player.getCurrentTime()).toFixed(2),
+            jump: jump,
+        }, data => {
+            var t = data.val;
+            if (t < 0) t = 0;
+            g_video.pos1 = t;
+            g_video.onSetPos();
+            data.jump && g_player.setCurrentTime(t);
+        });
     },
 
     setEnd: function(time, jump = false) {
-        var t = Number(time || g_player.getCurrentTime()).toFixed(2);
-        if (t < 0) t = 0;
-        this.pos2 = t;
-        this.onSetPos();
-        jump && g_player.setCurrentTime(t);
+        triggerEvent('onSetPosEnd', {
+            val: Number(time || g_player.getCurrentTime()).toFixed(2),
+            jump: jump,
+        }, data => {
+            var t = data.val;
+            if (t < 0) t = 0;
+            g_video.pos2 = t;
+            g_video.onSetPos();
+            data.jump && g_player.setCurrentTime(t);
+        });
     },
 
     onSetPos: function() {
@@ -505,38 +519,42 @@ var g_video = {
     },
 
     loadVideo: function(key, start = 0) {
-        loadTab('list');
-        g_sub.unlinkTarget();
+        triggerEvent('onLoadVideo', {
+            key: key,
+            start: start,
+        }, data => {
+            var { key, start } = data;
+            var self = g_video;
+            var d = self.getVideo(key);
+            if (!d) return;
+            loadTab('list');
+            g_sub.unlinkTarget();
+            self.clearInput();
+            g_config.lastVideo = key;
+            // 记录最后播放时间
+            var t = new Date().getTime();
+            if (!g_config.last) g_config.last = {};
+            g_config.last[key] = t;
+            for (var i = Object.keys(g_config.last).length; i > 20; i--) delete g_config.last[key];
+            local_saveJson('config', g_config);
+            d.last = t;
 
-        var d = this.getVideo(key);
-        if (!d) return;
-        // g_sub.loadSub(key);
-        this.clearInput();
+            self.key = key;
+            self.data = d;
+            g_player.load(d.file, key, start);
+            $('#sidebar-wrapper').find('.card_active').removeClass('card_active');
+            domSelector({ action: 'loadVideo', video: key }).addClass('card_active');
 
-        g_config.lastVideo = key;
-        // 记录最后播放时间
-        var t = new Date().getTime();
-        if (!g_config.last) g_config.last = {};
-        g_config.last[key] = t;
-        for (var i = Object.keys(g_config.last).length; i > 20; i--) delete g_config.last[key];
-        local_saveJson('config', g_config);
-        d.last = t;
-
-        this.key = key;
-        this.data = d;
-        g_player.load(d.file, key, start);
-        $('#sidebar-wrapper').find('.card_active').removeClass('card_active');
-        domSelector({ action: 'loadVideo', video: key }).addClass('card_active');
-
-        $('[data-action="resetPos"]').addClass('hide');
-        this.initPos();
-        setHeight($('.div_video_side_list'));
-        if (!d.meta) {
-            this.getMeta(key);
-        } else {
-            this.loadMeta(d.meta);
-        }
-        this.saveVideos(false);
+            $('[data-action="resetPos"]').addClass('hide');
+            self.initPos();
+            setHeight($('.div_video_side_list'));
+            if (!d.meta) {
+                self.getMeta(key);
+            } else {
+                self.loadMeta(d.meta);
+            }
+            self.saveVideos(false);
+        });
     },
 
     getMeta: function(key, full = false) {
@@ -615,7 +633,7 @@ var g_video = {
                 id: 'add',
                 text: '<span class="badge badge-success mr-2" id="selected_file_cnt">0</span>添加文件</button>',
                 class: 'disabled btn-primary',
-            },{
+            }, {
                 id: 'selectAll',
                 text: '全选',
                 class: 'btn-warning',
@@ -624,7 +642,7 @@ var g_video = {
                 switch (btn.id) {
                     case 'btn_selectAll':
                         doAction(null, 'btn_file_selectAll');
-                    break;
+                        break;
 
                     case 'btn_add':
                         doAction(null, 'btn_file_add')

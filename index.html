@@ -37,9 +37,7 @@
     <title>视频管理</title>
 </head>
 <body >
-
-      
-
+    <audio id='soundTip' autoplay></audio>
     <div id="dragBar" style="-webkit-app-region: drag;pointer-events: none !important;position:fixed;top: 0;left:0;width: 100%;height: 15px;z-index: 99999;"></div>
     <div id="ftb"  style="position: fixed;z-index: 1;right: 10px;bottom: 10px;">
         <button type="button" data-action="showlist" class="btn btn-outline-primary">
@@ -144,6 +142,7 @@
                             <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-expanded="false">设置</a>
                             <div class="dropdown-menu" aria-labelledby="navbarDropdown">
                                 <a class="dropdown-item" data-action="modal_hotkey">快捷键</a>
+                                <a class="dropdown-item" data-action="modal_plugin">插件</a>
                                 <div class="dropdown-divider"></div>
                                 <a class="dropdown-item" data-action="setting">更多设置</a>
                             </div>
@@ -264,7 +263,7 @@
             </div>
         </div>
     </div>
-    <script src="js/jquery.slim.min.js"></script>
+    <script src="js/jquery.min.js"></script>
     <script src="js/until.js"></script>
     <script src="js/style.js"></script>
     <script src="renderer.js"></script>
@@ -276,17 +275,18 @@
     <script src="plugins/datepicker/moment.min.js"></script>
     <script src="plugins/datepicker/lang/zh-cn.js"></script>
     <script src="plugins/datepicker/tempusdominus-bootstrap-4.min.js"></script>
+    <script src="js/menu.js"></script>
     <script src="js/select.js"></script>
     <script src="js/md5.js"></script>
     <script src="js/pinyin.js"></script>
     <script src="js/setting.js"></script>
+    <script src="js/plugins.js"></script>
     <script src="js/player.js"></script>
     <script src="js/index.js"></script>
     <script src="js/sub.js"></script>
     <script src="js/tags.js"></script>
     <script src="js/video.js"></script>
     <script src="js/search.js"></script>
-    <script src="js/menu.js"></script>
     <script src="js/event.js"></script>
     <script src="js/list.js"></script>
     <script src="js/filter.js"></script>

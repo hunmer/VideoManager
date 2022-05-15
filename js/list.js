@@ -45,17 +45,14 @@ var g_list = {
                 	<div class="ts _videolist_show hide">
                 		<button type="button" class="btn btn-primary" data-action="collection_toSRT">批量字幕</button>
                 	</div>
-
                 	<div class="ts _cliplist_show hide">
                 		<button type="button" class="btn btn-primary" data-action="collection_zip">另存压缩包</button>
                 	</div>
-
                     <button type="button" class="btn btn-danger" data-action="collection_clear">全部清空</button>
                 </div>
             </div>
         </div>
     </div>`).appendTo('body');
-
 		modal.find('a[data-toggle="tab"]').on('shown.bs.tab', function (event) {
 		  var classes = event.target.id.replace('-tab', '_show');
 		  for(var d of modal.find('.ts')){

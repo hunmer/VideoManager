@@ -306,14 +306,9 @@ function doAction(dom, action, event) {
                         <img src="favicon.png" style="width: 100px">
                         <h4><a class="badge badge-primary" style="font-size: 2rem">${APP_VERSION}</a></h4>
                         <div  style="margin-top: 20px">
-<<<<<<< HEAD
                             <h6 class="text-right text-danger">有bug按F12截图红色文字的错误信息(Console)</h6>
-                            <h6 class="text-right">2022年5月15日 18点33分</h6>
-=======
-                            <h6 class="text-right">2022年5月10日 03点32分</h6>
->>>>>>> a44b4bfbf8a7864186f647daef0a7bdf219a2e1a
+                            <h6 class="text-right">2022年5月16日 01点37分</h6>
                             <h6 class="text-right">by <a href="javascript: ipc_send('url', 'https://github.com/hunmer/')">@hunmer</a></h6>
-                            
                         </div>
                     </div>
                 </div>
