@@ -307,7 +307,7 @@ function doAction(dom, action, event) {
                         <h4><a class="badge badge-primary" style="font-size: 2rem">${APP_VERSION}</a></h4>
                         <div  style="margin-top: 20px">
                             <h6 class="text-right text-danger">有bug按F12截图红色文字的错误信息(Console)</h6>
-                            <h6 class="text-right">2022年5月16日 01点37分</h6>
+                            <h6 class="text-right">2022年5月17日 01点27分</h6>
                             <h6 class="text-right">by <a href="javascript: ipc_send('url', 'https://github.com/hunmer/')">@hunmer</a></h6>
                         </div>
                     </div>

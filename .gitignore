@@ -6,7 +6,10 @@ cache
 thumbnails
 build
 scripts
+accounts
 download
+accounts.json
+config.json
 icudtl.dat
 chrome_200_percent.pak
 libEGL.dll

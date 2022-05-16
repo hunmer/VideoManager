@@ -3,7 +3,6 @@ var g_plugin = {
     resetAll: function() {
         nodejs.files.removeDir('*path*/scripts/');
         g_plugin.defaultList();
-        toast('重置成功', 'alert-success');
     },
     defaultList: function(reload = true) {
         this.list = {};
@@ -337,6 +336,8 @@ var g_plugin = {
                     if(btn == 'ok') location.reload();
                 }
             })
+        }else{
+            this.initPlugins();
         }
     },
     setItem: function(key, value, save = true) {

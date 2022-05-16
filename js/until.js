@@ -9,6 +9,15 @@ var g_config = local_readJson('config', {
     previewMs_search: 2000,
 });
 
+function local_readFile(file, def = {}){
+    var content = nodejs.files.read(file, false);
+    return content ? JSON.parse(content) : def;
+}
+
+function local_saveFile(file, def = '{}'){
+    return nodejs.files.write(file, JSON.stringify(def));
+}
+
 function playSound(src){
     $('#soundTip').attr('src', src)[0].play();
 }

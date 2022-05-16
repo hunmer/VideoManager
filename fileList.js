@@ -18,7 +18,7 @@ function walkSync(currentDirPath, callback) {
 }
 var res = {};
 walkSync('.', function (filePath, stat) {
-    if(['README.md', 'package.json', 'package-lock.json', '.gitignore', '.gitattributes', 'LICENSE.md', 'listFile.json'].indexOf(filePath) == -1){
+    if(['README.md', 'config.json','accounts.json','package.json', 'package-lock.json', '.gitignore', '.gitattributes', 'LICENSE.md', 'listFile.json'].indexOf(filePath) == -1){
         const stream = fs.createReadStream(path.join(__dirname, filePath));
         const hash = crypto.createHash('md5');
         stream.on('data', chunk => {

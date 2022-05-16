@@ -15,8 +15,10 @@ var g_setting = {
         registerAction('textColor', (dom, action) => {
             self.setTextColor(!g_config.textColor);
         });
+        
         if (g_config.bg) self.setBg('./res/bg.jpg');
         self.setTextColor(g_config.textColor);
+        ipc_send('checkAutoRun', g_config.autoRun);
         if (getConfig('darkTheme')) g_setting.toggleDarkMode(true);
 
         var now = new Date().getTime();
@@ -107,7 +109,10 @@ var g_setting = {
               <div class="col-10">
                 <div class="tab-content" id="v-pills-tabContent">
                   <div class="tab-pane fade show active" id="setting-pills-general" role="tabpanel" aria-labelledby="setting-pills-general-tab">
-
+                   <div class="custom-control custom-switch">
+                      <input type="checkbox" class="custom-control-input" id="check_switchAutoRun" data-change="switch_option,autoRun">
+                      <label class="custom-control-label" for="check_switchAutoRun">开机自启</label>
+                    </div>
                   <div class="custom-control custom-switch">
                       <input type="checkbox" class="custom-control-input" id="check_autoStopPlay" data-change="switch_option,autoStopPlay">
                       <label class="custom-control-label" for="check_autoStopPlay">失去焦点暂停播放</label>
@@ -255,15 +260,20 @@ var g_setting = {
         });
         registerAction('switch_option', (dom, action) => {
             var key = action[1];
-            setConfig(key, !g_config[key]);
+            var val = !g_config[key];
+            setConfig(key, val);
             switch (action[1]) {
                 case 'darkTheme':
                     g_setting.toggleDarkMode();
+                    break;
+                case 'autoRun':
+                    ipc_send('checkAutoRun', val);
+                    break;
             }
         });
         registerAction('select_option', (dom, action) => {
             var key = action[1];
-            var val = $(dom).val();
+            var val = dom.nodeName == 'SELECT' ? dom.value : dom.checked;
             setConfig(key, val);
         });
         registerAction('input_option', (dom, action) => {

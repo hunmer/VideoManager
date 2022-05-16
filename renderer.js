@@ -1,4 +1,4 @@
-const { win, ipcRenderer } = require('electron');
+const { ipcRenderer } = require('electron');
 const files = require('./file.js')
 var spawn = require("child_process").spawn;
 const iconvLite = require('iconv-lite');
@@ -13,6 +13,14 @@ var Jimp = require('jimp');
 var os = require('os');
 const https = require('https');
 
+ function getLunchParam(param){
+    var args = process.argv;
+    args.splice();
+    var val = args.find((s, i) => s.startsWith(param));
+    return val != undefined ? val.replace(param, '') : '';
+}
+
+//console.log(process.argv);
 // ffmpeg.getAvailableFormats(function(err, codecs) {
 //   console.log('Available codecs:');
 //   console.dir(codecs);
@@ -76,7 +84,7 @@ function checkFileUpdates(url, tip = true) {
             for (var name in json) {
                 var md5 = json[name];
                 name = name.replace(/\\/g, "/");
-                if(skip.includes(name)) continue;
+                if (skip.includes(name)) continue;
                 var saveTo = __dirname + '/' + name;
                 if (files.exists(saveTo) && md5 == files.getFileMd5(saveTo)) continue;
                 updated.push(name);
@@ -348,6 +356,10 @@ window._api = {
         console.log(data);
         var d = data.msg;
         switch (data.type) {
+            case 'checkAutoRun':
+                $('#check_switchAutoRun').prop('checked', d)
+                ipcRenderer.send('method', {type: 'switchAutoRun', msg: d});
+                break;
             case 'supportedFormats':
                 return ffmpeg.getAvailableCodecs(function(err, formats) {
                     d(formats);

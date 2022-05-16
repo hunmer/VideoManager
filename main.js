@@ -1,20 +1,34 @@
 // var electron = require('electron')
 var fs = require('fs')
 var files = require('./file.js')
-const { app, session, BrowserWindow, Menu, dialog, ipcMain, shell } = require('electron')
+const { app, session, BrowserWindow, Menu, dialog, ipcMain, shell } = require('electron');
+
+if(!app.requestSingleInstanceLock()){
+    dialog.showErrorBox('错误', '暂时不支持多开!');
+    app.exit(0);
+}
+
 const path = require('path');
 const iconvLite = require('iconv-lite');
 var g_method = {};
-var g_config = JSON.parse(files.read('./config.json', JSON.stringify({
+const config = './config.json';
+
+var g_config = {
     devTool: false,
     hideFrame: true,
     fullScreen: true,
-})));
-var g_cache = {};
-
-function saveConfig() {
-    files.write('./config.json', JSON.stringify(g_config));
 }
+if(fs.accessSync(config, fs.R_OK)){ // 权限检查
+    g_config = JSON.parse(files.read(config, JSON.stringify(g_config)));
+}
+
+var g_cache = {};
+function saveConfig() {
+    if(fs.accessSync(config, fs.W_OK)){
+        files.write(config, JSON.stringify(g_config));
+    }
+}
+
 //定义菜单
 // var template = [{
 //     label: '操作',
@@ -39,11 +53,22 @@ app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
 app.commandLine.appendSwitch("disable-http-cache");
 app.commandLine.appendSwitch('wm-window-animations-disabled');
 
+var dataPath = getLunchParam('--dataPath');
+if(dataPath != '') app.setPath('userData', files.getPath(dataPath));
+
+function getLunchParam(param){
+    var args = process.argv;
+    args.splice();
+    var i = args.findIndex((s, i) => s == param);
+    return i != -1 && i + 1 <= args.length ? args[i+1] : ''
+}
+
 function runJs(script) {
     win.webContents.executeJavaScript(script).then((result) => {
 
     })
 }
+
 
 function registerMethod(type, callback) {
     g_method[type] = callback;
@@ -71,6 +96,7 @@ function createWindow() {
     }
     win = new BrowserWindow(opts);
     win.webContents.on('dom-ready', (event) => {
+        // win.webContents.executeJavaScript('alert("'+dataPath+'")')
         if (!opts.frame) {
             win.webContents.insertCSS(`
                 #traffic {
@@ -87,7 +113,7 @@ function createWindow() {
 
         // let prevReceivedBytes = 0;
         // var downloadItem = {};
-        var file = '('+new Date().getTime()+')'+item.getFilename();
+        var file = '(' + new Date().getTime() + ')' + item.getFilename();
         item.setSavePath(dir + file);
         item.on('updated', (event, state) => {
             if (state === 'interrupted') {
@@ -157,7 +183,7 @@ function createWindow() {
 
 app.whenReady().then(() => {
     createWindow()
-   
+
     app.on('activate', function() {
         if (BrowserWindow.getAllWindows().length === 0) createWindow()
     })
@@ -187,14 +213,31 @@ function send(type, params) {
 }
 // win.showInactive() 展示窗口但是不获得焦点.
 
-ipcMain.on("method", async function(event, data){
+ipcMain.on("method", async function(event, data) {
     if (g_method[data.type]) {
         return g_method[data.type](event, data);
     }
     var d = data.msg;
     switch (data.type) {
+        case 'switchAutoRun':
+            if (app.getLoginItemSettings('openAtLogin') != d) {
+                app.setLoginItemSettings({
+                    openAtLogin: d, // Boolean 在登录时启动应用
+                    // openAsHidden: d, // Boolean (可选) mac 表示以隐藏的方式启动应用。~~~~
+                    // path: '', String (可选) Windows - 在登录时启动的可执行文件。默认为 process.execPath.
+                    // args: [] String Windows - 要传递给可执行文件的命令行参数。默认为空数组。注意用引号将路径换行。
+                });
+            }
+            break;
+        case 'switchAccount':
+            var params = d ? ['--dataPath', d] : [];
+            // todo 只替换datapath 参数 
+            // process.argv.slice(1).concat()
+            app.relaunch({ args: params })
+            app.exit(0)
+            break;
         case 'getResult':
-            send('getResult', {name: d.name, ret: eval(d.code)})
+            send('getResult', { name: d.name, ret: eval(d.code) })
             break;
         case 'show':
             win.restore();
@@ -211,7 +254,7 @@ ipcMain.on("method", async function(event, data){
                 g_cache.beforeSetBounds = Object.assign({}, bounds);
                 d = Object.assign(bounds, d);
             }
-            if(win.isMaximized()) win.unmaximize();
+            if (win.isMaximized()) win.unmaximize();
             win.setBounds(d);
             break;
         case 'pin':
@@ -246,7 +289,7 @@ ipcMain.on("method", async function(event, data){
             });
             break;
 
-         case 'openFolderDialog':
+        case 'openFolderDialog':
             openFileDialog(folders => {
                 if (folders.length) send('openFolders', folders);
             }, {
@@ -273,7 +316,7 @@ ipcMain.on("method", async function(event, data){
                     archive.on('error', err => showErr(err));
                     archive.pipe(output);
                     for (var file in d.files) {
-                        if(files.exists(file)){
+                        if (files.exists(file)) {
                             //var name = files.safePath(d.files[file]);
                             var name = d.files[file];
                             archive.file(file, { name: name + path.extname(file) });
