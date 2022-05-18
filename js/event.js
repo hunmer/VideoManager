@@ -61,7 +61,7 @@ function parseFiles(files) {
             }
             if(f.path == g_cache.dragFile) return;
             var ext = f.name.split('.').pop().toLowerCase();
-            if(['mp4', 'ts', 'm3u8', 'flv', 'mdp'].includes(ext)){
+            if(SUPPORTED_FORMAT.includes(ext)){
                     if(f.path.indexOf(base) == 0){ // 忽略裁剪过的文件
                         cnt++;
                         continue;
@@ -69,8 +69,6 @@ function parseFiles(files) {
                 g_cache.files.push(f.path);
             }
         }
-        // video/mp4
-        // if (!f.type.startsWith('image/')) 
     }
     if (cnt == 0 && g_cache.files.length > 0) {
         g_video.reviceFiles(g_cache.files);

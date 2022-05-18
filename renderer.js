@@ -7,13 +7,15 @@ const path = require('path');
 const { execFile } = require('child_process');
 const ffmpeg = require('fluent-ffmpeg');
 ffmpeg.setFfmpegPath(path.join(__dirname, 'bin/ffmpeg.exe'));
+
+
 var rm = require('rimraf');
 var nsg = require('node-sprite-generator');
 var Jimp = require('jimp');
 var os = require('os');
-const https = require('https');
+var request = require('request');
 
- function getLunchParam(param){
+function getLunchParam(param) {
     var args = process.argv;
     args.splice();
     var val = args.find((s, i) => s.startsWith(param));
@@ -47,60 +49,79 @@ function replaceAll_once(str, search, replace, start = 0) {
     return str;
 }
 
-function httpRequest(opts) {
-    return new Promise(function(resolve, reject) {
-        https.get(opts.url, (resp) => {
-            let data = '';
-            resp.on('data', (chunk) => {
-                data += chunk;
-            });
-            resp.on('end', () => {
-                resolve(data);
-            });
-        }).on("error", (err) => {
-            opts.onError && opts.onError(err.message);
-        });
+function downloadFile(opts) {
+    var received_bytes = 0;
+    var total_bytes = 0;
+    var progress = 0;
+    var opt = {
+        method: 'GET',
+        url: opts.url,
+        timeout: 15000,
+        // headers:{
+        //     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.99 Safari/537.36 Edg/97.0.1072.76',
+        // }
+    }
+    var req = request(opt);
+    var fileBuff = [];
+    req.on('data', function(chunk) {
+        //received_bytes += chunk.length;
+        fileBuff.push(Buffer.from(chunk));
+        // var newProgress = parseInt(received_bytes / total_bytes * 100);
+        // if (newProgress != progress) {
+        //     progress = newProgress;
+        //     opts.progress && opts.progress(progress);
+        // }
+    });
+    req.on('end', function() {
+        var totalBuff = Buffer.concat(fileBuff);
+        if (opts.saveTo) {
+            files.mkdir(path.dirname(opts.saveTo));
+            fs.appendFile(opts.saveTo, totalBuff, (err) => opts.complete && opts.complete(err));
+        } else {
+            opts.complete && opts.complete(totalBuff.toString())
+        }
+    });
+    req.on('response', function(data) {
+        //total_bytes = parseInt(data.headers['content-length']);
+    });
+    req.on('error', function(e) {
+        opts.complete && opts.complete(e);
     });
 }
 
-function downloadFile(opts) {
-    httpRequest({
-        url: opts.url,
-    }).then(data => {
-        files.write(opts.saveTo, data);
-        opts.callback(opts.saveTo);
-    })
-}
-
 function checkFileUpdates(url, tip = true) {
-    var skip = getConfig('disabled_updates', 'css/user.css\ndownload/DPlayer.png').split('\n');
-    httpRequest({
+    var skip = getConfig('disabled_updates', 'css/user.css').split('\n');
+    downloadFile({
         url: url + 'listFile.json',
-    }).then(data => {
-        try {
-            var i = 0;
-            var updated = [];
-            var json = JSON.parse(data);
-            for (var name in json) {
-                var md5 = json[name];
-                name = name.replace(/\\/g, "/");
-                if (skip.includes(name)) continue;
-                var saveTo = __dirname + '/' + name;
-                if (files.exists(saveTo) && md5 == files.getFileMd5(saveTo)) continue;
-                updated.push(name);
-                i++;
+        complete: data => {
+            console.log(data);
+            try {
+                var i = 0;
+                var updated = [];
+                var json = JSON.parse(data);
+                for (var name in json) {
+                    var md5 = json[name];
+                    name = name.replace(/\\/g, "/");
+                    if (skip.includes(name)) continue;
+                    var saveTo = __dirname + '/' + name;
+                    if (files.exists(saveTo) && md5 == files.getFileMd5(saveTo)) continue;
+                    if (name.split('/')[0] != 'accounts') continue;
+                    updated.push(name);
+                    i++;
+                }
+                if (tip) {
+                    if (!i) return toast('没有更新', 'alert-success');
+                    showUpdateFiles(url, updated);
+                } else {
+                    g_cache.needUpdate = updated;
+                    domSelector('aboutMe').find('.badge').toggleClass('hide', i == 0).html('New');
+                }
+            } catch (e) {
+                toast('请求错误', 'alert-danger');
             }
-            if (tip) {
-                if (!i) return toast('没有更新', 'alert-success');
-                showUpdateFiles(url, updated);
-            } else {
-                g_cache.needUpdate = updated;
-                domSelector('aboutMe').find('.badge').toggleClass('hide', i == 0).html('New');
-            }
-        } catch (e) {
-            toast('请求错误', 'alert-danger');
+
         }
-    })
+    });
 }
 
 function showUpdateFiles(url, updated) {
@@ -161,7 +182,7 @@ function updateFiles(url, fileList) {
             url: url + name,
             saveTo: __dirname + '\\' + name,
             onError: () => ++err,
-            callback: saveTo => {
+            complete: saveTo => {
                 var newProgress = parseInt(++done / max * 100);
                 if (newProgress != progress) {
                     progress = newProgress;
@@ -225,7 +246,9 @@ function videoThumb(file, output) {
     });
 }
 
-
+ipcRenderer.on('toggleFrame', (event, arg) => {
+    $('#traffic div[data-action!="pin"]').css('display', arg ? 'none' : 'unset');
+});
 ipcRenderer.on('toast', (event, arg) => {
     toast(arg.text, arg.class);
 });
@@ -356,9 +379,9 @@ window._api = {
         console.log(data);
         var d = data.msg;
         switch (data.type) {
-            case 'checkAutoRun':
+            case 'autoRun':
                 $('#check_switchAutoRun').prop('checked', d)
-                ipcRenderer.send('method', {type: 'switchAutoRun', msg: d});
+                ipcRenderer.send('method', { type: 'switchAutoRun', msg: d });
                 break;
             case 'supportedFormats':
                 return ffmpeg.getAvailableCodecs(function(err, formats) {

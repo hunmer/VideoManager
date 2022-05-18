@@ -3,8 +3,8 @@ var fs = require('fs')
 var files = require('./file.js')
 const { app, session, BrowserWindow, Menu, dialog, ipcMain, shell } = require('electron');
 
-if(!app.requestSingleInstanceLock()){
-    dialog.showErrorBox('错误', '暂时不支持多开!');
+if (!app.requestSingleInstanceLock()) {
+    dialog.showErrorBox('错误', '暂时不支持多开,如果没有多开请检查是否在后台运行(任务管理器)');
     app.exit(0);
 }
 
@@ -18,14 +18,22 @@ var g_config = {
     hideFrame: true,
     fullScreen: true,
 }
-if(fs.accessSync(config, fs.R_OK)){ // 权限检查
+
+try {
+    fs.accessSync(config, fs.R_OK);
     g_config = JSON.parse(files.read(config, JSON.stringify(g_config)));
+} catch (err) {
+
 }
 
 var g_cache = {};
+
 function saveConfig() {
-    if(fs.accessSync(config, fs.W_OK)){
+    try {
+        fs.accessSync(config, fs.W_OK);
         files.write(config, JSON.stringify(g_config));
+    } catch (err) {
+
     }
 }
 
@@ -43,6 +51,7 @@ function saveConfig() {
 // var m = Menu.buildFromTemplate(template);
 // Menu.setApplicationMenu(m);
 Menu.setApplicationMenu(null)
+
 var win;
 process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true';
 app.commandLine.appendSwitch('--ignore-certificate-errors', 'true');
@@ -54,13 +63,13 @@ app.commandLine.appendSwitch("disable-http-cache");
 app.commandLine.appendSwitch('wm-window-animations-disabled');
 
 var dataPath = getLunchParam('--dataPath');
-if(dataPath != '') app.setPath('userData', files.getPath(dataPath));
+if (dataPath != '') app.setPath('userData', files.getPath(dataPath));
 
-function getLunchParam(param){
+function getLunchParam(param) {
     var args = process.argv;
     args.splice();
     var i = args.findIndex((s, i) => s == param);
-    return i != -1 && i + 1 <= args.length ? args[i+1] : ''
+    return i != -1 && i + 1 <= args.length ? args[i + 1] : ''
 }
 
 function runJs(script) {
@@ -76,14 +85,13 @@ function registerMethod(type, callback) {
 
 
 function createWindow() {
-    // Create the browser window.
     var opts = {
         width: 1920,
         height: 1080,
         resizable: true,
         show: false,
         title: 'loading...',
-        // hasShadow: true,
+        hasShadow: true,
         frame: !g_config.hideFrame,
         // nativeWindowOpen: true,
         webPreferences: {
@@ -96,16 +104,8 @@ function createWindow() {
     }
     win = new BrowserWindow(opts);
     win.webContents.on('dom-ready', (event) => {
-        // win.webContents.executeJavaScript('alert("'+dataPath+'")')
-        if (!opts.frame) {
-            win.webContents.insertCSS(`
-                #traffic {
-                    display: none;
-                }
-          `);
-        }
+        send('toggleFrame', opts.frame);
     });
-
     win.webContents.session.on('will-download', (event, item, webContents) => {
         //event.preventDefault();
         var dir = __dirname + '\\download\\';
@@ -117,10 +117,8 @@ function createWindow() {
         item.setSavePath(dir + file);
         item.on('updated', (event, state) => {
             if (state === 'interrupted') {
-                //   
             } else if (state === 'progressing') {
                 if (item.isPaused()) {
-
                 } else {
                     // const receivedBytes = item.getReceivedBytes()
                     // // 计算每秒下载的速度
@@ -212,7 +210,6 @@ function send(type, params) {
     win.webContents.send(type, params);
 }
 // win.showInactive() 展示窗口但是不获得焦点.
-
 ipcMain.on("method", async function(event, data) {
     if (g_method[data.type]) {
         return g_method[data.type](event, data);
@@ -228,6 +225,12 @@ ipcMain.on("method", async function(event, data) {
                     // args: [] String Windows - 要传递给可执行文件的命令行参数。默认为空数组。注意用引号将路径换行。
                 });
             }
+            break;
+        case 'toggleFrame':
+            g_config.hideFrame = d;
+            saveConfig();
+            dialog.showMessageBoxSync(win, { message: '请手动重启' });
+            app.exit(0);
             break;
         case 'switchAccount':
             var params = d ? ['--dataPath', d] : [];
@@ -283,7 +286,7 @@ ipcMain.on("method", async function(event, data) {
                 title: '添加文件(长按ctrl可多选)',
                 filters: [{
                     name: '视频文件',
-                    extensions: ['mp4', 'ts', 'm3u8', 'flv', 'mdp'], // , 'rar'
+                    extensions: ['mp4', 'ts', 'm3u8', 'flv', 'mdp', 'mkv'], // , 'rar'
                 }],
                 properties: ['openFile', 'multiSelections'],
             });

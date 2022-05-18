@@ -67,7 +67,19 @@ const files = {
         const buffer = fs.readFileSync(file);
         const hash = crypto.createHash('md5');
         hash.update(buffer, 'utf8');
-        return hash.digest('hex');
+        var md5 = hash.digest('hex');
+
+
+         const stream = fs.createReadStream(file);
+        const hash1 = crypto.createHash('md5');
+        stream.on('data', chunk => {
+          hash1.update(chunk, 'utf8');
+        });
+        stream.on('end', () => {
+         console.log(hash1.digest('hex'));
+        });
+        console.log(md5);
+        return md5;
     },
     getMd5: (s) => {
         return crypto.createHash('md5').update(s).digest("hex")

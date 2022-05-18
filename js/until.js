@@ -1,5 +1,5 @@
 const APP_VERSION = 'v1.2.5';
- const SUPPORTED_FORMAT = ['mp4', 'ts', 'm3u8', 'mdp'];
+ const SUPPORTED_FORMAT = ['mp4', 'ts', 'm3u8', 'mdp', 'mkv'];
 // const UPDATE_SCRIPT_URL = 'https://raw.githubusercontent.com/hunmer/videoManager/main/';
 const UPDATE_SCRIPT_URL = 'https://gitee.com/neysummer2000/VideoManager/raw/main/';
 var g_localKey = 'vm_';
@@ -455,7 +455,7 @@ var PF_SRT = function() {
 }();
 
 function srcollVideo(e, video) {
-    if(e.originalEvent) e = originalEvent;
+    if(e.originalEvent) e = e.originalEvent;
     if ($('input:focus').length) return;
     if(!e.ctrlKey && !e.shiftKey && !e.altKey) return;
 

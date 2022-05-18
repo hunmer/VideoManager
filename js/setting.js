@@ -130,6 +130,10 @@ var g_setting = {
                       <label class="custom-control-label" for="check_notificationWhenDone">后台完成裁剪后提示</label>
                     </div>
                     <div class="custom-control custom-switch">
+                      <input type="checkbox" class="custom-control-input" id="check_toggleFrame" data-change="switch_option,toggleFrame">
+                      <label class="custom-control-label" for="check_toggleFrame" data-default="true">隐藏边框</label>
+                    </div>
+                    <div class="custom-control custom-switch">
                       <input type="checkbox" class="custom-control-input"  id="check_autoTheme" data-change="switch_option,darkTheme">
                       <label class="custom-control-label" for="check_autoTheme">黑暗模式</label>
                     </div>
@@ -267,7 +271,8 @@ var g_setting = {
                     g_setting.toggleDarkMode();
                     break;
                 case 'autoRun':
-                    ipc_send('checkAutoRun', val);
+                case 'toggleFrame':
+                    ipc_send(action[1], val);
                     break;
             }
         });
