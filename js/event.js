@@ -75,18 +75,17 @@ function parseFiles(files) {
     }
 }
 
-function revicePath(path, files) {
+function revicePath(path, files, title = '') {
     var i = g_cache.paths.indexOf(path);
     if (i != -1) {
         g_cache.paths.splice(i, 1);
         for (var file of files) {
-
             if (!g_cache.files.includes(file)) {
                 g_cache.files.push(file);
             }
         }
         if (g_cache.paths.length == 0) {
-            g_video.reviceFiles(g_cache.files);
+            g_video.reviceFiles(g_cache.files, title);
         }
     }
 }

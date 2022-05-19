@@ -94,7 +94,6 @@ function checkFileUpdates(url, tip = true) {
     downloadFile({
         url: url + 'listFile.json',
         complete: data => {
-            console.log(data);
             try {
                 var i = 0;
                 var updated = [];
@@ -189,12 +188,7 @@ function updateFiles(url, fileList) {
                     $('#modal_update #btn_ok').html(newProgress + '%');
                     if (progress == 100) {
                         $('#modal_update').modal('hide');
-                        confirm(`成功更新 ${max - err} 个文件!${err ? err + '个文件处理失败!' : ''}是否重载页面?`, {
-                            title: '更新成功',
-                            callback: btn => {
-                                if (btn == 'ok') location.reload();
-                            }
-                        });
+                        alert(`成功更新 ${max - err} 个文件!${err ? err + '个文件处理失败!' : ''}请手动重启软件!`);
                     }
                 }
                 next();
@@ -450,10 +444,10 @@ window._api = {
                     d.callback(d.key, d.output, files.exists(d.output))
                 })
                 return;
-            case 'files.getPath':
+            case 'getPath':
                 var list = [];
-                files.searchDirFiles(data.msg, list, ['mp4', 'ts', 'm3u8', 'flv', 'mpd'], 2);
-                window.revicePath(data.msg, list);
+                files.searchDirFiles(data.msg, list, ['mp4', 'ts', 'm3u8', 'flv', 'mpd', 'mkv'], 2);
+                if(list.length) window.revicePath(data.msg, list, path.basename(data.msg));
                 return;
 
             default:

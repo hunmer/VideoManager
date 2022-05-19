@@ -605,7 +605,7 @@ var g_video = {
         return _videos[key];
     },
 
-    reviceFiles: function(files, overwrite = false) {
+    reviceFiles: function(files, title = '') {
         $('#file-drop').toggleClass('hide', true);
 
         var h = '';
@@ -618,7 +618,7 @@ var g_video = {
                 <div class="input-group-prepend">
                     <span class="input-group-text">合集名称</span>
                 </div>
-                <input type="text" class="form-control" placeholder="" aria-label="" id="input_folderName" aria-describedby="input_folderName">
+                <input type="text" class="form-control" placeholder="" aria-label="" id="input_folderName" aria-describedby="input_folderName" value="${title}">
                 <button type="button" data-action="modal_folders,#input_folderName" class="btn btn-outline-secondary"><i class="bi bi-list"></i></button>
             </div>
             <ul class="list-group" id="files_add">
@@ -668,18 +668,18 @@ var g_video = {
         var h = '';
         for (var file of files) {
             var key = SparkMD5.hash(file);
-            var existed = _videos[key];
+            var existed = _videos[key] != undefined;
             if (existed) {
                 exists.push(file);
             } else {
                 saved++;
-                _videos[key] = Object.assign(props, {
+                _videos[key] = Object.assign({
                     file: file,
                     tags: [],
                     folder: folder,
                     add: new Date().getTime(),
                     clips: {},
-                });
+                }, props);
                 // TODO 队列
                 this.videoCover(key, false);
             }
