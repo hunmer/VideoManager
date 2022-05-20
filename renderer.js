@@ -58,10 +58,10 @@ function downloadFile(opts) {
         var totalBuff = Buffer.concat(fileBuff);
         if (opts.saveTo) {
             fs.writeFileSync(opts.saveTo, totalBuff, (err) => {
-                opts.complete && opts.complete(err)
+                opts.complete && opts.complete(opts.saveTo)
             });
         } else {
-            opts.complete && opts.complete(null, totalBuff.toString())
+            opts.complete && opts.complete(totalBuff.toString())
         }
     });
     req.on('response', function(data) {
@@ -165,7 +165,7 @@ function updateFiles(url, fileList) {
             url: url + name,
             saveTo: __dirname + '\\' + name,
             onError: () => ++err,
-            complete: data => {
+            complete: saveTo => {
                 var newProgress = parseInt(++done / max * 100);
                 if (newProgress != progress) {
                     progress = newProgress;

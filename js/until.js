@@ -1,7 +1,7 @@
 const APP_VERSION = 'v1.2.5';
  const SUPPORTED_FORMAT = ['mp4', 'ts', 'm3u8', 'mdp', 'mkv'];
-// const UPDATE_SCRIPT_URL = 'https://raw.githubusercontent.com/hunmer/videoManager/main/';
-const UPDATE_SCRIPT_URL = 'https://gitee.com/neysummer2000/VideoManager/raw/main/';
+const UPDATE_SCRIPT_URL = 'https://raw.githubusercontent.com/hunmer/videoManager/main/';
+// const UPDATE_SCRIPT_URL = 'https://gitee.com/neysummer2000/VideoManager/raw/main/';
 var g_localKey = 'vm_';
 var g_config = local_readJson('config', {
     tags_rent: [],
