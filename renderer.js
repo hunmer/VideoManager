@@ -7,14 +7,11 @@ const path = require('path');
 const { execFile } = require('child_process');
 const ffmpeg = require('fluent-ffmpeg');
 ffmpeg.setFfmpegPath(path.join(__dirname, 'bin/ffmpeg.exe'));
-
-
 var rm = require('rimraf');
 var nsg = require('node-sprite-generator');
 var Jimp = require('jimp');
 var os = require('os');
-// var request = require('request');
-const https = require('https');
+var request = require('request');
 
 function getLunchParam(param) {
     var args = process.argv;
@@ -22,22 +19,6 @@ function getLunchParam(param) {
     var val = args.find((s, i) => s.startsWith(param));
     return val != undefined ? val.replace(param, '') : '';
 }
-
-//console.log(process.argv);
-// ffmpeg.getAvailableFormats(function(err, codecs) {
-//   console.log('Available codecs:');
-//   console.dir(codecs);
-// });
-
-// ffmpeg.getAvailableEncoders(function(err, encoders) {
-//   console.log('Available encoders:');
-//   console.dir(encoders);
-// });
-
-// ffmpeg.getAvailableFilters(function(err, filters) {
-//   console.log("Available filters:");
-//   console.dir(filters);
-// });
 
 function replaceAll_once(str, search, replace, start = 0) {
     while (true) {
@@ -50,72 +31,49 @@ function replaceAll_once(str, search, replace, start = 0) {
     return str;
 }
 
-function httpRequest(opts) {
-    return new Promise(function(resolve, reject) {
-        https.get(opts.url, (resp) => {
-            let data = '';
-            resp.on('data', (chunk) => {
-                data += chunk;
+function downloadFile(opts) {
+    var received_bytes = 0;
+    var total_bytes = 0;
+    var progress = 0;
+    var opt = {
+        method: 'GET',
+        url: opts.url,
+        timeout: 15000,
+        headers:{
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.99 Safari/537.36 Edg/97.0.1072.76',
+        }
+    }
+    var req = request(opt);
+    var fileBuff = [];
+    req.on('data', function(chunk) {
+        received_bytes += chunk.length;
+        fileBuff.push(Buffer.from(chunk));
+        var newProgress = parseInt(received_bytes / total_bytes * 100);
+        if (newProgress != progress) {
+            progress = newProgress;
+            opts.progress && opts.progress(progress);
+        }
+    });
+    req.on('end', function() {
+        var totalBuff = Buffer.concat(fileBuff);
+        if (opts.saveTo) {
+            fs.writeFileSync(opts.saveTo, totalBuff, (err) => {
+                opts.complete && opts.complete(err)
             });
-            resp.on('end', () => {
-                resolve(data);
-            });
-        }).on("error", (err) => {
-            opts.onError && opts.onError(err.message);
-        });
+        } else {
+            opts.complete && opts.complete(null, totalBuff.toString())
+        }
+    });
+    req.on('response', function(data) {
+        total_bytes = parseInt(data.headers['content-length']);
+    });
+    req.on('error', function(e) {
+        opts.complete && opts.complete(e);
     });
 }
 
-function downloadFile(opts) {
-    httpRequest({
-        url: opts.url,
-    }).then(data => {
-        opts.saveTo && files.write(opts.saveTo, data);
-        opts.complete && opts.complete(data, opts.saveTo);
-    })
-}
-
-// function downloadFile(opts) {
-//     var received_bytes = 0;
-//     var total_bytes = 0;
-//     var progress = 0;
-//     var opt = {
-//         method: 'GET',
-//         url: opts.url,
-//         timeout: 15000,
-//         // headers:{
-//         //     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.99 Safari/537.36 Edg/97.0.1072.76',
-//         // }
-//     }
-//     var req = request(opt);
-//     var fileBuff = [];
-//     req.on('data', function(chunk) {
-//         //received_bytes += chunk.length;
-//         fileBuff.push(Buffer.from(chunk));
-//         // var newProgress = parseInt(received_bytes / total_bytes * 100);
-//         // if (newProgress != progress) {
-//         //     progress = newProgress;
-//         //     opts.progress && opts.progress(progress);
-//         // }
-//     });
-//     req.on('end', function() {
-//         var totalBuff = Buffer.concat(fileBuff);
-//         if (opts.saveTo) {
-//             files.mkdir(path.dirname(opts.saveTo));
-//             fs.appendFile(opts.saveTo, totalBuff, (err) => opts.complete && opts.complete(err));
-//         } else {
-//             opts.complete && opts.complete(totalBuff.toString())
-//         }
-//     });
-//     req.on('response', function(data) {
-//         //total_bytes = parseInt(data.headers['content-length']);
-//     });
-//     req.on('error', function(e) {
-//         opts.complete && opts.complete(e);
-//     });
-// }
-
 function checkFileUpdates(url, tip = true) {
+    if(g_cache.updateing) return;
     var skip = getConfig('disabled_updates', 'css/user.css').split('\n');
     downloadFile({
         url: url + 'listFile.json',
@@ -202,6 +160,7 @@ function updateFiles(url, fileList) {
     var next = () => {
         if (++now >= max) return;
         var name = fileList[now];
+        g_cache.updateing = true;
         downloadFile({
             url: url + name,
             saveTo: __dirname + '\\' + name,
@@ -212,6 +171,7 @@ function updateFiles(url, fileList) {
                     progress = newProgress;
                     $('#modal_update #btn_ok').html(newProgress + '%');
                     if (progress == 100) {
+                        delete g_cache.updateing;
                         $('#modal_update').modal('hide');
                         alert(`成功更新 ${max - err} 个文件!${err ? err + '个文件处理失败!' : ''}请手动重启软件!`);
                     }
