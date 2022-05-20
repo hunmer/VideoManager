@@ -12,14 +12,7 @@ var g_video = {
         self.inited = true;
         self.initEvent();
         g_tag.preInit();
-        $('#input_tag').on('keydown', function(e) {
-            if (e.keyCode == 13) {
-                g_tag.addTag(this.value);
-                this.value = '';
-            }
-        }).on('input', function(e) {
-            g_tag.searchTag(this.value);
-        })
+     
         self.initVideos();
         if (getConfig('autoPlay', true) && g_config.lastVideo != undefined) {
             self.loadVideo(g_config.lastVideo, true);
@@ -72,8 +65,10 @@ var g_video = {
             r[folder][key] = d.file;
 
             for (var tag of this.getVideoTags(d)) {
-                if (!all[tag]) all[tag] = 0;
-                all[tag]++;
+                if(tag != ''){
+                    if (!all[tag]) all[tag] = 0;
+                    all[tag]++;
+                }
             }
 
         }
@@ -310,7 +305,7 @@ var g_video = {
         }
 
         this.initPos();
-        g_player.setCurrentTime(this.pos2);
+        if(this.pos2) g_player.setCurrentTime(this.pos2);
         g_player.playVideo(true);
 
         this.clearInput(this.pos2);

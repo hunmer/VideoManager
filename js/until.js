@@ -35,6 +35,11 @@ function guid() {
         return v.toString(16);
     });
 }
+
+function hasChinese(str) {
+    return /[\u4E00-\u9FA5]+/g.test(str)
+}
+
 var MODAL_HTML = (id, opts) => {
     opts = Object.assign({
         autoDestroy: false,

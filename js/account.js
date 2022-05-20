@@ -20,17 +20,29 @@ var g_account = {
             dataKey: 'data-key',
             html: `
                 <div class="list-group" style="width: 100%;">
-                    <a data-action="account_item_edit" class="list-group-item list-group-item-action text-warning" aria-current="true">
+                      <a data-action="account_item_edit" class="list-group-item list-group-item-action text-warning" aria-current="true">
                         <i class="bi bi-pencil mr-2"></i><span>编辑</span>
+                      </a>
+                      <a data-action="account_item_setDefault" class="list-group-item list-group-item-action text-info" aria-current="true">
+                        <i class="bi bi-flag-fill mr-2"></i><span>设为默认</span>
                       </a>
                       <a data-action="account_item_delete" class="list-group-item list-group-item-action text-danger" aria-current="true">
                         <i class="bi bi-trash mr-2"></i><span>删除</span>
                       </a>
                     </div>
             `,
+             onShow: key => {
+               
+
+            }
+            
         });
+        
         registerAction('account_list', (dom, action) => {
             this.modal_show();
+        });
+        registerAction('account_item_setDefault', (dom, action) => {
+            g_account.switchAccount(g_menu.key, true)
         });
         registerAction('account_item_edit', (dom, action) => {
             g_account.prompt_add(g_menu.key);
@@ -66,12 +78,15 @@ var g_account = {
             domSelector('account_list').append('<span class="badge badge-info">' + name + '</span>');
         }
     },
-    switchAccount: function(key) {
+    switchAccount: function(key, asDefault = false) {
+        var path;
     	if(key == '默认'){
-    		return ipc_send('switchAccount');
-    	}
-        var d = this.getItem(key);
-        d && ipc_send('switchAccount', d.path == '' ? '*path*/accounts/' + key : d.path);
+            path = '';
+    	}else{
+             var d = this.getItem(key);
+             path = d.path == '' ? '*path*/accounts/' + key : d.path;
+        }
+        ipc_send('switchAccount', {dataPath: path, default: asDefault})
     },
     prompt_delete: function(key) {
         // todo 只删除指定文件和目录

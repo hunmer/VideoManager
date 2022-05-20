@@ -129,6 +129,12 @@ var g_setting = {
                       <input type="checkbox" class="custom-control-input" id="check_notificationWhenDone" data-change="switch_option,notificationWhenDone">
                       <label class="custom-control-label" for="check_notificationWhenDone">后台完成裁剪后提示</label>
                     </div>
+
+                    <div class="custom-control custom-switch">
+                      <input type="checkbox" class="custom-control-input" id="check_pyAsFirste" data-change="switch_option,pyAsFirst">
+                      <label class="custom-control-label" for="check_pyAsFirste">拼音标签自动选中第一个结果</label>
+                    </div>
+
                     <div class="custom-control custom-switch">
                       <input type="checkbox" class="custom-control-input" id="check_toggleFrame" data-change="switch_option,toggleFrame">
                       <label class="custom-control-label" for="check_toggleFrame" data-default="true">隐藏边框</label>

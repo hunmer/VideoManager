@@ -38,7 +38,7 @@ $(function() {
         parseFiles(files);
         e.stopPropagation();
         e.preventDefault();
-         delete g_cache.dragFile;
+        delete g_cache.dragFile;
     });
 
 });

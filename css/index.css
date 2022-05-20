@@ -6,6 +6,10 @@ body {
     /*cursor: url('../res/default.ico'), pointer;*/
 }
 
+.tag {
+    position: relative;
+}
+
 .card_selected {
     border: 2px solid red !important;
 }

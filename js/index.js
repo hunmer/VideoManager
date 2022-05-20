@@ -483,10 +483,7 @@ function doAction(dom, action, event) {
             g_video.onSelectFile();
             break;
 
-        case 'tag_add':
-            if (!$(dom).hasClass('badge-success')) { // 排除最近的已被添加的标签
-                g_tag.addTag($(dom).attr('data-tag'));
-            }
+     
             break;
         case 'jumpClip':
             if(event.ctrlKey){
@@ -510,9 +507,7 @@ function doAction(dom, action, event) {
         case 'addPos':
             g_video.addPos();
             break;
-        case 'tag_remove':
-            g_tag.removeTag($(dom).attr('data-tag'));
-            break;
+      
         case 'search':
             g_site.doSubmit();
             break;

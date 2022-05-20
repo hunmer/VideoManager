@@ -164,6 +164,13 @@ var g_tag = {
         if (save) local_saveJson('tags', this.data);
     },
     group_addTag: function(group, tag, save = true) {
+        // 拼音输入选中仅有的结果
+        if(getConfig('check_pyAsFirste')){
+            var res = $('#tags_all .tag');
+            if(!hasChinese(tag) && res.length == 1){
+                tag = res.text();
+            }
+        }
         var tags = this.getGroup(group) || [];
         var i = tags.indexOf(tag);
         if (i == -1) {
@@ -187,6 +194,52 @@ var g_tag = {
     },
 
     init: function() {
+        $('#input_tag').on('keydown', function(e) {
+            var code = e.keyCode;
+            if(code == 17){ // ctrl
+                g_cache.tags_showNumberBadge = true;
+                var tags = $('#tags_all .tag');
+                for(var i = 0; i<Math.min(9, tags.length);i++){
+                    $(`<span class="badge badge-danger" style="position: absolute;top: -5px;right:-6px;">${i+1}</span>`).appendTo(tags[i]);
+                }
+            }else
+            if(code >= 49 && code <= 57 && e.ctrlKey && !e.shiftKey && !e.altKey){
+                var tag = $('#tags_all .tag').get(code - 49);
+                if(tag != undefined) tag.click();
+            }else
+            if (code == 13) {
+                g_tag.addTag(this.value);
+                this.value = '';
+            }
+        }).on('keyup', function(e) {
+            if(g_cache.tags_showNumberBadge){
+                delete g_cache.tags_showNumberBadge;
+                g_tag.searchTag(this.value);
+            }
+        }).on('input', function(e) {
+            g_tag.searchTag(this.value);
+        })
+
+        registerAction('tag_resetSelected', (dom, action) => {
+            g_tag.update([]);
+        });
+
+        registerAction('tag_add', (dom, action) => {
+            var tag = $(dom).attr('data-tag');
+           if (!$(dom).hasClass('badge-success')) { // 排除最近的已被添加的标签
+                g_tag.addTag(tag);
+            }else{
+                g_tag.removeTag(tag);
+            }
+        });
+
+        registerAction('tag_remove', (dom, action) => {
+            g_tag.removeTag($(dom).attr('data-tag'));
+        });
+
+        registerAction('tag_toggle', (dom, action) => {
+        });
+
         registerAction('tag_resetSelected', (dom, action) => {
             g_tag.update([]);
         });
@@ -340,14 +393,16 @@ var g_tag = {
     },
 
     searchTag: function(search) {
+        if(search == '') return this.initAll();
         var h = '';
         var py = PinYinTranslate.start(search);
         var sz = PinYinTranslate.sz(search);
         for (var tag of this.getAllTags().filter((t) => {
                 return t.indexOf(search) != -1 || PinYinTranslate.start(t).indexOf(py) != -1 || PinYinTranslate.sz(t).indexOf(sz) != -1
             })) {
-            h += this.getHtml(tag, 'tag_add', 'badge-primary');
-
+            if(!g_tag.list.includes(tag)){
+                h += this.getHtml(tag, 'tag_add', 'badge-primary');
+            }
         }
         $('#tags_all .tags_content').html(h);
     },

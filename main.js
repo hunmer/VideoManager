@@ -19,9 +19,15 @@ var g_config = {
     fullScreen: true,
 }
 
+var dataPath = getLunchParam('--dataPath');
+if (dataPath != ''){
+    app.setPath('userData', files.getPath(dataPath));
+}
+
 try {
     fs.accessSync(config, fs.R_OK);
     g_config = JSON.parse(files.read(config, JSON.stringify(g_config)));
+    if(dataPath == '' && g_config.dataPath) app.setPath('userData', files.getPath(g_config.dataPath));
 } catch (err) {
 
 }
@@ -62,8 +68,7 @@ app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
 app.commandLine.appendSwitch("disable-http-cache");
 app.commandLine.appendSwitch('wm-window-animations-disabled');
 
-var dataPath = getLunchParam('--dataPath');
-if (dataPath != '') app.setPath('userData', files.getPath(dataPath));
+
 
 function getLunchParam(param) {
     var args = process.argv;
@@ -233,7 +238,11 @@ ipcMain.on("method", async function(event, data) {
             app.exit(0);
             break;
         case 'switchAccount':
-            var params = d ? ['--dataPath', d] : [];
+            if(d.default){
+                g_config.dataPath = d.dataPath;
+                saveConfig();
+            }
+            var params = d.dataPath != '' ? ['--dataPath', d.dataPath] : [];
             // todo 只替换datapath 参数 
             // process.argv.slice(1).concat()
             app.relaunch({ args: params })
