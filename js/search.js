@@ -310,7 +310,6 @@ function modal_listSelector(opts){
         },
         onShow: () => {
             $('#input_searchTag').on('input', function(e) {
-                console.log(e);
                 var s = this.value;
                 var py = PinYinTranslate.start(s);
                 var sz = PinYinTranslate.sz(s);

@@ -104,7 +104,6 @@ function checkFileUpdates(url, tip = true) {
                     if (skip.includes(name)) continue;
                     var saveTo = __dirname + '/' + name;
                     if (files.exists(saveTo) && md5 == files.getFileMd5(saveTo)) continue;
-                    if (name.split('/')[0] != 'accounts') continue;
                     updated.push(name);
                     i++;
                 }
@@ -181,7 +180,7 @@ function updateFiles(url, fileList) {
             url: url + name,
             saveTo: __dirname + '\\' + name,
             onError: () => ++err,
-            complete: saveTo => {
+            complete: data => {
                 var newProgress = parseInt(++done / max * 100);
                 if (newProgress != progress) {
                     progress = newProgress;
