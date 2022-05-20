@@ -54,7 +54,7 @@ function downloadFile(opts) {
     req.on('end', function() {
         var totalBuff = Buffer.concat(fileBuff);
         if (opts.saveTo) {
-            fs.writeFileSync(opts.saveTo, totalBuff, (err) => {
+            fs.writeFile(opts.saveTo, totalBuff, (err) => {
                 opts.complete && opts.complete(opts.saveTo)
             });
         } else {
