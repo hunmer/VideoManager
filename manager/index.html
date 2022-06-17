@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
+    <meta name="theme-color" content="#000000">
+    <meta name="msapplication-navbutton-color" content="#000000">
+    <meta name="apple-mobile-web-app-status-bar-style" content="#000000">
+    <meta name="description" content="">
+    <meta name="author" content="hunmer">
+    <meta name="keywords" content="">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="">
+    <meta property="og:title" content="videoManager">
+    <meta property="og:description" content="">
+    <meta property="og:image" content="favicon.png">
+    <link rel="shortcut icon" href="favicon.png">
+    <meta http-equiv="pragma" content="no-cache" />
+    <meta http-equiv="content-type" content="no-cache, must-revalidate" />
+    <meta http-equiv="expires" content="Wed, 26 Feb 1997 08:21:57 GMT" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-touch-fullscreen" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="full-screen" content="yes">
+    <meta name="browsermode" content="application">
+    <meta name="x5-fullscreen" content="true">
+    <meta name="x5-page-mode" content="app">
+    <meta name="Author" contect="liaoyanjie2000@gmail.com">
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="../public/css/bootstrap-icons.css">
+    <link rel="stylesheet" href="../public/css/bootstrap-multiselect.min.css">
+    <link rel="stylesheet" href="../plugins/datepicker/tempusdominus-bootstrap-4.min.css">
+    <link rel="stylesheet" href="../public/css/public.css">
+    <link rel="stylesheet" href="css/index.css">
+    <link rel="stylesheet" href="css/sidebars.css">
+    <title>资源库</title>
+</head>
+
+<body>
+    <audio id='soundTip' autoplay></audio>
+   
+    <div id="dragBar" style="-webkit-app-region: drag;pointer-events: none !important;position:fixed;top: 0;left:0;width: 100%;height: 15px;z-index: 99999;"></div>
+   
+    <input id="upload" class='inputstyle' type="file" accept=".json" onchange="parseFile(this)" />
+
+    <div id="file-drop" onclick="this.classList.add('hide1')" class="text-center bg-white hide1" style="position: fixed;width: 100%;height:100%;z-index: 99999;">
+        <div class="card" style="width: 18rem;margin: 0 auto;top: 40%;">
+            <i class="bi bi-download" style="font-size: 4rem;"></i>
+            <!-- <img src="..." class="card-img-top" alt="..."> -->
+            <div class="card-body">
+                <p class="card-text">拖放文件完成导入</p>
+            </div>
+        </div>
+    </div>
+    <main class="d-flex flex-nowrap">
+        <div id="sidebar_left" class="sidebar flex-shrink-0 p-3 bg-white border-end">
+            <a href="#" class="d-flex align-items-center pb-3 mb-3 link-dark text-decoration-none border-bottom">
+               <select class="form-select" aria-label=".form-select-lg example">
+                  <option >选择素材库</option>
+                  <option value="1" selected>默认资源库</option>
+                  <option value="2">局域网</option>
+                </select>
+            </a>
+            <ul class="list-unstyled ps-0" id="filters">
+            </ul>
+             <div class="border-top p-2" style="position: absolute;bottom: 0px;width: 100%;width: calc(100% - 20px);">
+                <div class="dropdown">
+                    <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
+                        <img src="res/user.jpg" alt="" width="32" height="32" class="rounded-circle me-2">
+                        <strong class="text-dark">hunmer</strong>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="dropdownUser1">
+                        <li><a class="dropdown-item" data-action="setting">设置</a></li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li><a class="dropdown-item" data-action="about">关于</a></li>
+                    </ul>
+                </div>
+            </div>
+    </div>
+        
+
+        <div id="content" class="w-full">
+            <nav id="navbar-top" class="navbar bg-light p-0 hide">
+              <div class="container-fluid">
+                <a class="navbar-brand" href="#">
+                  <!-- <img src="/docs/5.2/assets/brand/bootstrap-logo.svg" alt="" width="30" height="24" class="d-inline-block align-text-top"> -->
+                  <i class="ms-2 bi bi-list" data-action="toggleSideBar" style="font-size: 2rem;"></i>
+                  资源库1
+                </a>
+                 <input type="text" class="form-control" style="width: 200px;" placeholder="search" aria-describedby="basic-addon1">
+                <input style="width: 100px;"  type="range" class="form-range" min="0" max="6" id="range_size" id="input_switchAutoRun" data-input="input_option,gridCol">
+                <div data-action="toggleRight" style="line-height: 0px !important;"><i class="bi bi-layout-sidebar-reverse"></i></div>
+                 <div id="traffic" class="border-start">
+                    <div data-action="pin" style="line-height: 0px !important;"><i class="bi bi-pin"></i></div>
+                    <div style="background-color: #55efc4" data-action="minSize"></div>
+                    <div style="background-color: #ffeaa7" data-action="maxSize"></div>
+                    <div style="background-color: #ff7675" data-action="close"></div>
+                </div>
+
+              </div>
+            </nav>
+
+             <nav id="navbar-top" class="navbar bg-light p-0">
+              <div class="container-fluid">
+                <a class="navbar-brand" href="#">
+                  <i class="ms-2 bi bi-list" data-action="toggleSideBar" style="font-size: 2rem;"></i>
+                </a>
+                <div class="d-flex align-items-center"> <img src="res/user.jpg" alt="" width="32" height="32" class="rounded-circle me-2 ms-2">
+                    <h4 class="text-dark m-0">hunmer</h4>
+                    <!-- <span class="text-small ms-2">5人在线</h4> -->
+                </div>
+                 <div id="traffic" class="border-start">
+                    <div data-action="pin" style="line-height: 0px !important;"><i class="bi bi-pin"></i></div>
+                    <div style="background-color: #55efc4" data-action="minSize"></div>
+                    <div style="background-color: #ffeaa7" data-action="maxSize"></div>
+                    <div style="background-color: #ff7675" data-action="close"></div>
+                </div>
+              </div>
+            </nav>
+
+            <div class="row w-full m-0 hide">
+                <div class="col" id="gallery" style="height: calc(100vh - 100px);overflow-y: scroll;">
+                    <div class="row">
+                    </div>
+
+                </div>
+                <div id="detail" class="col-3 sidebar flex-shrink-0 p-3 bg-white border-start"></div>
+            </div>
+            <div class="row w-full m-0">
+                <div class="col h-full" id="chat" style="">
+                    <div class="p-3" style="height: calc(100vh - 110px);overflow-y: scroll;padding-bottom: 200px;">
+                        <!--  flex-row-reverse  -->
+                        <div class="msg d-flex h-auto mb-2" style="max-width: 80%;max-width: 500px;">
+                            <img src="res/user.jpg" alt="" width="32" height="32" class="rounded-circle me-2 ms-2">
+                            <div class="alert alert-info m-0" role="alert">
+                                <video class="w-full" src="../cuts/1653403839029.mp4" poster="../cover/1653403839029.jpg" controls></video>                                
+                            </div>
+                            <span class="text-small text-mute align-self-end ms-2">20:03</span>
+                        </div>
+                        <div class="msg d-flex h-auto mb-2 flex-row-reverse">
+                            <img src="res/user.jpg" alt="" width="32" height="32" class="rounded-circle me-2 ms-2">
+                            <div class="alert alert-info m-0" role="alert">
+                                hello world!
+                            </div>
+                            <span class="text-small text-mute align-self-end ms-2 me-2">20:03</span>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center" style="height:  50px;position: relative; ">
+                        <input class="form-control me-2" style="position:relative;padding-right: 100px;" placeholder="发送消息..." value="test" onkeydown="if(event.keyCode == 13)">
+                        <div style="position: absolute;right: 60px;">
+                            <i class="ms-2 bi bi-card-image" data-action="toggleSideBar"  style="font-size: 1.5rem;"></i>
+                            <i class="ms-2 bi bi-tiktok" onclick="g_chat.form_video()"  style="font-size: 1.25rem;"></i>
+                        </div>
+                        <button class="btn btn-primary"><i class=" bi bi-send" data-action="toggleSideBar"></i></button>
+                    </div>
+
+                </div>
+                <!-- <div id="chat_side" class="col-3 sidebar flex-shrink-0 p-3 bg-white border-start">
+                    
+                </div> -->
+            </div>
+        </div>
+    </main>
+    <script src="../public/js/until.js"></script>
+    <script src="js/until.js"></script>
+    <script src="js/var.js"></script>
+    <script src="../public/js/style.js"></script>
+    <script src="../public/js/pinyin.js"></script>
+    <script src="js/tags.js"></script>
+    <script src="../public/js/bootstrapHelper.js"></script>
+    <script src="../public/js/jquery.min.js"></script>
+    <script src="js/renderer.js"></script>
+    <script src="js/bootstrap.bundle.min.js"></script>
+    <script src="../public/js/lazyload.min.js"></script>
+    <script src="../public/js/bootstrap-multiselect.min.js"></script>
+    <script src="../plugins/dplayer/DPlayer.min.js"></script>
+    <script src="../public/js/menu.js"></script>
+    <script src="../public/js/plugins.js"></script>
+    <script src="../public/js/hotkey.js"></script>
+    <script src="../public/js/event.js"></script>
+    <script src="../public/js/setting.js"></script>
+    <script src="js/setting.js"></script>
+    <script src="js/toast.js"></script>
+    <script src="js/video.js"></script>
+    <script src="js/sidebar.js"></script>
+    <script src="js/index.js"></script>
+    <script src="js/gallery.js"></script>
+    <script src="js/database.js"></script>
+    <script src="js/chat.js"></script>
+    <script src="js/websock.js"></script>
+    <script src="js/test.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,35 @@
+
+.filter_active {
+    background-color: var(--bs-primary) !important;
+    color: var(--bs-white) !important;
+}
+
+.video_item_active {
+    border: 1px solid var(--bs-primary);
+}
+
+.hide1 {
+    display: none !important;
+}
+
+.hide {
+    display: none;
+}
+
+.show {
+    display: unset !important;
+}
+
+#traffic {
+    position: unset;
+}
+
+.user-icon {
+    width: 100%;
+    border-radius: 50%;
+}
+
+.bi {
+    vertical-align: -.125em;
+    fill: currentColor;
+}
