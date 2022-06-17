@@ -236,6 +236,7 @@ var g_plugin = {
             version: '0.0.1',
             primary: 1,
         }
+        
         var h = `
             <div class="input-group mb-3">
               <div class="input-group-prepend">
