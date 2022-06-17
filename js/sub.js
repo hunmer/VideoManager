@@ -213,11 +213,9 @@ var g_sub = {
         }
     },
      showTxt: function() {
-        var key = g_video.key;
-        if (!key || !this.subs) return;
         var s = '';
-        for (var sub of this.subs) {
-            s += `${sub.text}\r\n`;
+        for(var span of $('.sub_item span')){
+            s += `${span.outerText}\r\n`;
         }
         if (s == '') {
             toast('没有字幕内容', 'alert-danger');

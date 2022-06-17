@@ -422,6 +422,34 @@ function srcollVideo(e, video) {
     }
 }
 
+function toggleFullScreen() {
+    if (!document.fullscreenElement && // alternative standard method
+        !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) { // current working methods
+        if (document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen();
+        } else if (document.documentElement.msRequestFullscreen) {
+            document.documentElement.msRequestFullscreen();
+        } else if (document.documentElement.mozRequestFullScreen) {
+            document.documentElement.mozRequestFullScreen();
+        } else if (document.documentElement.webkitRequestFullscreen) {
+            document.documentElement.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
+        }
+        $(window).resize();
+        return true;
+    }
+    if (document.exitFullscreen) {
+        document.exitFullscreen();
+    } else if (document.msExitFullscreen) {
+        document.msExitFullscreen();
+    } else if (document.mozCancelFullScreen) {
+        document.mozCancelFullScreen();
+    } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+    }
+    $(window).resize();
+    return false;
+}
+
 function insertStyle(cssText) {
     var head = document.getElementsByTagName("head")[0];
     var style = document.createElement("style");
@@ -453,7 +481,7 @@ function domSelector(opts, s = '') {
     if (typeof(opts) != 'object') opts = { action: opts };
     for (var key in opts) {
         s += '[data-' + key;
-        if (opts[key] != '') {
+        if (opts[key] !== '') {
             s += '="' + opts[key] + '"';
         }
         s += ']';
@@ -467,7 +495,7 @@ function uniqueArr(arr) {
 
 function dragFile(ev, src) {
     hidePreview && hidePreview();
-    g_player && g_player.playVideo(false);
+    typeof(g_player) != 'undefined' && g_player.playVideo(false);
     var target = $(ev.currentTarget);
     ev.preventDefault();
     var files = [];

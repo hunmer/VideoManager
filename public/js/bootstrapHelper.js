@@ -90,6 +90,7 @@ function buildModal(text, opts) {
             class: 'btn-secondary',
         }],
         html: '%html%',
+        scrollable: true,
         onShow: () => {},
         fullHeight: false,
         callback: (id) => {},
@@ -104,7 +105,7 @@ function buildModal(text, opts) {
         maxWidth:  opts.width == 'unset' ? '80%' : 'unset',
         minWidth: opts.width,
         width: opts.width,
-    });
+    }).toggleClass('modal-dialog-scrollable', opts.scrollable);
     modal.find('.modal-content').toggleClass('h-full', opts.fullHeight);
     modal.find('.modal-title').html(opts.title);
     modal.find('.modal-body').html(opts.html.replace('%html%', text));
@@ -116,6 +117,7 @@ function buildModal(text, opts) {
                 opts.onBtnClick(opts, this);
             });
     }
+    if(!opts.btns.length) footer.hide();
     bindModalEvent(modal, opts);
     if(typeof(modal.modal) == 'function'){
         modal.modal('show');

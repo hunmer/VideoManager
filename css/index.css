@@ -1,10 +1,4 @@
-body {
-    min-height: calc(100vh);
-    -webkit-overflow-scrolling: touch;
-    font-family: customFont, -apple-system, BlinkMacSystemFont, Roboto, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-    overflow-y: hidden;
-    /*cursor: url('../res/default.ico'), pointer;*/
-}
+
 
 .tag {
     position: relative;
@@ -12,20 +6,6 @@ body {
 
 .card_selected {
     border: 2px solid red !important;
-}
-
-.show {
-    display: unset !important;
-}
-
-html,
-body {
-    scroll-behavior: smooth;
-}
-
-@font-face {
-    font-family: customFont;
-    src: url(NotoSansSC-Regular.otf);
 }
 
 textarea {
@@ -39,84 +19,6 @@ textarea {
     background-attachment: fixed;
 }*/
 
-a,
-i {
-    -webkit-user-drag: none;
-}
-
-#traffic {
-    display: inline-flex;
-    position: fixed;
-    right: 4px;
-    top: 2px;
-    z-index: 222;
-
-}
-
-#traffic div {
-    margin: 8px;
-    width: 15px;
-    height: 15px;
-    border-radius: 50%;
-    cursor: pointer;
-}
-
-li,
-.badge {
-    cursor: pointer;
-}
-
-::-webkit-scrollbar {
-    width: 5px;
-    height: 5px;
-}
-
-::-webkit-scrollbar-track {
-    width: 5px;
-    background: rgba(#101F1C, 0.1);
-    -webkit-border-radius: 2em;
-    -moz-border-radius: 2em;
-    border-radius: 2em;
-}
-
-::-webkit-scrollbar-thumb {
-    background-color: rgba(144, 147, 153, .5);
-    background-clip: padding-box;
-    min-height: 28px;
-    -webkit-border-radius: 2em;
-    -moz-border-radius: 2em;
-    border-radius: 2em;
-    transition: background-color .3s;
-    cursor: pointer;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(144, 147, 153, .3);
-}
-
-/* :not(.none-select)  */
-.user-select * {
-    user-select: text !important;
-    -webkit-user-select: text !important;
-}
-
-*:not(input, textarea) {
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-}
-
-
-
-* {
-    touch-action: pan-y;
-    -webkit-box-sizing: border-box;
-    -moz-box-sizing: border-box;
-    box-sizing: border-box;
-    -webkit-tap-highlight-color: transparent;
-    outline: none;
-    /*-webkit-user-drag: none;*/
-}
-
 .seled {
     border: 1px solid red;
     background-color: #D6DFF7
@@ -126,26 +28,6 @@ li,
     height: 50px;
 }
 
-.hide {
-    display: none !important;
-}
-
-.hide1 {
-    display: none;
-}
-
-
-.inputstyle {
-    cursor: pointer;
-    font-size: 30px;
-    outline: medium none;
-    position: absolute;
-    filter: alpha(opacity=0);
-    -moz-opacity: 0;
-    opacity: 0;
-    left: -100px;
-    top: -100px;
-}
 
 .card_active {
     color: var(--light);
@@ -166,29 +48,12 @@ li,
     transition: margin 0.25s ease-out;
 }
 
-.scrollableText {
-    max-height: -webkit-fill-available;
-    overflow: auto;
-
-}
-
-.scrollableText::-webkit-scrollbar {
-    width: 0 !important
-}
-
 #sidebar-wrapper .sidebar-heading {
     width: 250px;
     padding: 0.875rem 1.25rem;
     font-size: 1.2rem;
 }
 
-.mb-10 {
-    margin-bottom: 10px;
-}
-
-.mt-10 {
-    margin-top: 10px;
-}
 
 #page-content-wrapper {
     min-width: 100vw;

@@ -155,13 +155,19 @@ const files = {
     getExtension: (file) => path.extname(file).replace('.', ''),
     remove: (file) => { fs.existsSync(file) && fs.rmSync(file) },
     copy: (oldFile, newFile) => {
+        files.mkdir(path.dirname(newFile));
         fs.copyFileSync(oldFile, newFile);
         return fs.existsSync(newFile);
+    },
+    copyWithCallback: (oldFile, newFile, data, callback) => {
+        files.mkdir(path.dirname(newFile));
+        fs.promises.copyFile(oldFile, newFile).then(err => {
+            callback && callback(err, data);
+        });
     },
     rename: (oldFile, newFile) => {
         if(files.exists(oldFile)){
             return fs.renameSync(oldFile, newFile);
-
         }
     },
     copyMove: (oldFile, newFile) => {

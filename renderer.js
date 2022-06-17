@@ -268,55 +268,51 @@ ipcRenderer.on('getResult', (event, arg) => {
     }
 });
 
-var g_taskList = []; // todo 放在主线程 避免刷新丢失
-
-g_cache.cutList = [];
+g_cache.ffmpegCommands = [];
 
 function doFFMPEG(opts, callback) {
     switch (opts.type) {
         case 'cut':
-            if (!files.isDir(__dirname + '/cuts/')) files.mkdir(__dirname + '/cuts/')
-            if (!g_taskList.includes(opts.key)) g_taskList.push(opts.key);
-            const setText = (text, style = 'badge-secondary') => g_video.setClipStatus(opts.key, text, style);
+            if (!files.isDir(__dirname + '/cuts/')) files.mkdir(__dirname + '/cuts/');
+             // todo 放在主线程 避免刷新丢失
+            const setText = (text) => g_video.setClipStatus(opts.key, text);
             setText('队列中');
 
             var custom = typeof(opts.params) == 'string';
             if (custom) {
                 opts.params = opts.params.replace('{start}', opts.start).replace('{time}', opts.duration).split(' ');
             }
-            var run = ffmpeg(files.getPath(opts.input))
+            var command = ffmpeg(files.getPath(opts.input))
                 .outputOptions(opts.params);
+            g_cache.ffmpegCommands[opts.key] = command;
             if (!custom) {
-                run
+                command
                     .videoCodec(getConfig('outputVideo', 'libx264'))
                     .audioCodec(getConfig('outputAudio', 'copy'));
             }
 
-            run.on('start', function(cmd) {
+            command.on('start', function(cmd) {
                     setText('准备中');
                     console.log(cmd);
                 })
                 .on('progress', function(progress) {
-                    setText(parseInt(toTime(progress.timemark) / opts.duration * 100) + '%', 'badge-primary');
+                    setText(parseInt(toTime(progress.timemark) / opts.duration * 100) + '%');
                 })
                 .on('error', function(e) {
                     toast(e, 'alert-danger');
                     console.error(e);
-                    setText('错误', 'badge-danger');
+                    setText('任务失败');
                 })
                 .on('end', function(str) {
-                    var i = g_taskList.indexOf(opts.key);
-                    if (i != -1) {
-                        g_taskList.splice(i, 1);
-                        if (g_taskList.length == 0 && getConfig('notificationWhenDone')) {
-                            waitForRespone('clipTask', 'win.isFocused()', focus => {
-                                if (!focus) {
-                                    showMessage('任务完成', '已完成所有裁剪');
-                                }
-                            });
-                        }
+                    delete g_cache.ffmpegCommands[opts.key];
+                    
+                    if (g_list.remove('cutting', opts.key) == 0 && getConfig('notificationWhenDone')) {
+                        waitForRespone('clipTask', 'win.isFocused()', focus => {
+                            if (!focus) {
+                                showMessage('任务完成', '已完成所有裁剪');
+                            }
+                        });
                     }
-
                     triggerEvent('afterCutVideo', {
                         opts: opts
                     });
@@ -349,8 +345,6 @@ function doFFMPEG(opts, callback) {
 }
 
 window._api = {
-
-
     method: function(data) {
         console.log(data);
         var d = data.msg;
@@ -418,7 +412,6 @@ window._api = {
                     d.callback(d.key, meta)
                 });
                 return;
-                break;
             case 'cmd':
                 d.output = files.getPath(d.output);
                 //if (files.exists(d.output)) return;

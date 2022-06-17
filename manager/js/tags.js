@@ -4,7 +4,6 @@ var g_tags = {
 		return this.list;
 	},
 	toggleTag: function(tag, dom){
-		console.log(tag);
 		var list = this.getSelected();
 		var i = list.indexOf(tag);
 		var add = i == -1;

@@ -229,13 +229,15 @@ var g_plugin = {
     },
     changed: 0,
     prompt_add: function(key = '') {
-        var d = Object.assign(this.getKey(key), {content: nodejs.files.read('*path*/scripts/'+key+'.js')}) || {
+        var d = Object.assign({
             content: '',
             title: '',
             desc: '',
             version: '0.0.1',
             primary: 1,
-        }
+        }, this.getKey(key) || {}, {content: nodejs.files.read('*path*/scripts/'+key+'.js', '')});
+
+        console.log(d)
         var h = `
             <div class="input-group mb-3">
               <div class="input-group-prepend">
@@ -302,7 +304,7 @@ var g_plugin = {
                         title: $('#input_plugin_title').val(),
                         version: $('#input_plugin_version').val(),
                         desc: $('#input_plugin_desc').val(),
-                        primary: ParseInt($('#input_plugin_primary').val()),
+                        primary: parseInt($('#input_plugin_primary').val()),
                     });
                     toast('保存成功', 'alert-success');
                 } else

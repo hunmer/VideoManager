@@ -84,7 +84,7 @@ var g_menu = {
                       </a>
                     
                       <a data-action="video_delete" class="list-group-item list-group-item-action text-danger" aria-current="true">
-                        <i class="bi bi-trash mr-2"></i><span>移除</span>
+                        <i class="bi bi-trash mr-2"></i><span>删除</span>
                       </a>
                     </div>
             `,
@@ -164,7 +164,8 @@ var g_menu = {
                         for (var time in g_video.getFolders()[folder]) {
                             g_video.getVideo(time).folder = newFolder;
                         }
-                        g_video.saveVideos();
+                        local_saveJson('_videos', g_video);
+                        g_video.initVideos();
                     }
                 }
             });
@@ -184,7 +185,8 @@ var g_menu = {
                         }
                         g_video.removeVideo(time, false);
                     }
-                    g_video.saveVideos();
+                    local_saveJson('_videos', g_video);
+                    g_video.initVideos();
                 }
             });
             g_menu.hideMenu('folder_item');
@@ -209,7 +211,7 @@ var g_menu = {
                              g_video.cut(time, clip.start, clip.end - clip.start, d.file, saveTo, false);
                         }
                     }
-                    toast(i > 0? `有${i}处正在修复` : '没有丢失');
+                    toast(i ? `有${i}处正在修复` : '没有丢失');
                     break;
                 case 'video_addClipsToList':
                     var i = 0
@@ -242,15 +244,12 @@ var g_menu = {
 
                 case 'video_delete':
                     g_video.removeVideo(k);
-                    // confirm('是否同时删除文件?', {
-                    //     title: '<b class="text-danger">删除文件</b>',
-                    //     callback: id => {
-                    //         if (id == 'ok') ipc_send('deleteFile', [d.file]);
-                    //     },
-                    //     onShow: () => {
-                    //         setInterval(() => 3000);
-                    //     }
-                    // });
+                    confirm('是否同时删除文件?', {
+                        title: '<b class="text-danger">删除文件</b>',
+                        callback: id => {
+                            if (id == 'ok') ipc_send('deleteFile', [d.file]);
+                        }
+                    });
                     break;
             }
             g_menu.hideMenu('video_item');
@@ -311,9 +310,7 @@ var g_menu = {
         }
 
         g_menu.key = key;
-        if(opts.onShow){
-            if(opts.onShow(key, dom) === false) return;
-        }
+        opts.onShow && opts.onShow(key);
         var par = $('#' + id).attr('data-key', key).show();
         var div = par.find('.menu');
         var i = div.width() / 2;

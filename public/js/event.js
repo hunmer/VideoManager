@@ -11,7 +11,6 @@ $(function() {
 
     const inArea = (event, target) => {
         var point = { x: event.pageX, y: event.pageY }
-
         var area = $(target).offset();
         area = {
             l: area.left,
@@ -19,7 +18,6 @@ $(function() {
             w: $(target).width(),
             h: $(target).height(),
         }
-
         return point.x > area.l && point.x < area.l + area.w && point.y > area.t && point.y < area.t + area.h;
     }
 
@@ -44,7 +42,8 @@ $(function() {
 });
 
 function parseFiles(files) {
-     var base = nodejs.files.getPath('*path*/cuts/');
+    $('#file-drop').addClass('hide1');
+    //var base = nodejs.files.getPath('*path*/cuts/');
     var cnt = 0;
     g_cache.files = [];
     g_cache.paths = [];
@@ -60,10 +59,10 @@ function parseFiles(files) {
             if(f.path == g_cache.dragFile) return;
             var ext = f.name.split('.').pop().toLowerCase();
             if(SUPPORTED_FORMAT.includes(ext)){
-                    if(f.path.indexOf(base) == 0){ // 忽略裁剪过的文件
-                        cnt++;
-                        continue;
-                    }
+                // if(f.path.indexOf(base) == 0){ // 忽略裁剪过的文件
+                //     cnt++;
+                //     continue;
+                // }
                 g_cache.files.push(f.path);
             }
         }
@@ -73,7 +72,6 @@ function parseFiles(files) {
             g_video.reviceFiles(g_cache.files);
         }else{
             toast('不支持的文件', 'bg-danger');
-             $('#file-drop').addClass('hide1');
         }
     }
 }
@@ -93,31 +91,3 @@ function revicePath(path, files, title = '') {
     }
 }
 
-
-function toggleFullScreen() {
-    if (!document.fullscreenElement && // alternative standard method
-        !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) { // current working methods
-        if (document.documentElement.requestFullscreen) {
-            document.documentElement.requestFullscreen();
-        } else if (document.documentElement.msRequestFullscreen) {
-            document.documentElement.msRequestFullscreen();
-        } else if (document.documentElement.mozRequestFullScreen) {
-            document.documentElement.mozRequestFullScreen();
-        } else if (document.documentElement.webkitRequestFullscreen) {
-            document.documentElement.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
-        }
-        $(window).resize();
-        return true;
-    }
-    if (document.exitFullscreen) {
-        document.exitFullscreen();
-    } else if (document.msExitFullscreen) {
-        document.msExitFullscreen();
-    } else if (document.mozCancelFullScreen) {
-        document.mozCancelFullScreen();
-    } else if (document.webkitExitFullscreen) {
-        document.webkitExitFullscreen();
-    }
-    $(window).resize();
-    return false;
-}

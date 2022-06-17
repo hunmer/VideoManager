@@ -101,10 +101,8 @@ $(function() {
         .on('mousewheel', '[data-preview]', function(event) {
             srcollVideo(event, $('#preview_video_popup video')[0])
         })
-        // mouseenter 太快有bug
         .on('mousemove', '[data-preview]', function(event) {
             //if(!event.altKey) return;
-
             var self = $(this);
             var file = self.attr('data-file');
             var target;

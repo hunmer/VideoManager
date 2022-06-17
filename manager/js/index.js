@@ -1,8 +1,11 @@
+function loadTooltips(doms){
+    for(var dom of doms){
+        new bootstrap.Tooltip(dom)
+    }
+}
+
 (function() {
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-    tooltipTriggerList.forEach(function(tooltipTriggerEl) {
-        new bootstrap.Tooltip(tooltipTriggerEl)
-    });
+    loadTooltips($('[data-bs-toggle="tooltip"]'));
     var toastElList = [].slice.call(document.querySelectorAll('.toast'))
     var toastList = toastElList.map(function(toastEl) {
         return new bootstrap.Toast(toastEl, {})
@@ -20,7 +23,23 @@
         })
         .on('focus', event => {
             hidePreview();
-        });
+        })
+        .on('resize', e => {
+            for(var d of $('.p-relative-center')){
+                var par = $(d.parentElement);
+                d = $(d);
+
+                d.css({
+                    display: par.hasClass('p-hover') ? 'none' : 'unset', // 悬浮才显示
+                    position: 'absolute',
+                    left: par.width() / 2 - d.width() / 2 + 'px',
+                    top: par.height() / 2 - d.height() / 2 + 'px',
+                })
+              
+            }
+        })
+
+       
     $(document)
         .on('dragstart', '[data-file]', function(e) {
             g_cache.draging = true;

@@ -38,12 +38,10 @@ $(function() {
         parseFiles(files);
         e.stopPropagation();
         e.preventDefault();
-        delete g_cache.dragFile;
+         delete g_cache.dragFile;
     });
 
 });
-
-
 
 function parseFiles(files) {
      var base = nodejs.files.getPath('*path*/cuts/');
@@ -59,9 +57,9 @@ function parseFiles(files) {
                 cnt++;
                 continue;
             }
-            if(f.path == g_cache.dragFile) return;
+            if(g_cache.dragFile && g_cache.dragFile.includes(f.path)) return;
             var ext = f.name.split('.').pop().toLowerCase();
-            if(SUPPORTED_FORMAT.includes(ext)){
+            if(['mp4', 'ts', 'm3u8', 'flv', 'mdp'].includes(ext)){
                     if(f.path.indexOf(base) == 0){ // 忽略裁剪过的文件
                         cnt++;
                         continue;
@@ -69,23 +67,26 @@ function parseFiles(files) {
                 g_cache.files.push(f.path);
             }
         }
+        // video/mp4
+        // if (!f.type.startsWith('image/')) 
     }
     if (cnt == 0 && g_cache.files.length > 0) {
         g_video.reviceFiles(g_cache.files);
     }
 }
 
-function revicePath(path, files, title = '') {
+function revicePath(path, files) {
     var i = g_cache.paths.indexOf(path);
     if (i != -1) {
         g_cache.paths.splice(i, 1);
         for (var file of files) {
+
             if (!g_cache.files.includes(file)) {
                 g_cache.files.push(file);
             }
         }
         if (g_cache.paths.length == 0) {
-            g_video.reviceFiles(g_cache.files, title);
+            g_video.reviceFiles(g_cache.files);
         }
     }
 }

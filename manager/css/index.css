@@ -1,3 +1,17 @@
+.friend_card_active {
+     background-color: var(--bs-primary) !important;
+    color: var(--bs-white) !important;
+}
+.p-hover svg {
+    color:  #fff;
+}
+ .p-hover:hover .p-relative-center {
+    display: unset !important;
+}
+
+i {
+    cursor: pointer;
+}
 
 .filter_active {
     background-color: var(--bs-primary) !important;

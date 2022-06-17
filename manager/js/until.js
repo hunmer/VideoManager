@@ -1,5 +1,17 @@
 
 
+function getParamsArray(arr, def){
+        if(arr == undefined){
+            return def;
+        }else
+        if(!Array.isArray(arr)){
+            return [arr];
+        }
+        return arr;
+    }
+
+
+
 function doCallback(fn,args){ 
     return fn.apply(this, args);  
 }    
@@ -26,9 +38,11 @@ var MODAL_HTML = (id, opts) => {
         autoDestroy: false,
         title: '',
         html: '',
+        scrollable: true,
     }, opts);
+    console.log(opts)
     return `<div class="modal fade" id="${id}" tabindex="-1" aria-labelledby="modal_${id}_lable" aria-hidden="true"${opts.autoDestroy ? ' data-destroy=1' : ''}>
-        <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-dialog ${opts.scrollable ? 'modal-dialog-scrollable' : ''}">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="modal_${id}_lable">${opts.title}</h5>
@@ -44,8 +58,11 @@ var MODAL_HTML = (id, opts) => {
 }
 
 function onSetConfig(k, v){
-    console.log(v);
+    // console.log(k, v);
     switch(k){
+        case 'user':
+            g_chat.profile.profile_update();
+            break;
         case 'gridCol':
             removeClass($('.media-item'), 'col-').addClass( 'col-'+([1, 2, 3, 4, 6, 12][v]));
             break;
@@ -53,8 +70,9 @@ function onSetConfig(k, v){
 }
 
 function removeClass(dom, list){
+    var classes = dom.attr('class') || '';
     if(!Array.isArray(list)) list = [list];
-    for(var className of dom.attr('class').split(' ')){
+    for(var className of classes.split(' ')){
         for(var s of list){
             if(className.startsWith(s)) dom.removeClass(className);
         }

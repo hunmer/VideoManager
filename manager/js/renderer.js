@@ -16,11 +16,42 @@ window.nodejs = {
     path: replaceAll_once(__dirname, '\\', '\/'),
 }
 
-function startServer(){
-     require('../websock.js');
+if(!files.exists(nodejs.dir+'资源管理.bat')){
+    files.write(nodejs.dir+'资源管理.bat', 'videoManager.exe --homepage ./manager/index.html');
 }
 
-startServer();
+function startServer(opts){
+     require('../websock.js').startServer(opts);
+}
+
+ipcRenderer.on('openFiles', (event, arg) => {
+    var r = [];
+    for (var file of arg) {
+        r.push({
+            path: file,
+            type: files.isDir(file) ? '' : path.extname(file),
+            name: path.basename(file)
+        })
+    }
+    switch(g_cache.openFile_type){
+        case 'friend_msg_file':
+            g_friends.msg_sendFiles(r);
+            break;
+    }
+    console.log(r);
+});
+
+ipcRenderer.on('openFolders', (event, arg) => {
+
+});
+
+ipcRenderer.on('openImage', (event, arg) => {
+    
+});
+
+// startServer({
+//     path: 'D:\\c\\'
+// });
 
 function getIP(){
     return new Promise(function(resolve, reject) {
@@ -79,7 +110,6 @@ function doFFMPEG(opts, callback) {
     }
 }
 
-
 window._api = {
 	loadDB: function(readonly = true){
         var dbFile = window.nodejs.dir + '/data.db';
@@ -89,10 +119,12 @@ window._api = {
             readonly: readonly,
         });
         if (!exists) {
-            db.exec(`CREATE TABLE IF NOT EXISTS videos(
+            db.exec(`
+                CREATE TABLE IF NOT EXISTS videos(
                  id      INTEGER PRIMARY KEY AUTOINCREMENT,
                  tags   TEXT,
                  uploader   TEXT,
+                 folders TEXT,
                  json   TEXT,
                  date   INTEGER,
                  desc   TEXT,

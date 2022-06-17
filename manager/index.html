@@ -34,6 +34,7 @@
     <link rel="stylesheet" href="../plugins/datepicker/tempusdominus-bootstrap-4.min.css">
     <link rel="stylesheet" href="../public/css/public.css">
     <link rel="stylesheet" href="css/index.css">
+    <link rel="stylesheet" href="css/list-groups.css">
     <link rel="stylesheet" href="css/sidebars.css">
     <title>资源库</title>
 </head>
@@ -65,28 +66,27 @@
             </a>
             <ul class="list-unstyled ps-0" id="filters">
             </ul>
-             <div class="border-top p-2" style="position: absolute;bottom: 0px;width: 100%;width: calc(100% - 20px);">
-                <div class="dropdown">
+             <div class="border-top p-2 dropdown" style="position: absolute;bottom: 0px;width: 100%;width: calc(100% - 20px);">
                     <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
-                        <img src="res/user.jpg" alt="" width="32" height="32" class="rounded-circle me-2">
-                        <strong class="text-dark">hunmer</strong>
+                        <img id="user_icon" src="res/user.jpg" alt="" width="32" height="32" class="rounded-circle me-2">
+                        <strong class="text-dark">user</strong>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="dropdownUser1">
                         <li><a class="dropdown-item" data-action="setting">设置</a></li>
+                        <li><a class="dropdown-item" data-action="user">用户</a></li>
                         <li>
                             <hr class="dropdown-divider">
                         </li>
                         <li><a class="dropdown-item" data-action="about">关于</a></li>
                     </ul>
-                </div>
             </div>
     </div>
         
 
         <div id="content" class="w-full">
-            <nav id="navbar-top" class="navbar bg-light p-0 hide">
+            <nav id="navbar-gallery" class="navbar bg-light p-0">
               <div class="container-fluid">
-                <a class="navbar-brand" href="#">
+                <a class="navbar-brand p-0" href="#">
                   <!-- <img src="/docs/5.2/assets/brand/bootstrap-logo.svg" alt="" width="30" height="24" class="d-inline-block align-text-top"> -->
                   <i class="ms-2 bi bi-list" data-action="toggleSideBar" style="font-size: 2rem;"></i>
                   资源库1
@@ -104,15 +104,20 @@
               </div>
             </nav>
 
-             <nav id="navbar-top" class="navbar bg-light p-0">
+             <nav id="navbar-chat" class="hide navbar bg-light p-0">
               <div class="container-fluid">
                 <a class="navbar-brand" href="#">
                   <i class="ms-2 bi bi-list" data-action="toggleSideBar" style="font-size: 2rem;"></i>
                 </a>
-                <div class="d-flex align-items-center"> <img src="res/user.jpg" alt="" width="32" height="32" class="rounded-circle me-2 ms-2">
-                    <h4 class="text-dark m-0">hunmer</h4>
-                    <!-- <span class="text-small ms-2">5人在线</h4> -->
+                <div class="d-flex align-items-center" id="chat_name">
+                    <img src="res/user.jpg" alt="" width="32" height="32" class="rounded-circle me-2 ms-2 hide">
+                    <h4 class="text-dark m-0"></h4>
+                    <span class="badge bg-primary ms-2" data-action="channel_players"></span>
                 </div>
+                <div style="line-height: 0px !important;">
+                    <button class="btn btn-link"><i data-action="channel_videos" class="bi bi-film" data-bs-toggle="tooltip" data-bs-placement="bottom" title="影片列表"></i></button>
+                </div>
+
                  <div id="traffic" class="border-start">
                     <div data-action="pin" style="line-height: 0px !important;"><i class="bi bi-pin"></i></div>
                     <div style="background-color: #55efc4" data-action="minSize"></div>
@@ -122,17 +127,21 @@
               </div>
             </nav>
 
-            <div class="row w-full m-0 hide">
-                <div class="col" id="gallery" style="height: calc(100vh - 100px);overflow-y: scroll;">
+            <div class="row w-full m-0" id="row-gallery" style="height: calc(100vh - 100px);overflow-y: auto;">
+                <div class="col" id="gallery" style="height: calc(100vh - 100px);overflow-y: auto;">
                     <div class="row">
                     </div>
-
                 </div>
                 <div id="detail" class="col-3 sidebar flex-shrink-0 p-3 bg-white border-start"></div>
             </div>
-            <div class="row w-full m-0">
-                <div class="col h-full" id="chat" style="">
-                    <div class="p-3" style="height: calc(100vh - 110px);overflow-y: scroll;padding-bottom: 200px;">
+            <div id="gallery-bottom" style="height: 50px;position: absolute;bottom: 0px;" class="p-2 w-full row">
+                <div class="progress mt-2 col-6">
+                  <div class="progress-bar" role="progressbar" style="width: 25%;" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">25%</div>
+                </div>
+            </div>
+            <div class="row w-full m-0 hide" id="row-chat">
+                <div class="col h-full" style="">
+                    <div class="p-3" id="msg_list" style="height: calc(100vh - 110px);overflow-y: scroll;padding-bottom: 200px !important;">
                         <!--  flex-row-reverse  -->
                         <div class="msg d-flex h-auto mb-2" style="max-width: 80%;max-width: 500px;">
                             <img src="res/user.jpg" alt="" width="32" height="32" class="rounded-circle me-2 ms-2">
@@ -149,13 +158,24 @@
                             <span class="text-small text-mute align-self-end ms-2 me-2">20:03</span>
                         </div>
                     </div>
-                    <div class="d-flex align-items-center" style="height:  50px;position: relative; ">
-                        <input class="form-control me-2" style="position:relative;padding-right: 100px;" placeholder="发送消息..." value="test" onkeydown="if(event.keyCode == 13)">
-                        <div style="position: absolute;right: 60px;">
-                            <i class="ms-2 bi bi-card-image" data-action="toggleSideBar"  style="font-size: 1.5rem;"></i>
-                            <i class="ms-2 bi bi-tiktok" onclick="g_chat.form_video()"  style="font-size: 1.25rem;"></i>
+                    <div style="height: 50px;position: relative; " id="div_chat_bars">
+                        <div class="input-group mb-3">
+                          <button type="button" class="btn btn-outline-secondary hide" data-action="chat_action_btn">Action</button>
+                          <button type="button" class="btn btn-outline-secondary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+                            <span class="visually-hidden">Toggle Dropdown</span>
+                          </button>
+                          <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" data-action="">艾特全体</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" data-action="chat_action_reset">取消动作</a></li>
+                          </ul>
+                          <input class="form-control me" id="input_chat_msg" style="position:relative;padding-right: 100px;" placeholder="发送消息..." value="" onkeydown="if(event.keyCode == 13) doAction(null, 'chat_msg_send')">
+                            <div style="position: absolute;right: 60px;z-index: 222;">
+                                <i class="ms-2 bi bi-card-image" data-action="chat_uploadImage"  style="font-size: 1.5rem;"></i>
+                                <i class="ms-2 bi bi-tiktok" data-action="chat_video_edit" style="font-size: 1.25rem;"></i>
+                            </div>
+                            <button class="btn btn-primary" data-action="chat_msg_send"><i class=" bi bi-send" ></i></button>
                         </div>
-                        <button class="btn btn-primary"><i class=" bi bi-send" data-action="toggleSideBar"></i></button>
                     </div>
 
                 </div>
@@ -179,6 +199,7 @@
     <script src="../public/js/bootstrap-multiselect.min.js"></script>
     <script src="../plugins/dplayer/DPlayer.min.js"></script>
     <script src="../public/js/menu.js"></script>
+    <script src="../public/js/upload.js"></script>
     <script src="../public/js/plugins.js"></script>
     <script src="../public/js/hotkey.js"></script>
     <script src="../public/js/event.js"></script>
@@ -190,8 +211,8 @@
     <script src="js/index.js"></script>
     <script src="js/gallery.js"></script>
     <script src="js/database.js"></script>
-    <script src="js/chat.js"></script>
-    <script src="js/websock.js"></script>
+    <!-- <script src="js/websock.js"></script> -->
+    <script src="js/offcanvas.js"></script>
     <script src="js/test.js"></script>
 </body>
 

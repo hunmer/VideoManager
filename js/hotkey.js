@@ -15,6 +15,11 @@ var g_hotkey = {
             content: "doAction(null, 'modal_search')",
             type: 2,
         },
+        'f5': {
+            title: '刷新',
+            content: "ipc_send('reload')",
+            type: 2,
+        },
         'f11': {
             title: '全屏',
             content: "toggleFullScreen()",
@@ -98,11 +103,6 @@ var g_hotkey = {
         'space': {
             title: '播放/暂停',
             content: "if(!$('.modal.show').length) g_player.playVideo()",
-            type: 1,
-        },
-        '`': {
-            title: '切换侧边栏',
-            content: "toggleSidebar()",
             type: 1,
         },
     },
@@ -394,9 +394,7 @@ var g_hotkey = {
                         h += `</tbody>
                             </table>`;
                         confirm(h, {
-                            id: 'modal_codes',
                             title: '常用代码',
-                            once: true,
                             btns: [{
                                 id: 'issure',
                                 text: '请求更多',

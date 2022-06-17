@@ -9,27 +9,39 @@ var g_gallery = {
             dataKey: 'data-id',
             html: `
                 <div class="list-group list-group-flush p-0" style="width: 100%;">
-                    <a data-action="hotkey_item_edit" class="list-group-item list-group-item-action text-warning" aria-current="true">
+                    <a data-action="media_item_edit" class="list-group-item list-group-item-action text-primary" aria-current="true">
                         <i class="bi bi-pencil me-2"></i><span>编辑</span>
                       </a>
-                      <a data-action="hotkey_item_delete" class="list-group-item list-group-item-action text-danger" aria-current="true">
+                      <a data-action="media_item_delete" class="list-group-item list-group-item-action text-danger" aria-current="true">
                         <i class="bi bi-trash me-2"></i><span>删除</span>
                       </a>
                     </div>
             `,
         });
+         registerAction('media_item_delete', (dom) => {
+           g_data.data_remove(g_menu.key);
+            dom.remove();
+            g_menu.hideMenu('media-item');
+         })
         registerAction('unsetAll', (dom, action, event) => {
         	 $('.video_item_active').removeClass('video_item_active');
         	 $('#detail').html('');
         });
         registerAction('video_item_click', (dom, action, event) => {
             dom = $(dom);
-            if (!event.ctrlKey){
-            	$('.video_item_active').removeClass('video_item_active');
-            	dom.addClass('video_item_active');
+            if (event.ctrlKey){
+                dom.toggleClass('video_item_active');
+            }else
+            if(event.shiftKey){
+                var i1 = $('.video_item_active').attr('data-index');
+                var i2 = dom.attr('data-index');
+                for(var i=Math.min(i1, i2);i<=Math.max(i1, i2);i++){
+                    domSelector({index: i, action: 'video_item_click'}).addClass('video_item_active');
+                }
             }else{
-            	dom.toggleClass('video_item_active');
-           	}
+                $('.video_item_active').removeClass('video_item_active');
+                dom.addClass('video_item_active');
+            }
             g_gallery.loadVideoDetail(dom.attr('data-id'));
         });
         registerAction('fullPreview', (dom, action) => {
@@ -114,14 +126,14 @@ var g_gallery = {
                 </li>
 
                 <li class="mb-1">
-                    <button class="btn btn-toggle d-inline-flex align-items-center rounded border-0 collapsed" data-bs-toggle="collapse" data-bs-target="#tags-collapse" aria-expanded="true">
+                    <button class="btn btn-toggle d-inline-flex align-items-center rounded border-0 collapsed" data-bs-toggle="collapse" data-bs-target="#tags-collapse" aria-expanded="true" >
                         标签<span class="ms-2 badge bg-danger">${d.tags.length}</span>
                     </button>
                     <div class="collapse show" id="tags-collapse">
                         <div class="card">
                             <div class="card-body">
                                 <div class="btn-group dropstart">
-                                   <a data-bs-offset="0,20" data-bs-toggle="dropdown" class="badge bg-secondary me-2"><i class="bi bi-plus"></i></a>
+                                   <a data-bs-offset="0,20" data-bs-toggle="dropdown" class="badge bg-secondary me-2" data-bs-auto-close="outside" ><i class="bi bi-plus"></i></a>
                                   <div class="dropdown-menu p-3">
                                     ${g_tags.getTagsHtml()}
                                   </div>
@@ -132,7 +144,13 @@ var g_gallery = {
                     </div>
                 </li>
 
-                <li class="mb-1">
+              
+
+			`
+        }
+
+        /*
+      <li class="mb-1">
                     <button class="btn btn-toggle d-inline-flex align-items-center rounded border-0 collapsed" data-bs-toggle="collapse" data-bs-target="#info-collapse" aria-expanded="true">
                         信息
                     </button>
@@ -148,8 +166,7 @@ var g_gallery = {
                 </li>
               </ul>
 
-			`
-        }
+        */
         $('#detail').html(h);
         g_tags.setTags(d.tags);
     },

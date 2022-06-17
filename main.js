@@ -3,10 +3,10 @@ var fs = require('fs')
 var files = require('./file.js')
 const { app, session, BrowserWindow, Menu, dialog, ipcMain, shell } = require('electron');
 
-if (!app.requestSingleInstanceLock()) {
-    dialog.showErrorBox('错误', '暂时不支持多开,如果没有多开请检查是否在后台运行(任务管理器)');
-    app.exit(0);
-}
+// if (!app.requestSingleInstanceLock()) {
+//     dialog.showErrorBox('错误', '暂时不支持多开,如果没有多开请检查是否在后台运行(任务管理器)');
+//     app.exit(0);
+// }
 
 const path = require('path');
 const iconvLite = require('iconv-lite');
@@ -19,10 +19,17 @@ var g_config = {
     fullScreen: true,
 }
 
-var dataPath = getLunchParam('--dataPath');
-if (dataPath != ''){
-    app.setPath('userData', files.getPath(dataPath));
+// var flag = window && window.process && window.process.versions && window.process.versions['electron'];
+
+
+var homepage = getLunchParam('--homepage', 'index.html');
+if(homepage == 'index.html'){
+    var dataPath = getLunchParam('--dataPath');
+    if (dataPath != ''){
+        app.setPath('userData', files.getPath(dataPath));
+    }
 }
+
 
 try {
     fs.accessSync(config, fs.R_OK);
@@ -70,11 +77,11 @@ app.commandLine.appendSwitch('wm-window-animations-disabled');
 
 
 
-function getLunchParam(param) {
+function getLunchParam(param, defV = '') {
     var args = process.argv;
     args.splice();
     var i = args.findIndex((s, i) => s == param);
-    return i != -1 && i + 1 <= args.length ? args[i + 1] : ''
+    return i != -1 && i + 1 <= args.length ? args[i + 1] : defV
 }
 
 function runJs(script) {
@@ -179,14 +186,13 @@ function createWindow() {
     win.on('always-on-top-changed', (event, onTop) => {
         send('onTop', onTop);
     });
-    win.loadFile('index.html');
-    if (g_config.devTool) win.webContents.toggleDevTools();
+    win.loadFile(homepage);
+    if (true || g_config.devTool) win.webContents.toggleDevTools();
 
 }
 
 app.whenReady().then(() => {
     createWindow()
-
     app.on('activate', function() {
         if (BrowserWindow.getAllWindows().length === 0) createWindow()
     })
@@ -221,6 +227,12 @@ ipcMain.on("method", async function(event, data) {
     }
     var d = data.msg;
     switch (data.type) {
+        case 'test':
+            require('./test.js');
+            break;
+        case 'download':
+            win.webContents.downloadURL(d);
+            break;
         case 'switchAutoRun':
             if (app.getLoginItemSettings('openAtLogin') != d) {
                 app.setLoginItemSettings({
@@ -291,14 +303,14 @@ ipcMain.on("method", async function(event, data) {
         case 'openFileDialog':
             openFileDialog(files => {
                 if (files.length) send('openFiles', files);
-            }, {
+            }, Object.assign({
                 title: '添加文件(长按ctrl可多选)',
                 filters: [{
                     name: '视频文件',
                     extensions: ['mp4', 'ts', 'm3u8', 'flv', 'mdp', 'mkv'], // , 'rar'
                 }],
                 properties: ['openFile', 'multiSelections'],
-            });
+            }, d));
             break;
 
         case 'openFolderDialog':

@@ -3,14 +3,53 @@
   "version": "1.2.5",
   "description": "",
   "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "electron . --homepage ./manager/index.html",
+    "build": "electron-builder",
+    "update": "node fileList.js",
+    "build-32": "electron-builder --win --ia32"
+  },
   "repository": "https://github.com/hunmer/videoManager",
+  "keywords": [],
   "author": "hunmer",
   "license": "CC0-1.0",
+  "devDependencies": {
+    "electron": "^18.1.0",
+    "electron-builder": "^22.14.13",
+    "electron-rebuild": "^3.2.7"
+  },
   "dependencies": {
     "archiver": "^5.3.1",
-    "better-sqlite3": "^7.5.1",
+    "better-sqlite3": "^7.5.3",
     "dplayer-thumbnails": "^0.0.5",
+    "express": "^4.18.1",
     "fluent-ffmpeg": "^2.1.2",
-    "iconv-lite": "^0.6.3"
+    "iconv-lite": "^0.6.3",
+    "ws": "^8.7.0"
+  },
+  "build": {
+    "productName": "videoManager",
+    "appId": "com.hunmer.videoManager",
+    "copyright": "hunmer",
+    "asar": false,
+    "files": ["!subs","!download","!cuts","!cover","!accounts"],
+    "directories": {
+      "output": "build"
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "installerIcon": "icon.ico"
+    }
   }
 }

@@ -299,7 +299,6 @@ var g_video = {
         local_saveJson('videos', _videos);
 
         if (run) {
-            this.setClipStatus(time, '队列中', 'badge-primary');
             this.cover(time, this.pos1, this.data.file, `*path*/cover/${time}.jpg`, false);
             this.cut(time, this.pos1, this.pos2 - this.pos1, this.data.file, `*path*/cuts/${time}.mp4`, false);
         }
@@ -394,14 +393,12 @@ var g_video = {
         $('[data-action="loadVideo"][data-video="' + time + '"]').find('.lazyload').attr('data-src', url).lazyload();
     },
 
-    setClipStatus: function(clip, text, style = 'badge-primary') {
+    setClipStatus: function(clip, text) {
         var empty = text == undefined || text == '';
-        if (g_cache.clipBadges[clip]) {
-            if (empty) {
-                delete g_cache.clipBadges[clip];
-            } else {
-                g_cache.clipBadges[clip] = [text, style];
-            }
+        if(empty || text == '任务完成'){
+            g_list.remove('cutting', clip);
+        }else{
+            g_list.addToList('cutting', clip, text, false);
         }
         var d = domSelector({ dbaction: 'loadClip', clip: clip });
         if (!d.length) return;
@@ -412,8 +409,21 @@ var g_video = {
             badge = $(`<span style="position: absolute;bottom:0;right:6px;"></span>`).appendTo(d.find('.card-img-overlay'));
         }
         if (empty) {
-            delete g_cache.clipBadges[clip];
-            return badge.remove();
+             return badge.remove();
+        }
+        var style = 'badge-primary'
+        switch(text){
+            case '任务完成':
+                style = 'badge-success';
+                break;
+
+            case '任务失败':
+                 style = 'badge-danger';
+                break;
+
+            case '队列中':
+                style = 'badge-secondary';
+                break;
         }
         badge.attr('class', `staus badge mr-2 ${style}`).html(text);
     },
@@ -452,9 +462,9 @@ var g_video = {
 
         // 恢复badge
         setTimeout(() => {
-            for (var time in g_cache.clipBadges) {
-                var d = g_cache.clipBadges[time];
-                g_video.setClipStatus(time, d[0], d[1]);
+            var list = g_list.getList('cutting');
+            for (var time in list) {
+                g_video.setClipStatus(time, list[time]);
             }
         }, 200);
     },

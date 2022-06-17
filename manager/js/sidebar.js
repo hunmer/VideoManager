@@ -9,15 +9,14 @@ var g_sidebar = {
 				rule = `WHERE folders LIKE '%,${opts.name},%' order by date desc`;
 				break;
 			case '团队':
-				
-
-				return;
+				return g_channels.channel_request(opts.name);
 			default:
 				var d = g_sidebar.list[opts.type].find(d => d.name == opts.name);
 				if(!d) return;
 				rule = d.rule;
 				break;
 		}
+		g_channels.channel_show(false);
 		g_data.resetPage(rule);
 	},
 	init: function(){
@@ -57,7 +56,7 @@ var g_sidebar = {
 				rule: "order by date desc",
 			},{
 				name: '未分类',
-				rule: "WHERE folder='' order by date desc",
+				rule: "WHERE folders='' order by date desc",
 			},{
 				name: '无标签',
 				rule: "WHERE tags='' order by date desc",
@@ -67,25 +66,31 @@ var g_sidebar = {
 			},{
 				name: '文件夹2',
 			}],
-			'团队': [{
-				name: '总群',
-			}]
+			'团队': []
 		}
 		this.initList();
 	},
+	
+	addType: function(name, vals){
+		this.list[name] = vals || [];
+		if(vals){
+			this.initList(name);
+		}
+	},
 
-	initList: function(){
-		var h = ``;
-		for(var type in this.list){
-			h += `
-				<li class="mb-1 p-">
+	initList: function(names){
+		if(names == undefined) $('#sidebar_left #filters').html('');
+		names = getParamsArray(names, Object.keys(this.list));
+		for(var type of names){
+			var id = `sidebar_type_${type}`;
+			var h = `
+				<li class="mb-1" id="${id}">
                     <button class="btn btn-toggle d-inline-flex align-items-center rounded border-0 collapsed" data-bs-toggle="collapse" data-bs-target="#${type}-collapse" aria-expanded="true">
                         ${type}
                     </button>
 					  	${(() => {
 					  		var r = '';
 					  		var a = [];
-					  		console.log(type);
 					  		switch(type){
 					  			case '文件夹':
 					  				a.push(['新增', 'folder_add']);
@@ -94,9 +99,13 @@ var g_sidebar = {
 					  			case '团队':
 					  				return `
 					  				 <div class="dropdown  float-end">
-					  				 <span class="badge bg-secondary" id="badge_team_status" data-bs-toggle="dropdown">连接中<i class="ms-2 bi bi-three-dots"></i></span>
+					  				 <span class="badge bg-secondary" id="badge_team_status" data-bs-toggle="dropdown">
+					  				 	<b>连接中</b>
+					  				 	<i class="ms-2 bi bi-three-dots"></i></span>
 						              <ul class="dropdown-menu">
 						                <li><a class="dropdown-item" href="#" data-action="channel_dialog_new">新建频道</a></li>
+						                <li><a class="dropdown-item" href="#" data-action="channel_startServer">启动服务器</a></li>
+						                <li><a class="dropdown-item" href="#" data-action="channel_findServer">寻找服务器</a></li>
 						              </ul></div>
 					  				`;
 					  		}
@@ -126,10 +135,14 @@ var g_sidebar = {
              h+= `</ul>
                     </div>
                 </li>`;
-		}
-		$('#sidebar_left #filters').html(h);
-	}
 
+             if($('#'+id).length){
+             	$('#'+id).replaceWith(h);
+             }else{
+             	$('#sidebar_left #filters').append(h);
+             }
+		}
+	}
 
 }
 
