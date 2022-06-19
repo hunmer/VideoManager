@@ -166,13 +166,13 @@ var g_video = {
                         c++;
                     }
                     var file = list[folder][key];
-                    var name = getFileName(file);
+                    var name = d.title || getFileName(file);
                     var classes = key == g_video.key ? ' card_active' : '';
                     switch (style) {
                         case 'image':
                             r += `
                             <div class="card p-2 text-white${classes}" data-file="${file}" draggable="true" data-action="loadVideo" data-video="${key}" data-name="${name}">
-                              <img data-src="./cover/${key}.jpg" class="card-img lazyload" alt="${name}">
+                              <img data-src="${d.cover || `./cover/${key}.jpg`}" class="card-img lazyload" alt="${name}">
                               <div class="card-img-overlay">
                                 <h5 class="card-title" style="max-height: 50%;overflow: hidden">${name}</h5>
                                 `;
@@ -400,6 +400,7 @@ var g_video = {
         }else{
             g_list.addToList('cutting', clip, text, false);
         }
+        
         var d = domSelector({ dbaction: 'loadClip', clip: clip });
         if (!d.length) return;
 
@@ -532,6 +533,9 @@ var g_video = {
             var self = g_video;
             var d = self.getVideo(key);
             if (!d) return;
+
+            if(g_parse.loadUrl(key, d.url)) return;
+
             loadTab('list');
             g_sub.unlinkTarget();
             self.clearInput();
@@ -553,11 +557,17 @@ var g_video = {
             $('[data-action="resetPos"]').addClass('hide');
             self.initPos();
             setHeight($('.div_video_side_list'));
-            if (!d.meta) {
-                self.getMeta(key);
-            } else {
-                self.loadMeta(d.meta);
+
+            if(d.file.startsWith('http')){ // 网络视频不加载信息
+                $('#_detail').html('网络视频不加载信息');
+            }else{
+                if (!d.meta) {
+                    self.getMeta(key);
+                } else {
+                    self.loadMeta(d.meta);
+                }
             }
+            
             self.saveVideos(false);
         });
     },
@@ -698,7 +708,9 @@ var g_video = {
     saveVideos: function(init = true) {
         local_saveJson('videos', _videos);
         init && this.initVideos();
-    }
+    },
+
+
 }
 
 g_video.init();

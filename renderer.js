@@ -5,13 +5,14 @@ const iconvLite = require('iconv-lite');
 const fs = require('fs');
 const path = require('path');
 const { execFile } = require('child_process');
-const ffmpeg = require('fluent-ffmpeg');
-ffmpeg.setFfmpegPath(path.join(__dirname, 'bin/ffmpeg.exe'));
 var rm = require('rimraf');
 var nsg = require('node-sprite-generator');
 var Jimp = require('jimp');
 var os = require('os');
 var request = require('request');
+const ffmpeg = require('fluent-ffmpeg');
+ffmpeg.setFfmpegPath(path.join(__dirname, 'bin/ffmpeg.exe'));
+var cli = require('./cli.js');
 
 function getLunchParam(param) {
     var args = process.argv;
@@ -183,6 +184,8 @@ function updateFiles(url, fileList) {
 window.nodejs = {
     files: files,
     env: process.env,
+    require: require,
+    exec: cli,
     path: replaceAll_once(__dirname, '\\', '\/'),
 }
 
@@ -193,24 +196,36 @@ function videoThumb(file, output) {
         }
         var tmp = __dirname + '/cache/' + files.getMd5(file) + '/';
         files.mkdir(tmp);
-        ffmpeg(file)
+        new cli.ffmpeg(file, {progress: true, meta: true})
             .screenshots({
                 count: 100,
                 folder: tmp,
-                filename: 'screenshot%00i.png',
+                filename: 'screenshot%03d.jpg',
                 size: '160x?'
             })
+            .on('progress', function(progress) {
+                console.log(progress);
+                _player.notice(progress+'%');
+            })
             .on('end', function() {
+
+                // 只保留100张图片
+                let list = [];
+                nodejs.files.searchDirFiles(tmp, list, ['jpg']);
+                for(let i = 100;i<list.length;i++){
+                    nodejs.files.remove(list[i]);
+                }
+
                 nsg({
                     src: [
-                        tmp + '/*.png'
+                        tmp + '/*.jpg'
                     ],
-                    spritePath: tmp + '/sprite.png',
+                    spritePath: tmp + '/sprite.jpg',
                     stylesheetPath: tmp + '/sprite.css',
                     layout: 'horizontal',
                     compositor: 'jimp'
                 }, function(err) {
-                    Jimp.read(tmp + '/sprite.png', function(err, lenna) {
+                    Jimp.read(tmp + '/sprite.jpg', function(err, lenna) {
                         if (err) throw err;
                         lenna.quality(60).write(output);
                         rm(tmp, function() {
@@ -270,6 +285,11 @@ ipcRenderer.on('getResult', (event, arg) => {
 
 g_cache.ffmpegCommands = [];
 
+
+ window.addEventListener('unload', function(e) {
+    cli.task_killAll();
+});
+
 function doFFMPEG(opts, callback) {
     switch (opts.type) {
         case 'cut':
@@ -282,7 +302,10 @@ function doFFMPEG(opts, callback) {
             if (custom) {
                 opts.params = opts.params.replace('{start}', opts.start).replace('{time}', opts.duration).split(' ');
             }
-            var command = ffmpeg(files.getPath(opts.input))
+            var command = new cli.ffmpeg(files.getPath(opts.input), {
+                progress: true,
+                env: { proxy: 'http://127.0.0.1:1080', http_proxy: 'http://127.0.0.1:1080', https_proxy: 'http://127.0.0.1:1080' },
+            })
                 .outputOptions(opts.params);
             g_cache.ffmpegCommands[opts.key] = command;
             if (!custom) {
@@ -296,7 +319,7 @@ function doFFMPEG(opts, callback) {
                     console.log(cmd);
                 })
                 .on('progress', function(progress) {
-                    setText(parseInt(toTime(progress.timemark) / opts.duration * 100) + '%');
+                    setText(parseInt(toTime(progress) / opts.duration * 100) + '%');
                 })
                 .on('error', function(e) {
                     toast(e, 'alert-danger');
@@ -324,7 +347,7 @@ function doFFMPEG(opts, callback) {
 
         case 'cover':
             if (!files.isDir(__dirname + '/cover/')) files.mkdir(__dirname + '/cover/')
-            ffmpeg(files.getPath(opts.input))
+            new cli.ffmpeg(files.getPath(opts.input))
                 .screenshots({
                     timestamps: opts.params,
                     folder: path.dirname(files.getPath(opts.output)),
@@ -335,15 +358,12 @@ function doFFMPEG(opts, callback) {
                 });
             break;
         case 'meta':
-            ffmpeg.ffprobe(files.getPath(opts.input), function(err, metadata) {
-                if (err == null) {
-                    callback(metadata);
-                }
+            cli.ffprobe(files.getPath(opts.input)).then(metadata => {
+               callback(metadata);
             });
             break;
     }
 }
-
 window._api = {
     method: function(data) {
         console.log(data);
@@ -354,7 +374,7 @@ window._api = {
                 ipcRenderer.send('method', { type: 'switchAutoRun', msg: d });
                 break;
             case 'supportedFormats':
-                return ffmpeg.getAvailableCodecs(function(err, formats) {
+                return cli.ffmpeg.getAvailableCodecs(function(err, formats) {
                     d(formats);
                 });
             case 'checkUpdate':

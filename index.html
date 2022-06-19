@@ -185,7 +185,7 @@
                          <textarea rows="2" class="form-control" id='clip_note' placeholder="备注" onkeydown="if(event.keyCode == 13 && event.ctrlKey) doAction(null, 'addPos')" onfocus="g_player.playVideo(false)"></textarea>
                     </div>
                 </div>
-                <div class="col-md-4 col-sm-12" id="div_video_side" style="height:  100vh;">
+                <div class="col-md-4 col-sm-12" id="div_video_side" style="height:  calc(100vh - 50px);">
                     <ul class="nav nav-tabs" id="myTab" role="tablist">
                         <li class="nav-item" role="presentation">
                             <a class="nav-link active" id="_tags-tab" data-toggle="tab" href="#_tags" role="tab" aria-controls="_tags" aria-selected="true">标签</a>
@@ -284,6 +284,7 @@
     <script src="public/js/pinyin.js"></script>
     <script src="public/js/setting.js"></script>
     <script src="public/js/plugins.js"></script>
+    <script src="js/ytdl.js"></script>
     <script src="js/player.js"></script>
     <script src="js/index.js"></script>
     <script src="js/sub.js"></script>

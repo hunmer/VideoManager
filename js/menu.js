@@ -82,7 +82,6 @@ var g_menu = {
                         <a data-action="video_cover" class="list-group-item list-group-item-action text-success" aria-current="true">
                         <i class="bi bi-scissors mr-2"></i><span>封面</span>
                       </a>
-                    
                       <a data-action="video_delete" class="list-group-item list-group-item-action text-danger" aria-current="true">
                         <i class="bi bi-trash mr-2"></i><span>删除</span>
                       </a>
@@ -236,7 +235,11 @@ var g_menu = {
                     break;
 
                 case 'video_openFolder':
-                    ipc_send('openFolder', d.file)
+                    if(d.url){
+                        ipc_send('url', d.url)
+                    }else{
+                        ipc_send('openFolder', d.file)
+                    }
                     break;
                 case 'video_cover':
                     g_video.videoCover(k);

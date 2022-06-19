@@ -23,8 +23,10 @@
     "archiver": "^5.3.1",
     "better-sqlite3": "^7.5.3",
     "dplayer-thumbnails": "^0.0.5",
+    "execa": "^5.1.1",
     "express": "^4.18.1",
     "fluent-ffmpeg": "^2.1.2",
+    "forever-monitor": "^3.0.3",
     "iconv-lite": "^0.6.3",
     "ws": "^8.7.0"
   },
@@ -33,7 +35,13 @@
     "appId": "com.hunmer.videoManager",
     "copyright": "hunmer",
     "asar": false,
-    "files": ["!subs","!download","!cuts","!cover","!accounts"],
+    "files": [
+      "!subs",
+      "!download",
+      "!cuts",
+      "!cover",
+      "!accounts"
+    ],
     "directories": {
       "output": "build"
     },

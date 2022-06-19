@@ -35,7 +35,7 @@ var g_player = {
         this.url = opts.url;
         var thumbnails = '';
 
-        if (key != undefined) {
+        if (key != undefined && !opts.url.startsWith('http')) {
             thumbnails = nodejs.files.getPath('*path*/thumbnails/' + key + '.jpg');
             if (!nodejs.files.exists(thumbnails)) thumbnails = '';
             opts.url = 'file://' + encodeURI(opts.url.replaceAll('\\', '/')).replaceAll('#', '%23');
@@ -58,72 +58,7 @@ var g_player = {
                 volume: 1,
                 container: $('#player')[0],
                 screenshot: true,
-                video: Object.assign({
-                    customType: {
-                        /*ts: function(video, player) {
-                            loadRes([
-                                { url: './plugins/mux.min.js', type: 'js' },
-                            ], () => {
-                                // Create array of TS files to play
-                                segments = [opts.url];
-
-                                // Replace this value with your files codec info
-                                mime = 'video/mp4; codecs="mp4a.40.2,avc1.64001f"';
-
-                                let mediaSource = new MediaSource();
-                                let transmuxer = new muxjs.mp4.Transmuxer();
-
-                                video.src = URL.createObjectURL(mediaSource);
-                                mediaSource.addEventListener("sourceopen", appendFirstSegment);
-
-                                function appendFirstSegment() {
-                                    // if (segments.length == 0) return;
-                                    URL.revokeObjectURL(video.src);
-                                    sourceBuffer = mediaSource.addSourceBuffer(mime);
-                                    sourceBuffer.addEventListener('updateend', appendNextSegment);
-
-                                    transmuxer.on('data', (segment) => {
-                                        let data = new Uint8Array(segment.initSegment.byteLength + segment.data.byteLength);
-                                        data.set(segment.initSegment, 0);
-                                        data.set(segment.data, segment.initSegment.byteLength);
-                                        console.log(muxjs.mp4.tools.inspect(data));
-                                        sourceBuffer.appendBuffer(data);
-                                    })
-
-                                    fetch(segments.shift()).then((response) => {
-                                        return response.arrayBuffer();
-                                    }).then((response) => {
-                                        transmuxer.push(new Uint8Array(response));
-                                        transmuxer.flush();
-                                    })
-                                }
-
-                                function appendNextSegment() {
-                                    // reset the 'data' event listener to just append (moof/mdat) boxes to the Source Buffer
-                                    transmuxer.off('data');
-                                    transmuxer.on('data', (segment) => {
-                                        sourceBuffer.appendBuffer(new Uint8Array(segment.data));
-                                    })
-
-                                    if (segments.length == 0) {
-                                        // notify MSE that we have no more segments to append.
-                                        mediaSource.endOfStream();
-                                    }
-
-                                    segments.forEach((segment) => {
-                                        // fetch the next segment from the segments array and pass it into the transmuxer.push method
-                                        fetch(segments.shift()).then((response) => {
-                                            return response.arrayBuffer();
-                                        }).then((response) => {
-                                            transmuxer.push(new Uint8Array(response));
-                                            transmuxer.flush();
-                                        })
-                                    })
-                                }
-                            })
-                        }*/
-                    }
-                }, opts),
+                video: opts,
                 contextmenu: [{
                         text: '设为封面',
                         click: player => {
@@ -145,7 +80,6 @@ var g_player = {
                 ],
             }
 
-
             var sub = nodejs.files.getPath('*path*/subs/' + key + '.vtt');
             if (nodejs.files.exists(sub)) {
                 config.subtitle = {
@@ -163,6 +97,10 @@ var g_player = {
                 // var self.autoSave = setInterval(() => {
                 // })
             });
+            _player.on('error', function(e) {
+                let d = g_video.getVideo(g_video.key);
+                if(d.url) d.file = ''; // 清空url
+            });
             _player.on('fullscreen', function(e) {
                 g_player.onFullscreen(true);
             });
@@ -175,14 +113,6 @@ var g_player = {
             _player.on('webfullscreen_cancel', function(e) {
                 g_player.onFullscreen(false);
             });
-
-            /*
-             <div class="dropup">
-                    <button type="button" class="btn btn-outline-light  dropdown-toggle mr-2" style="height: 15px;padding: 2.5px;line-height: 15px;" data-action="clipList">
-                    </button>
-                    
-                </div>
-            */
             $(`
                     <div id="layout_video_range" class="hide" style="display: inline-flex;">
                     <div class="dropup" data-dropdown="clipList">
