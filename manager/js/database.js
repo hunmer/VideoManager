@@ -97,22 +97,22 @@ var g_data = {
         var exists = [];
         var added = [];
         var max = Object.keys(data).length;
+        
         const progress = () => {
             var p = $('#gallery-bottom .progress-bar').css('width', cnt / max + '%').show();
-            console.log(cnt);
-            if(++cnt == max){
+            let progress = ++cnt / max;
+            if(progress == 1){
                 p.hide();
                 var i = added.length;
-                // if (i) {
-                //     self.loadItems(added);
-                // }
                 toast(`${i ? `成功导入${i}个文件 ` : ''}${exists.length ? `${exists.length}个文件已经存在!` : ''}`, 'bg-info');
+            }else{
+
             }
         }
         for(var md5 in data){
             var d = data[md5];
             var saveTo = self.getPathWithMd5(md5) + d.name + '.mp4';
-            if (nodejs.files.exists(saveTo)) {
+            if (nodejs.files.exists(saveTo)) { // 已存在
                 exists.push(md5);
                 delete data[md5];
                 progress();

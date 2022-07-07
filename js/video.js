@@ -55,7 +55,6 @@ var g_video = {
 
     getFolders: function() {
         // TODO 每次启动不需要遍历
-
         var all = {};
         var r = { '未分组': [] };
         for (var key in _videos) {
@@ -111,7 +110,9 @@ var g_video = {
     initVideos: function() {
         var self = this;
         var h = '';
+
         var list = self.getFolders();
+        self.folders = list;
         for (var folder in list) {
             var id = 'folder_' + folder;
             h += `
@@ -275,7 +276,6 @@ var g_video = {
             g_tag.addTag(tag);
             $('#input_tag').val('');
         }
-
         var run = true;
         if (!this.clip) { // 新建
             this.clip = new Date().getTime();
@@ -299,13 +299,12 @@ var g_video = {
         local_saveJson('videos', _videos);
 
         if (run) {
-            this.cover(time, this.pos1, this.data.file, `*path*/cover/${time}.jpg`, false);
             this.cut(time, this.pos1, this.pos2 - this.pos1, this.data.file, `*path*/cuts/${time}.mp4`, false);
         }
 
         this.initPos();
         if(this.pos2) g_player.setCurrentTime(this.pos2);
-        g_player.playVideo(true);
+        if(getConfig('autoPlayVideoCliped', true)) g_player.playVideo(true);
 
         this.clearInput(this.pos2);
         toast('添加成功', 'alert-success');
@@ -340,6 +339,7 @@ var g_video = {
             output: saveTo,
             type: 'cut',
             callback: (k, saveFile, success) => {
+                this.cover(k, 0, saveFile, `*path*/cover/${k}.jpg`, false);
                 tip && toast('裁剪' + (success ? '成功' : '失败'), 'alert-' + (success ? 'success' : 'danger'));
                 if (success) {
 
@@ -441,7 +441,7 @@ var g_video = {
             // 如果是刚刚添加的 暂时不展示图片
             h += `
                  <div class="card col-md-12 col-lg-6 mb-10 text-white" style="border: unset;display: relative;" data-start="${d.start}" data-file="*path*/cuts/${time}.mp4" draggable="true" data-action="jumpClip" data-dbaction="loadClip" data-clip="${time}" data-preview>
-                      <img style="width: 100%" class="card-img lazyload" src="./res/loading.png" draggable="false" ${time != g_cache.lastAdded ? `data-src="./cover/${time}.jpg"` : ''}>
+                      <img style="width: 100%" class="card-img lazyload" src="./res/loading.png" draggable="false" ${g_list.isInList('cutting', time) ? '' : `data-src="./cover/${time}.jpg"`}>
                       <div class="card-img-overlay">
                         <h6 class="card-title scrollableText">${d.tags.join(' , ')}</h6>
                         <span class="badge badge-secondary mr-2" style="position: absolute;top:0;left:15px;">${getTime(d.start)} - ${getTime(d.end)}

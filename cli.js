@@ -182,6 +182,7 @@ class ffmpeg {
                 this.emit('progress', this.meta ? Math.min(parseInt(toTime(time) / parseInt(this.meta.format.duration) * 100), 100) : time);
             },
             onError: err => {
+                console.error(err);
                 this.emit('error', err);
             },
             onExit: _process => {
@@ -204,8 +205,41 @@ class ffmpeg {
         this.process.kill();
     }
 
+    getAvailableCodecs(callback){
+        let r = {V: {}, A: {}};
+        let s = '';
+         ffmpeg1('-encoders', {}, {
+            onOutput: msg => {
+                s += msg;
+            },
+            onExit: code => {
+                for(let line of s.split('\n')){
+                    line = line.trim();
+                    let key = line.substr(0, 1);
+                    if(r[key]){
+                        let arr = line.replaceAll('  ', ' ').split(' ');
+                        let name = arr[1];
+                        if(name == '=') continue;
+                        let val = '';
+                        arr.reverse().some(s1 => {
+                            val = s1 + ' ' + val;
+                            return s1 == '';
+                        });
+                        r[key][name] = val.trim();
+                    }
+                }
+                callback(r);
+            }
+        });
+         return this;
+    }
+
     screenshots(opts) {
+        // TODO 单张的不需要获取时长
         let file = this.getParam('-i').trim('');
+        // if(opts.size){
+            
+        // }
         ffprobe(file).then(meta => {
             let duration = meta.format.duration;
             let video = meta.streams[0];
@@ -317,4 +351,5 @@ module.exports = {
     ffmpeg: ffmpeg,
     ffprobe: ffprobe,
     ytdl_parse: ytdl_parse,
+    task_killAll: task_killAll,
 }

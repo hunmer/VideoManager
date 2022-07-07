@@ -4,6 +4,8 @@ var g_player = {
     video: undefined,
     init: function(){
         this.reset();
+                registerAction('playNext', () => $('.card_active').next().click())
+        registerAction('playPrev', () => $('.card_active').prev().click())
     },
     reset: function(){
         $('#player').html(`
@@ -60,6 +62,16 @@ var g_player = {
                 screenshot: true,
                 video: opts,
                 contextmenu: [{
+                        text: '上一集',
+                        click: player => {
+                            doAction(null, 'playPrev');
+                        },
+                    },{
+                        text: '下一集',
+                        click: player => {
+                            doAction(null, 'playNext');
+                        },
+                    },{
                         text: '设为封面',
                         click: player => {
                             doAction(null, 'setVideoCover');

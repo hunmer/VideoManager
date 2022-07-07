@@ -87,7 +87,7 @@ var g_hotkey = {
         },
         'ctrl+shift+arrowleft': {
             title: '倒退5%',
-            content: "g_player.addTime('5%')",
+            content: "g_player.addTime('-5%')",
             type: 1,
         },
         'ctrl+shift+arrowright': {
@@ -105,8 +105,20 @@ var g_hotkey = {
             content: "toggleSidebar()",
             type: 1,
         },
+         'alt+n': {
+            title: '下一集',
+            content: "doAction(null, 'playNext')",
+            type: 1,
+        },
+        'alt+p': {
+            title: '上一集',
+            content: "doAction(null, 'playPrev')",
+            type: 1,
+        },
     },
     init: function() {
+
+
         this.list = local_readJson('hotkeys',this.defaultList);
         this.initEvent();
         this.initData();

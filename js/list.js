@@ -136,7 +136,7 @@ var g_list = {
                     var i1 = 0;
                     for (var key in v) {
                         h += `
-							<div class="col-4" style="position: relative;margin-top: 20px;" data-key="${key}" data-file="*path*/cuts/${key}.mp4" draggable="true">
+							<div class="col-sm-6 col-md-4 col-lg-3 col-xl-2" style="position: relative;margin-top: 20px;" data-key="${key}" data-file="*path*/cuts/${key}.mp4" draggable="true">
 								<img style="width: 100%;" src="./cover/${key}.jpg" alt="${v[key]}" draggable="false" data-pos="right-bottom" data-time=1000 data-preview>
 								<i class="bi bi-dash-circle" onclick="g_list.remove('clips', '${key}')" style="position: absolute;top: 0px;right: 20px;"></i>
 							</div>
@@ -194,7 +194,7 @@ var g_list = {
             this.list[type][key] = value;
             //toast('添加成功!', 'alert-success');
         }
-        if($('#modal_list.show').length){
+        if(!$('#modal_list.show').length){
         	// if(type == 'cutting'){
         	// 	case 'cutting':
         	// 		var dom = domSelector({key: key}, '.list-group-item');

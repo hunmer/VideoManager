@@ -44,6 +44,7 @@ $(function() {
 });
 
 function parseFiles(files) {
+     $('#file-drop').addClass('hide1');
      var base = nodejs.files.getPath('*path*/cuts/');
     var cnt = 0;
     g_cache.files = [];

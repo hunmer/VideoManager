@@ -363,6 +363,14 @@ function getFileName(s, ext = false) {
     return name;
 }
 
+
+function getFilePath(s) {
+    let a = s.replaceAll('\\', '/').replaceAll('//', '/').split('/');
+    a.pop();
+    return a.filter(s => s != '').join('\\');
+}
+
+
 function randNum(min, max) {
     return parseInt(Math.random() * (max - min + 1) + min, 10);
 }

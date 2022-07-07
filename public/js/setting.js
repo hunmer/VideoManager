@@ -6,6 +6,30 @@ var g_setting = {
         registerAction('setting', (dom, action) => {
             self.modal_show();
         });
+        registerAction('ffmpeg_formats', () => {
+            console.log('a');
+                ipc_send('supportedFormats', data => {
+                    let h = '';
+                    for (let [key, val] of Object.entries(data.V)) {
+                        h += `<option value="${key}">[${key}]${val}</option>`;
+                    }
+                    $('#select_codec_video').html(`
+                        <option selected disabled>选择</option>
+                        <option value="copy">不转换(秒裁剪,但开头结尾会几秒黑屏，适合长片段裁剪)</option>
+                        ${h}
+                    `).find('option[value="'+getConfig('outputVideo')+'"]').prop('selected', true);
+
+                    h = '';
+                    for (let [key, val] of Object.entries(data.A)) {
+                        h += `<option value="${key}">[${key}]${val}</option>`;
+                    }
+                    $('#select_codec_audio').html(`
+                        <option selected disabled>选择</option>
+                        <option value="copy">不转换</option>
+                        ${h}
+                    `).find('option[value="'+getConfig('outputAudio')+'"]').prop('selected', true)
+                });
+            });
         registerAction('bg', (dom, action) => {
             if (g_config.bg) {
                 return self.setBg('', true);

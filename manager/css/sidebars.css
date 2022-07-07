@@ -16,6 +16,11 @@ main {
   overflow-y: hidden;
 }
 
+
+.w-full1 {
+    width: calc(100% - 200px) !important;
+}
+
 .dropdown-toggle { outline: 0; }
 
 .sidebar {

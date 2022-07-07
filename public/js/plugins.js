@@ -7,6 +7,7 @@ var g_plugin = {
     defaultList: function(reload = true) {
         this.list = {};
         this.setItem(guid(), {
+            //title=测试插件&desc=添加音效让剪辑不在无聊&url=&version=0.0.1
             title: '音效插件',
             desc: '添加音效让剪辑不在无聊',
             enable: false,

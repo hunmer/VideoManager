@@ -1,7 +1,15 @@
 // var electron = require('electron')
+
+const { app } = require('electron');
+app.disableHardwareAcceleration() 
+const gotTheLock = app.requestSingleInstanceLock();
+if (!gotTheLock) {
+    app.quit();
+}
+
+const { session, BrowserWindow, Menu, dialog, ipcMain, shell, protocol } = require('electron');
 var fs = require('fs')
 var files = require('./file.js')
-const { app, session, BrowserWindow, Menu, dialog, ipcMain, shell } = require('electron');
 
 // if (!app.requestSingleInstanceLock()) {
 //     dialog.showErrorBox('错误', '暂时不支持多开,如果没有多开请检查是否在后台运行(任务管理器)');
@@ -19,13 +27,52 @@ var g_config = {
     fullScreen: true,
 }
 
+
+const args = [];
+if (!app.isPackaged) {
+    args.push(path.resolve(process.argv[1]));
+}
+args.push('--');
+const PROTOCOL = 'myapp';
+app.setAsDefaultProtocolClient(PROTOCOL, process.execPath, args);
+
+handleArgv(process.argv);
+app.on('second-instance', (event, argv) => {
+    if (process.platform === 'win32') {
+        // Windows
+        handleArgv(argv);
+    }
+});
+
+// macOS
+app.on('open-url', (event, urlStr) => {
+    handleUrl(urlStr);
+});
+
+function handleArgv(argv) {
+    const prefix = `${PROTOCOL}:`;
+    const offset = app.isPackaged ? 1 : 2;
+    const url = argv.find((arg, i) => i >= offset && arg.startsWith(prefix));
+    if (url) handleUrl(url);
+}
+
+function handleUrl(urlStr) {
+    // myapp:plugin?data={}
+    const location = new URL(urlStr);
+    const { searchParams } = urlObj;
+    let data = JSON.parse(searchParams.data);
+    switch(location.pathname){
+        case 'plugin':
+            
+            break;
+    }
+}
+
 // var flag = window && window.process && window.process.versions && window.process.versions['electron'];
-
-
 var homepage = getLunchParam('--homepage', 'index.html');
-if(homepage == 'index.html'){
+if (homepage == 'index.html') {
     var dataPath = getLunchParam('--dataPath');
-    if (dataPath != ''){
+    if (dataPath != '') {
         app.setPath('userData', files.getPath(dataPath));
     }
 }
@@ -34,7 +81,7 @@ if(homepage == 'index.html'){
 try {
     fs.accessSync(config, fs.R_OK);
     g_config = JSON.parse(files.read(config, JSON.stringify(g_config)));
-    if(dataPath == '' && g_config.dataPath) app.setPath('userData', files.getPath(g_config.dataPath));
+    if (dataPath == '' && g_config.dataPath) app.setPath('userData', files.getPath(g_config.dataPath));
 } catch (err) {
 
 }
@@ -90,16 +137,16 @@ function runJs(script) {
     })
 }
 
-
 function registerMethod(type, callback) {
     g_method[type] = callback;
 }
 
 
 function createWindow() {
+    // 启动时设置宽和高为0 防止边框闪过
     var opts = {
-        width: 1920,
-        height: 1080,
+        width: 0,
+        height: 0,
         resizable: true,
         show: false,
         title: 'loading...',
@@ -115,6 +162,11 @@ function createWindow() {
         }
     }
     win = new BrowserWindow(opts);
+    win.once("ready-to-show", () => {
+        if (process.argv.indexOf("--openAsHidden") < 0) win.show();
+        // if (!app.getLoginItemSettings().wasOpenedAsHidden) win.show();
+    });
+
     win.webContents.on('dom-ready', (event) => {
         send('toggleFrame', opts.frame);
     });
@@ -128,10 +180,8 @@ function createWindow() {
         var file = '(' + new Date().getTime() + ')' + item.getFilename();
         item.setSavePath(dir + file);
         item.on('updated', (event, state) => {
-            if (state === 'interrupted') {
-            } else if (state === 'progressing') {
-                if (item.isPaused()) {
-                } else {
+            if (state === 'interrupted') {} else if (state === 'progressing') {
+                if (item.isPaused()) {} else {
                     // const receivedBytes = item.getReceivedBytes()
                     // // 计算每秒下载的速度
                     // downloadItem.speed = receivedBytes - prevReceivedBytes
@@ -162,13 +212,17 @@ function createWindow() {
             action: 'deny'
         }
     });
-    win.show();
+
     if (g_config.bounds) {
         win.setBounds(g_config.bounds)
     } else
     if (g_config.fullScreen) {
         win.maximize();
+    } else {
+        win.setSize(1920, 1080, true);
     }
+    win.show();
+
     const savePos = () => {
         g_config.bounds = win.getBounds();
         if (g_cache.savePos) clearTimeout(g_cache.savePos);
@@ -187,9 +241,11 @@ function createWindow() {
         send('onTop', onTop);
     });
     win.loadFile(homepage);
-    if (true || g_config.devTool) win.webContents.toggleDevTools();
+    if (g_config.devTool) win.webContents.toggleDevTools();
 
 }
+
+
 
 app.whenReady().then(() => {
     createWindow()
@@ -237,9 +293,9 @@ ipcMain.on("method", async function(event, data) {
             if (app.getLoginItemSettings('openAtLogin') != d) {
                 app.setLoginItemSettings({
                     openAtLogin: d, // Boolean 在登录时启动应用
-                    // openAsHidden: d, // Boolean (可选) mac 表示以隐藏的方式启动应用。~~~~
+                    openAsHidden: true,
+                    args: ["--openAsHidden"],
                     // path: '', String (可选) Windows - 在登录时启动的可执行文件。默认为 process.execPath.
-                    // args: [] String Windows - 要传递给可执行文件的命令行参数。默认为空数组。注意用引号将路径换行。
                 });
             }
             break;
@@ -250,7 +306,7 @@ ipcMain.on("method", async function(event, data) {
             app.exit(0);
             break;
         case 'switchAccount':
-            if(d.default){
+            if (d.default) {
                 g_config.dataPath = d.dataPath;
                 saveConfig();
             }

@@ -8,15 +8,12 @@ var g_sidebar = {
 			case '文件夹':
 				rule = `WHERE folders LIKE '%,${opts.name},%' order by date desc`;
 				break;
-			case '团队':
-				return g_channels.channel_request(opts.name);
 			default:
 				var d = g_sidebar.list[opts.type].find(d => d.name == opts.name);
 				if(!d) return;
 				rule = d.rule;
 				break;
 		}
-		g_channels.channel_show(false);
 		g_data.resetPage(rule);
 	},
 	init: function(){
@@ -66,7 +63,6 @@ var g_sidebar = {
 			},{
 				name: '文件夹2',
 			}],
-			'团队': []
 		}
 		this.initList();
 	},
@@ -95,19 +91,6 @@ var g_sidebar = {
 					  			case '文件夹':
 					  				a.push(['新增', 'folder_add']);
 					  				break;
-
-					  			case '团队':
-					  				return `
-					  				 <div class="dropdown  float-end">
-					  				 <span class="badge bg-secondary" id="badge_team_status" data-bs-toggle="dropdown">
-					  				 	<b>连接中</b>
-					  				 	<i class="ms-2 bi bi-three-dots"></i></span>
-						              <ul class="dropdown-menu">
-						                <li><a class="dropdown-item" href="#" data-action="channel_dialog_new">新建频道</a></li>
-						                <li><a class="dropdown-item" href="#" data-action="channel_startServer">启动服务器</a></li>
-						                <li><a class="dropdown-item" href="#" data-action="channel_findServer">寻找服务器</a></li>
-						              </ul></div>
-					  				`;
 					  		}
 					  		if(a.length){
 					  			 r += `

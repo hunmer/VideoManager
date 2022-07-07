@@ -19,12 +19,13 @@ var g_cache = {
             zIndex: 1050,
         }
 
+
 var g_cache = {
     setting_html: `<div class="row">
               <div class="col-2">
                 <div class="nav flex-column nav-pills text-center" id="v-pills-tab" role="tablist" aria-orientation="vertical">
                   <a class="nav-link active" id="setting-pills-general-tab" data-toggle="pill" href="#setting-pills-general" role="tab" aria-controls="setting-pills-general" aria-selected="true">常规</a>
-                  <a class="nav-link" id="setting-pills-output-tab" data-toggle="pill" href="#setting-pills-output" role="tab" aria-controls="setting-pills-output" aria-selected="false">输出</a>
+                  <a class="nav-link" id="setting-pills-output-tab" data-toggle="pill" href="#setting-pills-output" role="tab"  data-action="ffmpeg_formats"  aria-controls="setting-pills-output" aria-selected="false">输出</a>
                   <a class="nav-link" id="setting-pills-other-tab" data-toggle="pill" href="#setting-pills-other" role="tab" aria-controls="setting-pills-other" aria-selected="false">其他</a>
                   <a class="nav-link" id="setting-pills-adven-tab" data-toggle="pill" href="#setting-pills-adven" role="tab" aria-controls="setting-pills-adven" aria-selected="false">高级</a>
                 </div>
@@ -43,6 +44,10 @@ var g_cache = {
                     <div class="custom-control custom-switch">
                       <input type="checkbox" class="custom-control-input" id="check_autoPlayVideo" data-change="switch_option,autoPlayVideo" data-default="true">
                       <label class="custom-control-label" for="check_autoPlayVideo">视频自动播放</label>
+                    </div>
+                    <div class="custom-control custom-switch">
+                      <input type="checkbox" class="custom-control-input" id="check_autoPlayVideoCliped" data-change="switch_option,autoPlayVideoCliped" data-default="true">
+                      <label class="custom-control-label" for="check_autoPlayVideoCliped">添加片段后恢复播放</label>
                     </div>
                      <div class="custom-control custom-switch">
                       <input type="checkbox" class="custom-control-input" id="check_autoPlay" data-change="switch_option,autoPlay" data-default="true">
@@ -73,9 +78,7 @@ var g_cache = {
                         <div class="form-group col-md-6">
                           <label for="select_codec_video">导出视频编码</label>
                           <select id="select_codec_video" class="form-control" data-change="select_option,outputVideo">
-                          <option selected disabled>选择</option>
-                            <option value="copy">不转换(秒裁剪,但开头结尾会几秒黑屏，适合长片段裁剪)</option>
-                            <option value="libx264">MP4</option>
+                          
                           </select>
                         </div>
                         <div class="form-group col-md-6">

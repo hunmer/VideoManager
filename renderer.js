@@ -71,7 +71,7 @@ function downloadFile(opts) {
 }
 
 function checkFileUpdates(url, tip = true) {
-    if(g_cache.updateing) return;
+    if (g_cache.updateing) return;
     var skip = getConfig('disabled_updates', 'css/user.css').split('\n');
     downloadFile({
         url: url + 'listFile.json',
@@ -196,7 +196,7 @@ function videoThumb(file, output) {
         }
         var tmp = __dirname + '/cache/' + files.getMd5(file) + '/';
         files.mkdir(tmp);
-        new cli.ffmpeg(file, {progress: true, meta: true})
+        new cli.ffmpeg(file, { progress: true, meta: true })
             .screenshots({
                 count: 100,
                 folder: tmp,
@@ -205,14 +205,14 @@ function videoThumb(file, output) {
             })
             .on('progress', function(progress) {
                 console.log(progress);
-                _player.notice(progress+'%');
+                _player.notice(progress + '%');
             })
             .on('end', function() {
 
                 // 只保留100张图片
                 let list = [];
                 nodejs.files.searchDirFiles(tmp, list, ['jpg']);
-                for(let i = 100;i<list.length;i++){
+                for (let i = 100; i < list.length; i++) {
                     nodejs.files.remove(list[i]);
                 }
 
@@ -286,7 +286,7 @@ ipcRenderer.on('getResult', (event, arg) => {
 g_cache.ffmpegCommands = [];
 
 
- window.addEventListener('unload', function(e) {
+window.addEventListener('unload', function(e) {
     cli.task_killAll();
 });
 
@@ -294,7 +294,7 @@ function doFFMPEG(opts, callback) {
     switch (opts.type) {
         case 'cut':
             if (!files.isDir(__dirname + '/cuts/')) files.mkdir(__dirname + '/cuts/');
-             // todo 放在主线程 避免刷新丢失
+            // todo 放在主线程 避免刷新丢失
             const setText = (text) => g_video.setClipStatus(opts.key, text);
             setText('队列中');
 
@@ -303,9 +303,9 @@ function doFFMPEG(opts, callback) {
                 opts.params = opts.params.replace('{start}', opts.start).replace('{time}', opts.duration).split(' ');
             }
             var command = new cli.ffmpeg(files.getPath(opts.input), {
-                progress: true,
-                env: { proxy: 'http://127.0.0.1:1080', http_proxy: 'http://127.0.0.1:1080', https_proxy: 'http://127.0.0.1:1080' },
-            })
+                    progress: true,
+                    env: { proxy: 'http://127.0.0.1:1080', http_proxy: 'http://127.0.0.1:1080', https_proxy: 'http://127.0.0.1:1080' },
+                })
                 .outputOptions(opts.params);
             g_cache.ffmpegCommands[opts.key] = command;
             if (!custom) {
@@ -328,7 +328,7 @@ function doFFMPEG(opts, callback) {
                 })
                 .on('end', function(str) {
                     delete g_cache.ffmpegCommands[opts.key];
-                    
+
                     if (g_list.remove('cutting', opts.key) == 0 && getConfig('notificationWhenDone')) {
                         waitForRespone('clipTask', 'win.isFocused()', focus => {
                             if (!focus) {
@@ -359,7 +359,7 @@ function doFFMPEG(opts, callback) {
             break;
         case 'meta':
             cli.ffprobe(files.getPath(opts.input)).then(metadata => {
-               callback(metadata);
+                callback(metadata);
             });
             break;
     }
@@ -374,7 +374,7 @@ window._api = {
                 ipcRenderer.send('method', { type: 'switchAutoRun', msg: d });
                 break;
             case 'supportedFormats':
-                return cli.ffmpeg.getAvailableCodecs(function(err, formats) {
+                return new cli.ffmpeg().getAvailableCodecs(formats => {
                     d(formats);
                 });
             case 'checkUpdate':
@@ -442,7 +442,7 @@ window._api = {
             case 'getPath':
                 var list = [];
                 files.searchDirFiles(data.msg, list, ['mp4', 'ts', 'm3u8', 'flv', 'mpd', 'mkv'], 2);
-                if(list.length) window.revicePath(data.msg, list, path.basename(data.msg));
+                if (list.length) window.revicePath(data.msg, list, path.basename(data.msg));
                 return;
 
             default:

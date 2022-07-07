@@ -286,7 +286,7 @@ function modal_listSelector(opts){
     <ul class="list-group">`;
     for (var tag in opts.source) {
         h += `
-            <li onclick="this.classList.toggle('active')" class="list-group-item d-flex justify-content-between align-items-center${opts.selected.includes(tag) ? ' active' : ''}"  data-value="${tag}">
+            <li onclick="this.classList.toggle('active')" class="list-group-item d-flex justify-content-between align-items-center${(opts.selected || []).includes(tag) ? ' active' : ''}"  data-value="${tag}">
                 ${tag}
                 <span class="badge badge-warning badge-pill">${opts.source[tag]}</span>
               </li>
@@ -302,8 +302,10 @@ function modal_listSelector(opts){
                 for (var d of $('#modal_tags .list-group-item.active')) {
                     tags.push(d.dataset.value);
                 }
-                var s = $('#modal_tags input').val();
-                if (s != '') tags.push(s);
+                if(!tags.length){
+                     var s = $('#modal_tags input').val();
+                    if (s != '') tags.push(s);
+                }
                 opts.callback(tags);
             }
             return true;
@@ -345,7 +347,7 @@ g_video.modal_folder = function(selected, callback) {
     h += '</ul>';
     confirm(h, {
         title: '选择目录',
-        id: 'modal_folders',
+        id: 'modal_folders', // todo 加上id不会显示在最前面
         callback: (id) => {
             if (id == 'ok') {
                 var tags = [];

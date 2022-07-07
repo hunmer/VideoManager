@@ -324,9 +324,17 @@ function doAction(dom, action, event) {
                     id: 'bbs',
                     text: '52pojie@neysummer',
                     class: 'btn-danger',
+                }, {
+                    id: 'feedback',
+                    text: '用户反馈',
+                    class: 'btn-info',
                 }],
+
                 onShow: () => {},
                 callback: btn => {
+                    if(btn == 'feedback'){
+                        ipc_send('url', 'https://support.qq.com/products/413973/');
+                    }else
                     if(btn == 'checkUpdate'){
                         toast('检查更新中...', 'alert-info');
                         checkUpdate();

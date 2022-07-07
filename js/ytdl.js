@@ -204,7 +204,8 @@ var g_parse = {
 					<p>上传日期: ${r.date}</p>
 					<p>文件大小: ${nodejs.files.renderSize(r.size)}</p>
 					<p>视频长度: ${getTime(r.duration)}</p>
-					<p>说明: ${r.desc}</p>
+					<p>说明: </p>
+                    <pre>${r.desc}</pre>
 				</div>
 			</div>
 

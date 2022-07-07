@@ -213,15 +213,18 @@ var g_sub = {
         }
     },
      showTxt: function() {
-        var s = '';
-        for(var span of $('.sub_item span')){
-            s += `${span.outerText}\r\n`;
-        }
-        if (s == '') {
-            toast('没有字幕内容', 'alert-danger');
-        } else {
-           showCopy(s);
-        }
+        let items = $('.sub_item span');
+        if(!items.length) return toast('没有字幕内容', 'alert-danger');
+        prompt("\r\n", {
+            title: '输入连接符号',
+            callback: join => {
+                 var s = '';
+                for(var span of items){
+                    s += `${span.outerText}${join}`;
+                }
+               showCopy(s);
+            }
+        })
     },
     getSub: function(key) {
         var file = this.file;
