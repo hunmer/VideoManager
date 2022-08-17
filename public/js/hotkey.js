@@ -32,7 +32,7 @@ var g_hotkey = {
         },
         'alt+digit3': {
             title: '输入标签',
-            content: "loadTab('tags');inputFocus($('#input_tag')[0]);",
+            content: "loadTab('tags');setTimeout(() => inputFocus($('#input_tag')[0]), 200);",
             type: 2,
         },
         'alt+digit4': {

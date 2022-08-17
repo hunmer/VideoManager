@@ -267,7 +267,7 @@ var g_video = {
         // if (this.pos2 == -1) {
         //     return alert('未设置pos2');
         // }
-        if (this.pos2 != -1 && this.pos1 == this.pos2) {
+        if (this.pos2 > 0 && this.pos1 == this.pos2) {
             return toast('至少要有1秒', 'alert-danger');
         }
         loadTab('list');
@@ -298,12 +298,17 @@ var g_video = {
         }
         local_saveJson('videos', _videos);
 
-        if (run) {
-            this.cut(time, this.pos1, this.pos2 - this.pos1, this.data.file, `*path*/cuts/${time}.mp4`, false);
+        this.initPos();
+        if(this.pos2 > 0){
+            if(run) {
+                this.cut(time, this.pos1, this.pos2 - this.pos1, this.data.file, `*path*/cuts/${time}.mp4`, false);
+            }
+            g_player.setCurrentTime(this.pos2);
+        }else{
+            // fix pos1
+            this.cover(time, this.pos1, this.data.file, `*path*/cover/${time}.jpg`, false);
         }
 
-        this.initPos();
-        if(this.pos2) g_player.setCurrentTime(this.pos2);
         if(getConfig('autoPlayVideoCliped', true)) g_player.playVideo(true);
 
         this.clearInput(this.pos2);
@@ -318,6 +323,7 @@ var g_video = {
         $('[data-action="resetPos"]').addClass('hide');
         $('#clip_note').val('');
         g_tag.update([]);
+        $(':focus').blur();
         this.pos1 = start;
         this.pos2 = -1;
         this.clip = undefined;
@@ -363,6 +369,21 @@ var g_video = {
                 }
             }
         });
+    },
+
+    removeVideoClips: function(id, save = true){
+        let i = 0;
+         let d = g_video.getVideo(id);
+        for (var k in d.clips) {
+            var mp4 = '*path*/cuts/' + k + '.mp4';
+            if (nodejs.files.exists(mp4)) {
+                i++;
+                nodejs.files.remove(mp4);
+            }
+        }
+        d.clips = {};
+        if(save) g_video.saveVideos();
+        return i;
     },
 
     videoCover: function(key, tip = true, time = 0) {

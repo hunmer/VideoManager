@@ -5,7 +5,7 @@ var g_sub = {
             g_sub.showTxt();
         });
         registerAction('sub_setTarget', (dom, action) => {
-              var key = g_video.key;
+            var key = g_video.key;
             if (key) {
                 g_sub.modal(dir => {
                     g_sub.setTarget(key, dir);
@@ -13,7 +13,7 @@ var g_sub = {
             }
         });
         registerAction('sub_delete', (dom, action) => {
-             var file = '*path*/subs/' + g_video.key + '.vtt';
+            var file = '*path*/subs/' + g_video.key + '.vtt';
             if (nodejs.files.exists(file)) {
                 confirm('字幕', {
                     title: '<b class="text-danger">是否删除字幕?</b>',
@@ -52,6 +52,13 @@ var g_sub = {
             }
         });
     },
+    getFolderItemHtml: function(dir) {
+        return `
+                <li data-action="singleSelect,[data-jianyin],active" class="list-group-item d-flex justify-content-between align-items-center${g_cache.jianyin == dir ? ' active' : ''}"  data-jianyin="${dir}">
+                    ${popString(dir, '\\')}
+                  </li>
+                `;
+    },
     modal: function(callback) {
         var path = g_config.jianyin || '';
         if (!nodejs.files.isDir(path)) {
@@ -72,13 +79,13 @@ var g_sub = {
     </div>
 
     <ul class="list-group" id="list_jianyin">`;
+        let names = []
         for (var dir of files.listDir(path)) {
-            h += `
-                <li data-action="singleSelect,[data-jianyin],active" class="list-group-item d-flex justify-content-between align-items-center${g_cache.jianyin == dir ? ' active' : ''}"  data-jianyin="${dir}">
-                    ${popString(dir, '\\')}
-                  </li>
-                `;
+            h += this.getFolderItemHtml(dir);
+            names.push(popString(dir, '\\'));
         }
+        this.folders = names;
+
         h += '</ul>';
         confirm(h, {
             title: '选择剪映项目',
@@ -107,17 +114,13 @@ var g_sub = {
         });
 
         $('#input_searchJianyin').on('input', function(e) {
-            var s = this.value;
-            for (var item of $('#list_jianyin li')) {
-                item.classList.toggle('hide', item.outerText.indexOf(s) == -1);
+            var search = this.value;
+            let h = '';
+            let base = g_config.jianyin;
+            for (let dir of g_sub.folders.filter(s => s.indexOf(search) != -1)) {
+                h += g_sub.getFolderItemHtml(base+dir);
             }
-            // var py = PinYinTranslate.start(s);
-            // var sz = PinYinTranslate.sz(s);
-            // for (var d of $('#modal_confirm .list-group-item')) {
-            //     var t = d.dataset.tag;
-            //     var b = t.indexOf(s) != -1 || PinYinTranslate.start(t).indexOf(py) != -1 || PinYinTranslate.sz(t).indexOf(sz) != -1;
-            //     $(d).toggleClass('hide', !b);
-            // }
+            $('#list_jianyin').html(h);
         });
     },
 
@@ -145,26 +148,25 @@ var g_sub = {
         if (subs) {
             for (var sub of subs) {
                 h += `<li class="list-group-item sub_item" data-action="sub_item" data-time="${sub.startTime}">
-                        <b  style="user-select: none;margin-right: 10px;" >${sub.startTime}</b>
+                        <b  style="user-select: none;margin-right: 10px;" >${getTime(sub.startTime)}</b>
                         <span>${sub.text.trim()}</span>
                     </li>`;
-                    i++;
+                i++;
             }
         }
         g_sub.lines = i;
-        if(i){
+        if (i) {
             h += `</ul>
              <div style="text-align: right;">
                 <button type="button" data-action="sub_saveSub" class="btn btn-info hide">保存</button>
             </div>
                         `;
             $('#sub_content').html(h);
-        }else{
+        } else {
             this.reset();
-        }
-        !exists && $('[data-action="sub_saveSub"]').removeClass('hide', i == 0);
+        }!exists && $('[data-action="sub_saveSub"]').removeClass('hide', i == 0);
     },
-    reset: function(){
+    reset: function() {
         $('#sub_content').html(`
              <div class="card text-center rounded none-select" draggable="true" data-file="${g_video.data.file}" data-icon="*path*/cover/${g_video.key}.jpg">
                 <i class="bi bi-video" style="font-size: 4rem;"></i>
@@ -181,7 +183,6 @@ var g_sub = {
     timer: -1,
     setTarget: function(key, dir) {
         this.unlinkTarget();
-
         var self = this;
         this.dir = dir;
         this.file = dir + '\\draft_content.json';
@@ -195,7 +196,7 @@ var g_sub = {
     },
     saveSub: function() {
         var key = g_video.key;
-       if (!key || !this.subs) return;
+        if (!key || !this.subs) return;
         var s = '';
         var i = 0;
         for (var sub of this.subs) {
@@ -205,24 +206,24 @@ var g_sub = {
         if (s == '') {
             toast('没有字幕内容', 'alert-danger');
         } else {
-            nodejs.files.write('*path*/subs/' + key + '.vtt', `WEBVTT`+'\r\n\r\n'+s);
+            nodejs.files.write('*path*/subs/' + key + '.vtt', `WEBVTT` + '\r\n\r\n' + s);
             toast('保存成功', 'alert-success');
             $('[data-action="sub_saveSub"]').addClass('hide');
             this.unlinkTarget();
             g_video.loadVideo(g_video.key, g_player.getCurrentTime());
         }
     },
-     showTxt: function() {
+    showTxt: function() {
         let items = $('.sub_item span');
-        if(!items.length) return toast('没有字幕内容', 'alert-danger');
+        if (!items.length) return toast('没有字幕内容', 'alert-danger');
         prompt("\r\n", {
             title: '输入连接符号',
             callback: join => {
-                 var s = '';
-                for(var span of items){
+                var s = '';
+                for (var span of items) {
                     s += `${span.outerText}${join}`;
                 }
-               showCopy(s);
+                showCopy(s);
             }
         })
     },
@@ -258,6 +259,7 @@ var g_sub = {
                 toast('错误json', 'alert-danger');
             }
         }
+        console.log(r);
         return r;
     },
 

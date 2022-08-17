@@ -246,6 +246,10 @@ ipcRenderer.on('toast', (event, arg) => {
 ipcRenderer.on('onTop', (event, arg) => {
     domSelector({ action: 'pin' }).toggleClass('text-primary', arg);
 });
+
+ipcRenderer.on('fileDialog_revice', (event, arg) => {
+    g_pp.call(arg.id, arg.paths);
+});
 ipcRenderer.on('openFiles', (event, arg) => {
     var r = [];
     for (var file of arg) {

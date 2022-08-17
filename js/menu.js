@@ -56,6 +56,30 @@ g_menu.registerMenu({
 });
 
 g_menu.registerMenu({
+    name: 'search_item',
+    selector: '.search_item',
+    dataKey: 'data-key',
+    html: `
+                <div class="list-group" style="width: 100%;">
+                    <a data-action="search_toPos" class="list-group-item list-group-item-action text-warning" aria-current="true">
+                        <i class="bi bi-folder mr-2"></i><span>定位</span>
+                      </a>
+                    </div>
+            `,
+});
+
+registerAction(['search_toPos'], (dom, action) => {
+    var p = g_menu.target;
+    switch (action[0]) {
+        case 'search_toPos':
+            g_video.loadVideo(p.attr('data-video'), p.attr('data-start'));
+            break;
+    }
+    $('#modal_search').modal('hide');
+    g_menu.hideMenu('search_item');
+});
+
+g_menu.registerMenu({
     name: 'video_item',
     selector: '[data-action="loadVideo"]',
     dataKey: 'data-video',
@@ -67,6 +91,7 @@ g_menu.registerMenu({
                      <a data-action="video_addClipsToList" class="list-group-item list-group-item-action" aria-current="true">
                         <i class="bi bi-list-nested mr-2"></i><span>片段加入列表</span>
                       </a>
+                      
                       <a data-action="video_checkClips" class="list-group-item list-group-item-action" aria-current="true">
                         <i class="bi bi-bug-fill mr-2"></i><span>检查丢失</span>
                       </a>
@@ -85,6 +110,7 @@ g_menu.registerMenu({
                       <a data-action="video_delete" class="list-group-item list-group-item-action text-danger" aria-current="true">
                         <i class="bi bi-trash mr-2"></i><span>删除</span>
                       </a>
+                      <a data-action="video_rename" class="list-group-item list-group-item-action " aria-current="true"><i class="bi bi-input-cursor-text mr-2 me-2"></i><span>重命名</span></a>
                     </div>
             `,
     onShow: key => {
@@ -110,6 +136,9 @@ g_menu.registerMenu({
                      </a>
                      <a data-action="folder_delete" class="list-group-item list-group-item-action text-danger" aria-current="true">
                         <i class="bi bi-trash mr-2"></i><span>删除</span>
+                     </a>
+                     <a data-action="folder_deleteClips" class="list-group-item list-group-item-action text-danger" aria-current="true">
+                        <i class="bi bi-trash mr-2"></i><span>删除所有片段</span>
                      </a>
                  </div>
             `,
@@ -160,9 +189,22 @@ registerAction(['clip_delete', 'clip_cover', 'clip_cut', 'clip_openFolder', 'cli
     }
     g_menu.hideMenu('clip_item');
 });
-registerAction(['folder_rename', 'folder_delete', 'folder_addClipsToList', 'folder_replaceFile'], (dom, action) => {
+registerAction(['folder_rename', 'folder_deleteClips', 'folder_delete', 'folder_addClipsToList', 'folder_replaceFile'], (dom, action) => {
     var folder = g_menu.target.parents('[data-folder]').data('folder');
     switch (action[0]) {
+        case 'folder_deleteClips':
+            confirm('确定删除所有片段吗?', {
+                title: '<b class="text-danger">删除片段</b>',
+                callback: id => {
+                    if (id == 'ok') {
+                        var i = 0
+                        for (let id in g_video.folders[folder]) {
+                            toast('成功删除 ' + g_video.removeVideoClips(id) + ' 个片段!', 'alert-success');
+                        }
+                    }
+                }
+            });
+            break;
         case 'folder_replaceFile':
             var i = 0;
             prompt('./', {
@@ -171,7 +213,7 @@ registerAction(['folder_rename', 'folder_delete', 'folder_addClipsToList', 'fold
                     // if(search.at(-1) == '')
                     for (let id in _videos) {
                         let d = _videos[id];
-                        if(d.folder == folder){
+                        if (d.folder == folder) {
                             // search.replace('./', )
                             _videos[id].file = search + '\\' + getFileName(d.file, true);
                             i++;
@@ -222,8 +264,7 @@ registerAction(['folder_rename', 'folder_delete', 'folder_addClipsToList', 'fold
                         }
                         g_video.removeVideo(time, false);
                     }
-                    local_saveJson('_videos', g_video);
-                    g_video.initVideos();
+                    g_video.saveVideos()
                 }
             });
             break;
@@ -233,14 +274,30 @@ registerAction(['folder_rename', 'folder_delete', 'folder_addClipsToList', 'fold
 
 });
 
-registerAction(['video_cover','video_clipsCover', 'video_addClipsToList', 'video_delete', 'video_openFolder', 'video_setFolder', 'video_addToList', 'video_checkClips'], (dom, action) => {
+registerAction(['video_cover', 'video_clipsCover', 'video_rename', 'video_addClipsToList', 'video_delete', 'video_openFolder', 'video_setFolder', 'video_addToList', 'video_checkClips'], (dom, action) => {
     var p = $(dom).parents('[data-key]');
     var k = p.attr('data-key');
     var d = g_video.getVideo(k);
     switch (action[0]) {
+        case 'video_rename':
+            let old = g_menu.target.attr('data-file');
+            prompt(old, {
+                title: '重命名文件',
+                callback: file => {
+                    let v = g_video.getVideo(g_menu.key);
+                    if (!v || isEmpty(file) || file == old) return;
+                    nodejs.files.rename(old, file)
+                    if (nodejs.files.exists(file)) {
+                        v.file = file;
+                        g_video.saveVideos();
+                        toast('更改路径成功', 'alert-success')
+                    }
+                }
+            });
+            break;
         case 'video_clipsCover':
-             for (var time in d.clips) {
-                 g_video.cover(time, 0, '*path*/cuts/' + time + '.mp4', '*path*/cover/' + time + '.jpg', false);
+            for (var time in d.clips) {
+                g_video.cover(time, 0, '*path*/cuts/' + time + '.mp4', '*path*/cover/' + time + '.jpg', false);
             }
             toast('请稍后...');
             break;
@@ -294,6 +351,7 @@ registerAction(['video_cover','video_clipsCover', 'video_addClipsToList', 'video
             break;
 
         case 'video_delete':
+            g_video.removeVideoClips(k, false);
             g_video.removeVideo(k);
             confirm('是否同时删除文件?', {
                 title: '<b class="text-danger">删除文件</b>',

@@ -9,13 +9,22 @@ g_cache.hideAdded = false;
         $('[data-action="collection_add"]').toggleClass('disabled', cnt == 0);
     }
 
-    registerAction('filter_addFolder', (dom, action) => {
-        if (g_filter.filter_get('local', 'folder').length) {
+    const addFolder = folder => {
+         if (g_filter.filter_get('local', 'folder').length) {
             return toast('目录过滤器已经存在!', 'alert-danger');
         }
-        g_video.modal_folder('', folder => {
+        let callback = folder => {
             g_filter.filter_add('local', '目录: ' + folder[0], (folder[0] == '未分组' ? `d.folder == undefined || d.folder == ''` : `d.folder == '${folder[0]}'`), 'folder');
-        });
+        }
+        if(folder){
+            callback(folder);
+        }else{
+            g_video.modal_folder('', callback);
+        }
+    }
+
+    registerAction('filter_addFolder', (dom, action) => {
+       addFolder();
     });
 
     registerAction('filter_currentVideo', (dom, action) => {
@@ -27,6 +36,9 @@ g_cache.hideAdded = false;
             return toast('当前没有播放视频!', 'alert-danger');
         }
         g_filter.filter_add('local', '当前视频: ' + getFileName(g_video.key.file, true), `key == '${key}'`, 'currentVideo');
+    });
+     registerAction('filter_currentFolder', (dom, action) => {
+        addFolder([$('.card_active').parents('[data-folder]').data('folder')])
     });
     registerAction('filter_addTag', (dom, action) => {
         g_video.modal_tag(g_cache.searchTags, tags => {
@@ -114,6 +126,7 @@ g_cache.hideAdded = false;
                 <button class="btn btn-outline-secondary dropdown-toggle float-right" type="button" data-toggle="dropdown" aria-expanded="false">过滤</button>
                 <div class="dropdown-menu">
                     <a class="dropdown-item" data-action="filter_currentVideo">当前视频</a>
+                    <a class="dropdown-item" data-action="filter_currentFolder">当前目录</a>
                     <a class="dropdown-item" data-action="filter_addTag">标签</a>
                     <a class="dropdown-item" data-action="filter_addFolder">目录</a>
                     <a class="dropdown-item" data-action="filter_addSize">尺寸</a>
@@ -136,7 +149,7 @@ g_cache.hideAdded = false;
                 <i tabindex="0" title="搜索视图" class="ml-2 bi bi-grid-1x2" data-toggle="popover" data-placement="bottom" data-content="">
                 </i>
                 <i data-action="view_fullSearch" class="ml-2 bi bi-box-arrow-up-right"></i>`,
-                width: '80%',
+                width: '100%',
                 footer: `
                  <b id="skipAdded_text" class="mr-2"></b>
                     <div class="custom-control custom-checkbox mr-2">
@@ -248,7 +261,7 @@ g_video.onSearchClip = function() {
         var d = r[time];
         var n = getFileName(d.file);
         h += `
-            <div class="card col-12 col-sm-6 col-md-4 col-lg-3 col-xl-2 mb-10 search_item ${classes}" data-action="card_active" data-key="${time}"  data-file="*path*/cuts/${time}.mp4" draggable="true">
+            <div class="card col-12 col-sm-6 col-md-4 col-lg-3 col-xl-2 mb-10 search_item ${classes}" data-action="card_active" data-video="${d.key}" data-start="${d.start}" data-key="${time}"  data-file="*path*/cuts/${time}.mp4" draggable="true">
               <img draggable="false" src="./res/loading.gif" data-src="./cover/${time}.jpg" class="card-img-top lazyload" data-preview data-pos='right-bottom' data-time="1000">
                 <div class="card-body">
                    <h6 class="card-title scrollableText">${d.tags.join(' , ')}</h6>

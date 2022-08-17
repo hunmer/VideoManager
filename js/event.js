@@ -81,13 +81,12 @@ function revicePath(path, files) {
     if (i != -1) {
         g_cache.paths.splice(i, 1);
         for (var file of files) {
-
             if (!g_cache.files.includes(file)) {
                 g_cache.files.push(file);
             }
         }
         if (g_cache.paths.length == 0) {
-            g_video.reviceFiles(g_cache.files);
+            g_video.reviceFiles(g_cache.files, popString(path, '\\'));
         }
     }
 }

@@ -153,7 +153,10 @@ const files = {
 
     },
     getExtension: (file) => path.extname(file).replace('.', ''),
-    remove: (file) => { fs.existsSync(file) && fs.rmSync(file) },
+    remove: (file) => {
+        file = files.getPath(file)
+        fs.existsSync(file) && fs.rmSync(file)
+    },
     copy: (oldFile, newFile) => {
         files.mkdir(path.dirname(newFile));
         fs.copyFileSync(oldFile, newFile);

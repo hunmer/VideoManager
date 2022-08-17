@@ -261,9 +261,18 @@ function saveDialog(callback, opts) {
     dialog.showSaveDialog(win, Object.assign({}, opts)).then(res => callback(res.filePath));
 }
 
-function openFileDialog(callback, opts) {
+function openFileDialog(opts, callback) {
+    opts = Object.assign({
+        title: '选中文件',
+        // filters: [{
+        //     name: '视频文件',
+        //     extensions: ['mp4', 'ts', 'm3u8', 'flv', 'mdp', 'mkv'],
+        // }],
+        properties: ['openFile'], // multiSelections
+    }, opts);
     dialog.showOpenDialog(win, Object.assign({}, opts)).then(res => callback(res.filePaths || res.filePath));
 }
+
 
 function send(type, params) {
     switch (type) {
@@ -342,31 +351,40 @@ ipcMain.on("method", async function(event, data) {
             win.setAlwaysOnTop(d, 'screen');
             break;
         case 'openImageDialog':
-            openFileDialog(file => {
-                if (file.length) {
-                    send('openImage', file[0]);
-                }
-            }, {
+            openFileDialog({
                 title: '选择图片',
                 filters: [{
                     name: '图片',
                     extensions: ['jpg', 'png', 'webp', 'gif'],
                 }],
                 properties: ['openFile'],
+            }, file => {
+                if (file.length) {
+                    send('openImage', file[0]);
+                }
+            });
+            break;
+
+        case 'fileDialog_callback':
+            openFileDialog(d, res => {
+                send('fileDialog_revice', {
+                    id: d.id,
+                    paths: res
+                });
             });
             break;
 
         case 'openFileDialog':
-            openFileDialog(files => {
-                if (files.length) send('openFiles', files);
-            }, Object.assign({
+            openFileDialog(Object.assign({
                 title: '添加文件(长按ctrl可多选)',
                 filters: [{
                     name: '视频文件',
                     extensions: ['mp4', 'ts', 'm3u8', 'flv', 'mdp', 'mkv'], // , 'rar'
                 }],
                 properties: ['openFile', 'multiSelections'],
-            }, d));
+            }, d), files => {
+                if (files.length) send('openFiles', files);
+            });
             break;
 
         case 'openFolderDialog':

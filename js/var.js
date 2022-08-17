@@ -6,6 +6,8 @@ const UPDATE_SCRIPT_URL = 'https://gitee.com/neysummer2000/VideoManager/raw/main
 var g_config = local_readJson('config', {
     tags_rent: [],
     previewMs_clip: 500,
+    outputAudio: 'libmp3lame',
+    outputVideo: 'libx264',
     previewMs_search: 2000,
 });
 

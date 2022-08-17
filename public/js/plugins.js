@@ -56,59 +56,101 @@ var g_plugin = {
        this.setItem(guid(), {
             title: '导入eagle',
             desc: '在右下角列表按钮添加片段导入到eagle选项',
-            enable: false,
+            enable: true,
             content: `
-                 $('<div class="ts _cliplist_show hide"><button type="button" class="btn btn-info" data-action="sendClipsToEagle">导入Eagle</button></div>').appendTo('#modal_list .modal-footer');
+                 function importToEagle(data) {
+    fetch("http://localhost:41595/api/item/addFromPaths", {
+            method: 'POST',
+            body: JSON.stringify(data),
+            redirect: 'follow'
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.status == 'success') {
+                toast('导入' + data.items.length + '条数据', 'alert-success');
+            }
+        })
+        .catch(error => toast('导入失败,请确保eagle在后台运行!', 'alert-danger'));
 
-                 registerAction('sendClipsToEagle', (dom, action) => {
-                    var data = {
-                        "items": [],
-                        "folderId": ""
-                    }
+}
 
-                $.getJSON('http://localhost:41595/api/folder/list', function(json, textStatus) {
-                    if (textStatus == 'success') {
-                        if (json.status == 'success') {
-                            var source = {};
-                            for (var folder of json.data) {
-                                source[folder.name] = folder.imageCount;
-                            }
-                            modal_listSelector({
-                                title: '选择导入目录(一个)',
-                                source: source,
-                                selected: [],
-                                callback: folders => {
-                                    data.folderId = folders.length ? json.data.find(item => {
-                                        return item.name == folders[0]
-                                    }).id : '';
+$('<div class="ts _cliplist_show hide"><button type="button" class="btn btn-info" data-action="sendClipsToEagle">导入Eagle</button></div>').appendTo('#modal_list .modal-footer');
 
-                                    var old = g_list.list.clips;
-                                    for (file of Object.keys(old)) {
-                                        data.items.push({
-                                            path: nodejs.files.getPath('*path*/cuts/'+file+'.mp4'),
-                                            name: file,
-                                            tags: old[file].split(','),
-                                        });
-                                    }
-                                     fetch("http://localhost:41595/api/item/addFromPaths", {
-                                        method: 'POST',
-                                        body: JSON.stringify(data),
-                                        redirect: 'follow'
-                                    })
-                                    .then(response => response.json())
-                                    .then(result => {
-                                        if (result.status == 'success') {
-                                            toast('导入成功!', 'alert-success');
-                                        }
-                                    })
-                                    .catch(error => toast('导入失败,请确保eagle在后台运行!', 'alert-danger'));
+registerAction('sendClipsToEagle', (dom, action) => {
+    var data = {
+        "items": [],
+        "folderId": ""
+    }
 
-                                }
+    $.getJSON('http://localhost:41595/api/folder/list', function(json, textStatus) {
+        if (textStatus == 'success') {
+            if (json.status == 'success') {
+                var source = {};
+                for (var folder of json.data) {
+                    source[folder.name] = folder.imageCount;
+                }
+                modal_listSelector({
+                    title: '选择导入目录(一个)',
+                    source: source,
+                    selected: [],
+                    callback: folders => {
+                        data.folderId = folders.length ? json.data.find(item => {
+                            return item.name == folders[0]
+                        }).id : '';
+                        for (file of Object.keys(g_list.list.clips)) {
+                            data.items.push({
+                                path: nodejs.files.getPath('*path*/cuts/' + file + '.mp4'),
+                                name: file,
+                                tags: g_list.list.clips[file].split(','),
                             });
                         }
+                        importToEagle(data);
                     }
                 });
+            }
+        }
+    });
+});
+
+$('#rm_video_item .list-group').append('<a data-action="video_toEagle" class="list-group-item list-group-item-action " aria-current="true"><i class="bi bi-arrow-right mr-2 me-2"></i><span>导入eagle</span></a>');
+
+registerAction('video_toEagle', dom => {
+    var d = g_video.getVideo(g_menu.key);
+    var data = {
+        "items": [],
+        "folderId": ""
+    }
+    for (var k in d.clips) {
+        data.items.push({
+            path: nodejs.files.getPath('*path*/cuts/' + k + '.mp4'),
+            name: k,
+            tags: d.clips[k].tags
+        });
+    }
+    importToEagle(data);
+    g_menu.hideMenu('video_item');
+})
+
+$('#rm_folder_item .list-group').append('<a data-action="folder_toEagle" class="list-group-item list-group-item-action " aria-current="true"><i class="bi bi-arrow-right mr-2 me-2"></i><span>导入eagle</span></a>');
+registerAction('folder_toEagle', dom => {
+    var folder = g_menu.target.parents('[data-folder]').data('folder');
+    for (let id in g_video.folders[folder]) {
+        var data = {
+            "items": [],
+            "folderId": ""
+        }
+        let d = g_video.getVideo(id);
+        for (var k in d.clips) {
+            data.items.push({
+                path: nodejs.files.getPath('*path*/cuts/' + k + '.mp4'),
+                name: k,
+                tags: d.clips[k].tags
             });
+        }
+        importToEagle(data);
+    }
+})
+
         `,
             version: '0.0.1',
             primary: 1,
