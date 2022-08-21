@@ -111,7 +111,7 @@ function buildModal(text, opts) {
     modal.find('.modal-body').html(opts.html.replace('%html%', text));
     var footer = modal.find('.modal-footer').html(opts.footer || '');
     for (var btn of opts.btns) {
-        $(`<button id="btn_${btn.id}" type="button" class="btn ${btn.class}">${btn.text}</button>`)
+        $(`<button id="btn_${btn.id}" type="button" class="btn ${btn.class}" ${btn.attr || ''}>${btn.text}</button>`)
             .prependTo(footer)
             .on('click', function() {
                 opts.onBtnClick(opts, this);

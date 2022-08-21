@@ -118,16 +118,13 @@ var g_sub = {
             let h = '';
             let base = g_config.jianyin;
             for (let dir of g_sub.folders.filter(s => s.indexOf(search) != -1)) {
-                h += g_sub.getFolderItemHtml(base+dir);
+                h += g_sub.getFolderItemHtml(base + dir);
             }
             $('#list_jianyin').html(h);
         });
     },
-
     searchSub: function(s) {
-        for (var item of $('#list_sub_item li')) {
-            item.style.display = item.querySelector('span').outerText.indexOf(s) != -1 ? 'unset' : 'none';
-        }
+        g_sub.updateSub(undefined, s == '' ? undefined : sub => $(sub.text).text().indexOf(s) != -1)
     },
     loadSub: function(key, cache = true) {
         var file = '*path*/subs/' + key + '.vtt';
@@ -137,15 +134,22 @@ var g_sub = {
             // subs = PF_SRT.parse(nodejs.files.read(file));
             subs = _player.video.textTracks[0].cues;
         } else {
-            subs = this.getSub(key);
+            subs = this.getSub(file);
         }
         this.subs = subs;
+        this.updateSub(subs, this.filter);
+        !exists && $('[data-action="sub_saveSub"]').removeClass('hide', Object.keys(subs).length == 0);
+    },
 
+    updateSub: function(subs, filter) {
+        if (!subs) subs = this.subs;
         var h = `
              <ul class="list-group list-group-flush" style="overflow-y: auto;padding-bottom: 50px;height: calc(100vh - 250px);" id="list_sub_item">                 
         `;
         var i = 0;
         if (subs) {
+            this.filter = filter;
+            if (filter) subs = Array.from(subs).filter(filter);
             for (var sub of subs) {
                 h += `<li class="list-group-item sub_item" data-action="sub_item" data-time="${sub.startTime}">
                         <b  style="user-select: none;margin-right: 10px;" >${getTime(sub.startTime)}</b>
@@ -164,7 +168,7 @@ var g_sub = {
             $('#sub_content').html(h);
         } else {
             this.reset();
-        }!exists && $('[data-action="sub_saveSub"]').removeClass('hide', i == 0);
+        }
     },
     reset: function() {
         $('#sub_content').html(`
@@ -227,8 +231,7 @@ var g_sub = {
             }
         })
     },
-    getSub: function(key) {
-        var file = this.file;
+    getSub: function(file) {
         var r = [];
         if (file) {
             if (!nodejs.files.exists(file)) return;

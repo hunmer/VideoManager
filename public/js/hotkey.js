@@ -116,6 +116,8 @@ var g_hotkey = {
             type: 1,
         },
     },
+
+   
     init: function() {
 
 

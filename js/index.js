@@ -57,13 +57,13 @@ $(function() {
             }
         })
         .on('blur', event => {
-            if(getConfig('autoStopPlay')){
+            if (getConfig('autoStopPlay')) {
                 g_player.tryStop();
             }
             hidePreview(false);
         })
         .on('focus', event => {
-            if(getConfig('autoStopPlay')){
+            if (getConfig('autoStopPlay')) {
                 g_player.tryStart();
             }
         });
@@ -106,13 +106,13 @@ $(function() {
             var self = $(this);
             var file = self.attr('data-file');
             var target;
-            if(file){
+            if (file) {
                 target = self;
-            }else{
+            } else {
                 target = file = self.parents('[data-file]');
                 file = target.attr('data-file');
             }
-            if(file == g_cache.previewFile) return;
+            if (file == g_cache.previewFile) return;
             g_cache.previewFile = file;
             var pos = self.data('pos');
             var popup = $('#preview_video_popup');
@@ -181,7 +181,7 @@ $(function() {
             var modal = event.target;
             if (modal.dataset.destroy) {
                 modal.remove();
-            }else{
+            } else {
                 modal.zIndex = 1050; // 取消置顶
             }
         })
@@ -237,11 +237,11 @@ $(function() {
             if (this.classList.contains('disabled')) return;
             doAction(this, this.dataset.dbaction, event);
         })
-        .on('change', '[data-change]', function(event){
+        .on('change', '[data-change]', function(event) {
             if (this.classList.contains('disabled')) return;
             doAction(this, this.dataset.change, event);
         })
-         .on('input', '[data-input]', function(event){
+        .on('input', '[data-input]', function(event) {
             if (this.classList.contains('disabled')) return;
             doAction(this, this.dataset.input, event);
         })
@@ -262,43 +262,45 @@ function checkUpdate() {
         })
         .then(data => {
             // console.log(data);
-            if(data.tag_name == 'none'){
+            if (data.tag_name == 'none') {
                 toast('检查更新失败,请去首页查看', 'alert-danger');
-            }else
+            } else
             if (data.tag_name != APP_VERSION) {
                 ipc_send('url', data.html_url);
-            }else{
+            } else {
                 toast('已经是最新版本', 'alert-success');
             }
         });
 }
 
-function doAction(dom, action, event) {
-    var action = action.split(',');
-    if (g_actions[action[0]]) {
-        g_actions[action[0]](dom, action, event);
-    }
-    switch (action[0]) {
-        case 'search_result_item':
-            $('#searchResults li.active').removeClass('active');
-            g_video.loadVideo($(dom).addClass('active').attr('data-video'));
-            break;
-        case 'addfiles':
-            ipc_send('openFileDialog', { multi: true });
-            break;
-        case 'addfolders':
-            ipc_send('openFolderDialog', { multi: true });
-            break;
-        case 'pin':
-            ipc_send('pin');
-            break;
-        case 'aboutMe':
-            var arr = g_cache.needUpdate || [];
-            if(arr.length){
-                g_cache.needUpdate = [];
-                return showUpdateFiles(UPDATE_SCRIPT_URL, arr);
-            }
-            confirm(`
+function doAction() {
+    triggerEvent('onActionBefore', [...arguments], data => {
+        let [dom, action, event] = data;
+        action = action.split(',');
+        if (g_actions[action[0]]) {
+            return g_actions[action[0]](dom, action, event);
+        }
+        switch (action[0]) {
+            case 'search_result_item':
+                $('#searchResults li.active').removeClass('active');
+                g_video.loadVideo($(dom).addClass('active').attr('data-video'));
+                break;
+            case 'addfiles':
+                ipc_send('openFileDialog', { multi: true });
+                break;
+            case 'addfolders':
+                ipc_send('openFolderDialog', { multi: true });
+                break;
+            case 'pin':
+                ipc_send('pin');
+                break;
+            case 'aboutMe':
+                var arr = g_cache.needUpdate || [];
+                if (arr.length) {
+                    g_cache.needUpdate = [];
+                    return showUpdateFiles(UPDATE_SCRIPT_URL, arr);
+                }
+                confirm(`
                 <div class="row align-items-center">
                     <div class="col-md-12 text-center">
                         <img src="favicon.png" style="width: 100px">
@@ -311,223 +313,224 @@ function doAction(dom, action, event) {
                     </div>
                 </div>
             `, {
-                title: '关于',
-                btns: [{
-                    id: 'checkUpdate',
-                    text: '<i class="bi bi-github mr-2"></i>大版本更新',
-                    class: 'btn-primary',
-                },{
-                    id: 'checkUpdate1',
-                    text: '<i class="bi bi-code mr-2"></i>小版本更新',
-                    class: 'btn-primary',
-                }, {
-                    id: 'bbs',
-                    text: '52pojie@neysummer',
-                    class: 'btn-danger',
-                }, {
-                    id: 'feedback',
-                    text: '用户反馈',
-                    class: 'btn-info',
-                }],
+                    title: '关于',
+                    btns: [{
+                        id: 'checkUpdate',
+                        text: '<i class="bi bi-github mr-2"></i>大版本更新',
+                        class: 'btn-primary',
+                    }, {
+                        id: 'checkUpdate1',
+                        text: '<i class="bi bi-code mr-2"></i>小版本更新',
+                        class: 'btn-primary',
+                    }, {
+                        id: 'bbs',
+                        text: '52pojie@neysummer',
+                        class: 'btn-danger',
+                    }, {
+                        id: 'feedback',
+                        text: '用户反馈',
+                        class: 'btn-info',
+                    }],
 
-                onShow: () => {},
-                callback: btn => {
-                    if(btn == 'feedback'){
-                        ipc_send('url', 'https://support.qq.com/products/413973/');
-                    }else
-                    if(btn == 'checkUpdate'){
-                        toast('检查更新中...', 'alert-info');
-                        checkUpdate();
-                    }else
-                    if(btn == 'checkUpdate1'){
-                        toast('检查更新中...', 'alert-info');
-                        ipc_send('checkUpdate', UPDATE_SCRIPT_URL);
-                    }else{
-                        ipc_send('url', 'https://www.52pojie.cn/thread-1628845-1-1.html');
+                    onShow: () => {},
+                    callback: btn => {
+                        if (btn == 'feedback') {
+                            ipc_send('url', 'https://support.qq.com/products/413973/');
+                        } else
+                        if (btn == 'checkUpdate') {
+                            toast('检查更新中...', 'alert-info');
+                            checkUpdate();
+                        } else
+                        if (btn == 'checkUpdate1') {
+                            toast('检查更新中...', 'alert-info');
+                            ipc_send('checkUpdate', UPDATE_SCRIPT_URL);
+                        } else {
+                            ipc_send('url', 'https://www.52pojie.cn/thread-1628845-1-1.html');
+                        }
+                        return false;
                     }
-                  return false;
+                });
+                break;
+            case 'config':
+                setConfig(action[1], action[2]);
+                break;
+            case 'folder_sort':
+            case 'folder_style':
+            case 'folder_sort_reverse':
+                const fun = () => {
+                    setConfig(action[0], action[1]);
+                    g_video.initVideos();
                 }
-            });
-            break;
-        case 'config':
-            setConfig(action[1], action[2]);
-            break;
-        case 'folder_sort':
-        case 'folder_style':
-        case 'folder_sort_reverse':
-            const fun = () => {
-                setConfig(action[0], action[1]);
-                g_video.initVideos();
-            }
-            if (action[0] == 'folder_sort') {
-                switch (action[1]) {
-                    case '替换文本':
-                        return prompt(g_config.folder_sort_replace || '', {
-                            title: '替换文件名(用,分开)',
-                            placeholder: '请输入',
-                            html: `%html%
+                if (action[0] == 'folder_sort') {
+                    switch (action[1]) {
+                        case '替换文本':
+                            return prompt(g_config.folder_sort_replace || '', {
+                                title: '替换文件名(用,分开)',
+                                placeholder: '请输入',
+                                html: `%html%
                             <p>如: 文件名为 [mp4.com]天道20集.mp4, 可以设置值为 [mp4.com]天道,.mp4 </br>取出来的就是 20</p>
                             `,
-                            callback: str => {
-                                setConfig('folder_sort_replace', str);
-                                fun();
-                            }
-                        })
-                    case '自定义':
-                        return prompt(g_config.folder_sort_fun || `
+                                callback: str => {
+                                    setConfig('folder_sort_replace', str);
+                                    fun();
+                                }
+                            })
+                        case '自定义':
+                            return prompt(g_config.folder_sort_fun || `
                             var last_a = a1.last || 0;
                             var last_b = b1.last || 0;
                             last_b - last_a;
                             `, {
-                            title: '自定义排序代码',
-                            placeholder: '请输入',
-                            html: `%html%
+                                title: '自定义排序代码',
+                                placeholder: '请输入',
+                                html: `%html%
                             <p>a=前者键值(md5) b=后者键值(md5) a1=前者影片数据(object) b1=后者影片数据(object)</p>
                             `,
-                            callback: code => {
-                                setConfig('folder_sort_fun', code);
-                                fun();
-                            }
-                        });
+                                callback: code => {
+                                    setConfig('folder_sort_fun', code);
+                                    fun();
+                                }
+                            });
 
-                }
-            }
-            fun();
-            break;
-        case 'openURL':
-            ipc_send('url', dom.dataset.url);
-            break;
-        case 'modal_folders':
-            var input = $(action[1]);
-            g_video.modal_folder(input.val(), folder => {
-                input.val(folder[0]);
-            });
-            break;
-        case 'singleSelect':
-            $(action[1] + '.' + action[2]).removeClass(action[2]);
-            dom.classList.add(action[2])
-            break;
-        case 'videoThumb':
-            var key = g_video.key;
-            if (key) {
-                toast('生成中,可能要花费一些时间');
-                ipc_send('videoThumb', { file: g_player.getUrl(), key: key });
-            }
-            break;
-
-        case 'openFile':
-        case 'openFolder':
-            ipc_send('openFile', dom.dataset.file)
-            break;
-        case 'btnGroup_select':
-            for (var d of dom.parentElement.children) {
-                d.className = 'btn' + (d == dom ? ' btn-primary' : '');
-            }
-            break;
-        case 'data_export':
-            var d = {};
-            for (var key of local_getList()) {
-                d[key] = localStorage.getItem(key);
-            }
-            downloadData(JSON.stringify(d), 'data_' + (new Date().format('yyyy_MM_dd_hh_mm_ss')) + '.json');
-            break;
-        case 'data_import':
-            $('#upload').click();
-            break;
-        case 'data_reset':
-            confirm('<b class="text-danger">你的数据将会被清空,无法找回!</b>', {
-                title: '确定删除吗?',
-                callback: (id) => {
-                    if (id == 'ok') {
-                        local_clearAll();
-                        location.reload();
                     }
-                    return true;
                 }
-            });
-            break;
-        case 'setScrollAddTime':
-            setScrollAddTime(dom.dataset.time);
-            break;
-        case 'toStart':
-            if (g_video.pos1 >= 0) g_player.setCurrentTime(g_video.pos1);
-            break;
-        case 'toEnd':
-            if (g_video.pos2 >= 0) g_player.setCurrentTime(g_video.pos2);
-            break;
-        case 'resetPos':
-            g_video.clearInput();
-            break;
-        case 'setVideoCover':
-            var k = g_video.key;
-            if (!k) return;
-            ipc_send('deleteFile', [`*path*/cover/${k}.jpg`]);
-            g_video.videoCover(k, true, g_player.getCurrentTime());
-            break;
+                fun();
+                break;
+            case 'openURL':
+                ipc_send('url', dom.dataset.url);
+                break;
+            case 'modal_folders':
+                var input = $(action[1]);
+                g_video.modal_folder(input.val(), folder => {
+                    input.val(folder[0]);
+                });
+                break;
+            case 'singleSelect':
+                $(action[1] + '.' + action[2]).removeClass(action[2]);
+                dom.classList.add(action[2])
+                break;
+            case 'videoThumb':
+                var key = g_video.key;
+                if (key) {
+                    toast('生成中,可能要花费一些时间');
+                    ipc_send('videoThumb', { file: g_player.getUrl(), key: key });
+                }
+                break;
 
-        case 'btn_file_selectAll':
-            var a = $('[data-action="files_select"].active');
-            if (a.length) {
-                a.removeClass('active');
-            } else {
-                $('[data-action="files_select"]').addClass('active');
-            }
-            g_video.onSelectFile();
-            break;
+            case 'openFile':
+            case 'openFolder':
+                ipc_send('openFile', dom.dataset.file)
+                break;
+            case 'btnGroup_select':
+                for (var d of dom.parentElement.children) {
+                    d.className = 'btn' + (d == dom ? ' btn-primary' : '');
+                }
+                break;
+            case 'data_export':
+                var d = {};
+                for (var key of local_getList()) {
+                    d[key] = localStorage.getItem(key);
+                }
+                downloadData(JSON.stringify(d), 'data_' + (new Date().format('yyyy_MM_dd_hh_mm_ss')) + '.json');
+                break;
+            case 'data_import':
+                $('#upload').click();
+                break;
+            case 'data_reset':
+                confirm('<b class="text-danger">你的数据将会被清空,无法找回!</b>', {
+                    title: '确定删除吗?',
+                    callback: (id) => {
+                        if (id == 'ok') {
+                            local_clearAll();
+                            location.reload();
+                        }
+                        return true;
+                    }
+                });
+                break;
+            case 'setScrollAddTime':
+                setScrollAddTime(dom.dataset.time);
+                break;
+            case 'toStart':
+                if (g_video.pos1 >= 0) g_player.setCurrentTime(g_video.pos1);
+                break;
+            case 'toEnd':
+                if (g_video.pos2 >= 0) g_player.setCurrentTime(g_video.pos2);
+                break;
+            case 'resetPos':
+                g_video.clearInput();
+                break;
+            case 'setVideoCover':
+                var k = g_video.key;
+                if (!k) return;
+                ipc_send('deleteFile', [`*path*/cover/${k}.jpg`]);
+                g_video.videoCover(k, true, g_player.getCurrentTime());
+                break;
 
-            break;
+            case 'btn_file_selectAll':
+                var a = $('[data-action="files_select"].active');
+                if (a.length) {
+                    a.removeClass('active');
+                } else {
+                    $('[data-action="files_select"]').addClass('active');
+                }
+                g_video.onSelectFile();
+                break;
 
-        case 'btn_file_add':
-            var files = [];
-            var a = $('[data-action="files_select"].active');
-            for (var d of a) files.push(d.dataset.file);
-            g_video.addFiles(files, $('#input_folderName').val());
-            $('#modal_addFiles').modal('hide');
-            break;
-        case 'files_select':
-            $(dom).toggleClass('active');
-            g_video.onSelectFile();
-            break;
+                break;
 
-     
-            break;
-        case 'jumpClip':
-            if(event.ctrlKey){
-                return $(dom).toggleClass('card_selected');
-            }
-            g_player.setCurrentTime(dom.dataset.start);
-            break;
-        case 'loadClip':
-            var d = $(dom);
-            if (d.hasClass('card_active')) {
-                return doAction(null, 'resetPos');
-            }
-            g_video.loadClip(d.data('clip'));
-            break;
-        case 'toggleSideBar':
-            toggleSidebar();
-            break;
-        case 'loadVideo':
-            g_video.loadVideo($(dom).attr('data-video'));
-            break;
-        case 'addPos':
-            g_video.addPos();
-            break;
-      
-        case 'search':
-            g_site.doSubmit();
-            break;
-        case 'site_add':
-            g_site.editSite();
-            break;
-        case 'minSize':
-            ipc_send('min');
-            break;
-        case 'maxSize':
-            ipc_send('max');
-            break;
-        case 'close':
-            ipc_send('close');
-            break;
-    }
+            case 'btn_file_add':
+                var files = [];
+                var a = $('[data-action="files_select"].active');
+                for (var d of a) files.push(d.dataset.file);
+                g_video.addFiles(files, $('#input_folderName').val());
+                $('#modal_addFiles').modal('hide');
+                break;
+            case 'files_select':
+                $(dom).toggleClass('active');
+                g_video.onSelectFile();
+                break;
+
+
+                break;
+            case 'jumpClip':
+                if (event.ctrlKey) {
+                    return $(dom).toggleClass('card_selected');
+                }
+                g_player.setCurrentTime(dom.dataset.start);
+                break;
+            case 'loadClip':
+                var d = $(dom);
+                if (d.hasClass('card_active')) {
+                    return doAction(null, 'resetPos');
+                }
+                g_video.loadClip(d.data('clip'));
+                break;
+            case 'toggleSideBar':
+                toggleSidebar();
+                break;
+            case 'loadVideo':
+                g_video.loadVideo($(dom).attr('data-video'));
+                break;
+            case 'addPos':
+                g_video.addPos();
+                break;
+
+            case 'search':
+                g_site.doSubmit();
+                break;
+            case 'site_add':
+                g_site.editSite();
+                break;
+            case 'minSize':
+                ipc_send('min');
+                break;
+            case 'maxSize':
+                ipc_send('max');
+                break;
+            case 'close':
+                ipc_send('close');
+                break;
+        }
+    })
 }

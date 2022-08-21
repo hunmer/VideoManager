@@ -1,5 +1,6 @@
 var g_plugin = {
     events: {},
+    instance: {},
     resetAll: function() {
         nodejs.files.removeDir('*path*/scripts/');
         g_plugin.defaultList();
@@ -194,8 +195,6 @@ registerAction('folder_toEagle', dom => {
             if(callback) return callback(data);
             event.finish && event.finish(data);
         }
-
-       
     },
     initPlugins: function(){
         var load = [];

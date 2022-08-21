@@ -508,6 +508,9 @@ function dragFile(ev, src) {
     ev.preventDefault();
     var files = [];
     var icon = '';
+    if(target.attr('multi') != undefined){
+        files = target.attr('data-file').split('|')
+    }else
     if (ev.ctrlKey) {
         // 获取所有同样class的元素
         for (var selected of $('.' + target.attr('class').replaceAll(' ', '.'))) {
