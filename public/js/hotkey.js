@@ -20,6 +20,26 @@ var g_hotkey = {
             content: "toggleFullScreen()",
             type: 2,
         },
+        'ctrl+digit1': {
+            title: '标签页_标签',
+            content: "loadTab('tags')",
+            type: 1,
+        },
+        'ctrl+digit2': {
+            title: '标签页_片段',
+            content: "loadTab('list')",
+            type: 1,
+        },
+        'ctrl+digit3': {
+            title: '标签页_信息',
+            content: "loadTab('detail')",
+            type: 1,
+        },
+        'ctrl+digit4': {
+            title: '标签页_字幕',
+            content: "loadTab('sub')",
+            type: 1,
+        },
         'alt+digit1': {
             title: '设置起点',
             content: "g_video.setStart()",

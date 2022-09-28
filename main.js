@@ -1,7 +1,7 @@
 // var electron = require('electron')
 
 const { app } = require('electron');
-app.disableHardwareAcceleration() 
+app.disableHardwareAcceleration()
 const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
     app.quit();
@@ -19,7 +19,7 @@ var files = require('./file.js')
 const path = require('path');
 const iconvLite = require('iconv-lite');
 var g_method = {};
-const config = './config.json';
+const config = path.join(__dirname, 'config.json');
 
 var g_config = {
     devTool: false,
@@ -61,9 +61,9 @@ function handleUrl(urlStr) {
     const location = new URL(urlStr);
     const { searchParams } = urlObj;
     let data = JSON.parse(searchParams.data);
-    switch(location.pathname){
+    switch (location.pathname) {
         case 'plugin':
-            
+
             break;
     }
 }
@@ -92,9 +92,7 @@ function saveConfig() {
     try {
         fs.accessSync(config, fs.W_OK);
         files.write(config, JSON.stringify(g_config));
-    } catch (err) {
-
-    }
+    } catch (err) {}
 }
 
 //定义菜单
@@ -315,15 +313,21 @@ ipcMain.on("method", async function(event, data) {
             app.exit(0);
             break;
         case 'switchAccount':
+            let fun = () => {
+                var params = d.dataPath != '' ? ['--dataPath', d.dataPath] : [];
+                // todo 只替换datapath 参数 
+                // process.argv.slice(1).concat()
+                app.relaunch({ args: params })
+                app.exit(0)
+            }
+
             if (d.default) {
                 g_config.dataPath = d.dataPath;
                 saveConfig();
+                setTimeout(() => fun(), 500)
+            } else {
+                fun()
             }
-            var params = d.dataPath != '' ? ['--dataPath', d.dataPath] : [];
-            // todo 只替换datapath 参数 
-            // process.argv.slice(1).concat()
-            app.relaunch({ args: params })
-            app.exit(0)
             break;
         case 'getResult':
             send('getResult', { name: d.name, ret: eval(d.code) })
@@ -388,11 +392,11 @@ ipcMain.on("method", async function(event, data) {
             break;
 
         case 'openFolderDialog':
-            openFileDialog(folders => {
-                if (folders.length) send('openFolders', folders);
-            }, {
+            openFileDialog({
                 title: '同步本地目录(长按ctrl可多选)',
                 properties: ['openDirectory', 'multiSelections'],
+            },folders => {
+                if (folders.length) send('openFolders', folders);
             });
             break;
         case 'saveAsZip':

@@ -285,6 +285,10 @@ registerAction(['video_cover', 'video_clipsCover', 'video_rename', 'video_addCli
                 title: '重命名文件',
                 callback: file => {
                     let v = g_video.getVideo(g_menu.key);
+                    if(g_player.url == v.file){
+                        // 解除播放
+                         g_player.destrory();
+                    }
                     if (!v || isEmpty(file) || file == old) return;
                     nodejs.files.rename(old, file)
                     if (nodejs.files.exists(file)) {
@@ -351,14 +355,44 @@ registerAction(['video_cover', 'video_clipsCover', 'video_rename', 'video_addCli
             break;
 
         case 'video_delete':
-            g_video.removeVideoClips(k, false);
-            g_video.removeVideo(k);
-            confirm('是否同时删除文件?', {
+            confirm(`
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="checkbox_deleteClips">
+                  <label class="form-check-label" for="checkbox_deleteClips">
+                    删除片段
+                  </label>
+                </div>
+                 <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="checkbox_deleteVideo">
+                  <label class="form-check-label" for="checkbox_deleteVideo">
+                    删除原视频
+                  </label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="checkbox_hideVideo" onchange="$('#checkbox_removeVideo').prop('checked', false)">
+                  <label class="form-check-label" for="checkbox_hideVideo">
+                    隐藏视频
+                  </label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="checkbox_removeVideo"  onchange="$('#checkbox_hideVideo').prop('checked', false)">
+                  <label class="form-check-label" for="checkbox_removeVideo">
+                    删除数据
+                  </label>
+                </div>
+                `,  {
                 title: '<b class="text-danger">删除文件</b>',
                 callback: id => {
-                    if (id == 'ok') ipc_send('deleteFile', [d.file]);
-                }
-            });
+                    if($('#checkbox_deleteClips').prop('checked')) g_video.removeVideoClips(k, false);
+                    if($('#checkbox_removeVideo').prop('checked')){
+                       g_video.removeVideo(k);
+                    }else
+                    if($('#checkbox_hideVideo').prop('checked')){
+                        d.enable = false
+                        g_video.saveVideos()
+                    }
+                    if($('#checkbox_deleteVideo').prop('checked')) ipc_send('deleteFile', [d.file]);
+                }})
             break;
     }
     g_menu.hideMenu('video_item');

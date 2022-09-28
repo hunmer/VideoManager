@@ -73,6 +73,7 @@ var g_folders = {
          }
     },
     addFolders: function(folders){
+        console.log(folders);
     	if(!Array.isArray(folders)) folders = [folders];
     	var time = new Date().getTime();
     	for(var folder of folders){

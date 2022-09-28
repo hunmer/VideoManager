@@ -286,7 +286,33 @@ function doAction() {
                 g_video.loadVideo($(dom).addClass('active').attr('data-video'));
                 break;
             case 'addfiles':
-                ipc_send('openFileDialog', { multi: true });
+                //
+                buildModal(`
+                    <div id="file-drop" class="text-center bg-white" style="width: 100%;height:100%;">
+                        <div class="card" style="width: 18rem;margin: 0 auto;">
+                            <i class="bi bi-download" style="font-size: 4rem;"></i>
+                            <div class="card-body">
+                                <p class="card-text">拖放文件完成导入</p>
+                            </div>
+                        </div>
+                    </div>
+
+                `, {
+                    title: '添加文件',
+                    btns: [{
+                        id: 'addFile',
+                        text: '添加文件',
+                        class: 'btn-primary',
+                    }],
+                    onBtnClick: (config, btn) => {
+                        var par = $(btn).parents('.modal');
+                        if (btn.id == 'btn_addFile') {
+                             ipc_send('openFileDialog', { multi: true });
+                        }
+                        // par.modal('hide');
+                    }
+                })
+                //
                 break;
             case 'addfolders':
                 ipc_send('openFolderDialog', { multi: true });

@@ -99,7 +99,15 @@ var g_player = {
                 }
             }
             _player = new DPlayer(config)
+            
+            // _player.on('seeking', function(e) {
+            //     console.log('seeking', e)
+            // })
+            // _player.on('seeked', function(e) {
+            //     console.log('seeked', e)
+            // })
             _player.on('loadeddata', function(e) {
+                triggerEvent('onPlayerInited', {}, data => {})
                 g_sub.loadSub(key);
                 g_player.setCurrentTime(start, getConfig('autoPlayVideo', true));
                 if(!g_cache.firstLoaded){

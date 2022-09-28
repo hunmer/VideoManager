@@ -14,6 +14,7 @@ var g_config = local_readJson('config', {
 var g_cache = {
             searchedClip: {},
             previewClip: -1,
+            dragFile: [],
             searchTags: [],
             filters: [],
             fullScreen: false,

@@ -1,4 +1,3 @@
-
 function cutString(s_text, s_start, s_end, i_start = 0) {
     i_start = s_text.indexOf(s_start, i_start);
     if (i_start === -1) return '';
@@ -9,26 +8,26 @@ function cutString(s_text, s_start, s_end, i_start = 0) {
 }
 
 
-function local_readFile(file, def = {}){
+function local_readFile(file, def = {}) {
     var content = nodejs.files.read(file, false);
     return content ? JSON.parse(content) : def;
 }
 
-function local_saveFile(file, def = '{}'){
+function local_saveFile(file, def = '{}') {
     return nodejs.files.write(file, JSON.stringify(def));
 }
 
-function playSound(src){
+function playSound(src) {
     $('#soundTip').attr('src', src)[0].play();
 }
 
- function triggerEvent(type, data, callback) {
+function triggerEvent(type, data, callback) {
     // console.log(type, data);
     g_plugin.callEvent(type, data, callback);
 }
 
 function guid() {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
         var r = Math.random() * 16 | 0,
             v = c == 'x' ? r : (r & 0x3 | 0x8);
         return v.toString(16);
@@ -169,14 +168,26 @@ function popString(s, split) {
 
 function getImgBase64(video, width, height) {
     return new Promise(function(resolve, reject) {
-        var canvas = document.createElement("canvas");
-        canvas.width = video.width();
-        canvas.height = video.height();
-        canvas.getContext("2d").drawImage(video[0], 0, 0, width, height); //绘制canvas
-        dataURL = canvas.toDataURL('image/jpeg'); //转换为base64
-        resolve(dataURL);
+                var canvas = document.createElement("canvas");
+        // createImageBitmap(
+        //         video, { resizeWidth: width, resizeHeight: height, resizeQuality: 'high' }
+        //     )
+        //     .then(imageBitmap => {
+        //         canvas.getContext("2d").drawImage(imageBitmap, 0, 0)
+        //         canvas.toBlob(e => resolve(URL.createObjectURL(e)))
+        //     });
+        let vw = video.videoWidth
+        let vh = video.videoHeight
+        canvas.width = vw;
+        canvas.height = vh;
+        let ctx =  canvas.getContext("2d")
+         ctx.drawImage(video, 0, 0);
+        canvas.toBlob(e => resolve(URL.createObjectURL(e)))
+        // dataURL = canvas.toDataURL('image/jpeg'); //转换为base64
     });
 }
+
+
 
 function loadRes(files, callback, cache = true) {
     var i = 0;
@@ -262,7 +273,7 @@ function local_clearAll() {
 
 function copyText(text, input) {
     var remove;
-    if (!input){
+    if (!input) {
         remove = true;
         input = $('<input value="' + text + '" hidden>').appendTo('body')[0];
     }
@@ -355,7 +366,7 @@ function getVal(value, defaultV) {
 
 function getFileName(s, ext = false) {
     var name = typeof(s) == 'string' ? s.split('\\').pop() : '';
-    if (!ext){
+    if (!ext) {
         var a = name.split('.');
         a.pop();
         name = a.join('.');
@@ -404,9 +415,9 @@ function _s2(s, j = '') {
 }
 
 function srcollVideo(e, video) {
-    if(e.originalEvent) e = e.originalEvent;
+    if (e.originalEvent) e = e.originalEvent;
     if ($('input:focus').length) return;
-    if(!e.ctrlKey && !e.shiftKey && !e.altKey) return;
+    if (!e.ctrlKey && !e.shiftKey && !e.altKey) return;
 
     var d = $(e.target);
     if (d.parents('.dropdown-menu').length) return; // 裁剪列表
@@ -426,7 +437,7 @@ function srcollVideo(e, video) {
         if (add < 1) add = 1;
         add = e.deltaY > 0 ? 0 - add : add;
         video.currentTime += add;
-       clearEventBubble(e);
+        clearEventBubble(e);
     }
 }
 
@@ -476,7 +487,7 @@ function insertStyle(cssText) {
 function setConfig(k, v) {
     g_config[k] = v;
     local_saveJson('config', g_config);
-    if(typeof(onSetConfig) == 'function') onSetConfig(k, v);
+    if (typeof(onSetConfig) == 'function') onSetConfig(k, v);
 }
 
 function getConfig(k, def) {
@@ -508,9 +519,9 @@ function dragFile(ev, src) {
     ev.preventDefault();
     var files = [];
     var icon = '';
-    if(target.attr('multi') != undefined){
+    if (target.attr('multi') != undefined) {
         files = target.attr('data-file').split('|')
-    }else
+    } else
     if (ev.ctrlKey) {
         // 获取所有同样class的元素
         for (var selected of $('.' + target.attr('class').replaceAll(' ', '.'))) {

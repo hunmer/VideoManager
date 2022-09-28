@@ -122,8 +122,8 @@ const files = {
         fs.readdirSync(dir).forEach(fileName => {
             var path = files.join(dir, fileName);
             if (files.isDir(path) && ((!C && C != 0) || C > 0)) {
-                if (files.isEmptyDir(path)) return files.removeDir(path);
-                searchDirFiles(path, list, fileExts, C - 1);
+                if (files.isEmptyDir(path)) return; // files.removeDir(path);
+                files.searchDirFiles(path, list, fileExts, C - 1);
                 return;
             }
             for (var i = 0; i < fileExts.length; i++) {
@@ -134,7 +134,11 @@ const files = {
             }
         });
     },
-
+    dirFiles(dir, fileExts, callback){
+       let list = [];
+       this.searchDirFiles(dir, list, fileExts)
+       callback(list)
+    },
     items: (dir) => {
         var r = {
             base: dir,

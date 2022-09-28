@@ -12,15 +12,22 @@ var g_video = {
         self.inited = true;
         self.initEvent();
         g_tag.preInit();
-     
+
         self.initVideos();
         if (getConfig('autoPlay', true) && g_config.lastVideo != undefined) {
             self.loadVideo(g_config.lastVideo, true);
         }
+
+        registerAction('video_to_start', dom => {
+            if(self.pos1 >= 0) g_player.setCurrentTime(self.pos1)
+        })
+         registerAction('video_to_end', dom => {
+            if(self.pos2 >= 0) g_player.setCurrentTime(self.pos2)
+        })
     },
     initEvent: function() {
         var self = this;
-        
+
     },
     initTagsFolder: function() {
         var h = ``;
@@ -29,6 +36,17 @@ var g_video = {
         }
         $('#select_tag_folder').html(h);
 
+    },
+    to_current: function() {
+        let active = $('.card_active')
+        if (active.length) {
+            let par = active.parents('.collapse')
+            $('#videoList .collapse.show').removeClass('show')
+            if (!par.hasClass('show')) {
+                par.addClass('show')
+            }
+            active[0].scrollIntoViewIfNeeded()
+        }
     },
     removeVideo: function(key, save = true) {
         if (key == g_video.key) {
@@ -64,7 +82,7 @@ var g_video = {
             r[folder][key] = d.file;
 
             for (var tag of this.getVideoTags(d)) {
-                if(tag != ''){
+                if (tag != '') {
                     if (!all[tag]) all[tag] = 0;
                     all[tag]++;
                 }
@@ -160,6 +178,7 @@ var g_video = {
                 if (g_config.folder_sort_reverse == '1') keys = keys.reverse();
                 for (var key of keys) {
                     var d = self.getVideo(key);
+                    if(d.enable === false) continue;
                     var t = 0;
                     var c = 0;
                     for (var clip of Object.values(d.clips)) {
@@ -299,17 +318,17 @@ var g_video = {
         local_saveJson('videos', _videos);
 
         this.initPos();
-        if(this.pos2 > 0){
-            if(run) {
+        if (this.pos2 > 0) {
+            if (run) {
                 this.cut(time, this.pos1, this.pos2 - this.pos1, this.data.file, `*path*/cuts/${time}.mp4`, false);
             }
             g_player.setCurrentTime(this.pos2);
-        }else{
+        } else {
             // fix pos1
             this.cover(time, this.pos1, this.data.file, `*path*/cover/${time}.jpg`, false);
         }
 
-        if(getConfig('autoPlayVideoCliped', true)) g_player.playVideo(true);
+        if (getConfig('autoPlayVideoCliped', true)) g_player.playVideo(true);
 
         this.clearInput(this.pos2);
         toast('添加成功', 'alert-success');
@@ -371,18 +390,20 @@ var g_video = {
         });
     },
 
-    removeVideoClips: function(id, save = true){
+    removeVideoClips: function(id, save = true) {
         let i = 0;
-         let d = g_video.getVideo(id);
+        let d = g_video.getVideo(id);
         for (var k in d.clips) {
             var mp4 = '*path*/cuts/' + k + '.mp4';
             if (nodejs.files.exists(mp4)) {
                 i++;
                 nodejs.files.remove(mp4);
+                let cover = '*path*/cover/' + k + '.jpg'
+                nodejs.files.exists(cover) && nodejs.files.remove(cover);
             }
         }
         d.clips = {};
-        if(save) g_video.saveVideos();
+        if (save) g_video.saveVideos();
         return i;
     },
 
@@ -416,12 +437,12 @@ var g_video = {
 
     setClipStatus: function(clip, text) {
         var empty = text == undefined || text == '';
-        if(empty || text == '任务完成'){
+        if (empty || text == '任务完成') {
             g_list.remove('cutting', clip);
-        }else{
+        } else {
             g_list.addToList('cutting', clip, text, false);
         }
-        
+
         var d = domSelector({ dbaction: 'loadClip', clip: clip });
         if (!d.length) return;
 
@@ -431,16 +452,16 @@ var g_video = {
             badge = $(`<span style="position: absolute;bottom:0;right:6px;"></span>`).appendTo(d.find('.card-img-overlay'));
         }
         if (empty) {
-             return badge.remove();
+            return badge.remove();
         }
         var style = 'badge-primary'
-        switch(text){
+        switch (text) {
             case '任务完成':
                 style = 'badge-success';
                 break;
 
             case '任务失败':
-                 style = 'badge-danger';
+                style = 'badge-danger';
                 break;
 
             case '队列中':
@@ -555,7 +576,7 @@ var g_video = {
             var d = self.getVideo(key);
             if (!d) return;
 
-            if(g_parse.loadUrl(key, d.url)) return;
+            if (g_parse.loadUrl(key, d.url)) return;
 
             loadTab('list');
             g_sub.unlinkTarget();
@@ -574,28 +595,32 @@ var g_video = {
             g_player.load(d.file, key, start);
             $('#sidebar-wrapper').find('.card_active').removeClass('card_active');
             domSelector({ action: 'loadVideo', video: key }).addClass('card_active');
-
+            self.to_current()
             $('[data-action="resetPos"]').addClass('hide');
             self.initPos();
             setHeight($('.div_video_side_list'));
 
-            if(d.file.startsWith('http')){ // 网络视频不加载信息
+            if (d.file.startsWith('http')) { // 网络视频不加载信息
                 $('#_detail').html('网络视频不加载信息');
-            }else{
+            } else {
                 if (!d.meta) {
                     self.getMeta(key);
                 } else {
                     self.loadMeta(d.meta);
                 }
             }
-            
+
             self.saveVideos(false);
         });
     },
 
-    getMeta: function(key, full = false) {
+    getMeta: function(key, full = false, callback) {
         var self = this;
         var d = self.getVideo(key);
+        if (!d) return;
+
+        if (callback && d.meta) return callback(d.meta)
+
         ipc_send('meta', {
             input: d.file,
             key: key,
@@ -609,6 +634,8 @@ var g_video = {
                         duration: f.duration,
                         size: f.size,
                     }
+                    if (callback) return callback(d.meta);
+
                     self.saveVideos(false);
                     self.loadMeta(d.meta);
                 } else {
@@ -642,8 +669,6 @@ var g_video = {
     },
 
     reviceFiles: function(files, title = '') {
-        $('#file-drop').toggleClass('hide', true);
-
         var h = '';
         for (var file of files) {
             h += `<li data-action="files_select" class="list-group-item active" data-file="${file}">${file}</li>`;

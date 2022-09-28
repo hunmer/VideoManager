@@ -1,4 +1,4 @@
-const { ipcRenderer } = require('electron');
+const { ipcRenderer, clipboard } = require('electron');
 const files = require('./file.js')
 var spawn = require("child_process").spawn;
 const iconvLite = require('iconv-lite');
@@ -184,6 +184,7 @@ function updateFiles(url, fileList) {
 window.nodejs = {
     files: files,
     env: process.env,
+    clipboard: clipboard,
     require: require,
     exec: cli,
     path: replaceAll_once(__dirname, '\\', '\/'),
@@ -446,7 +447,7 @@ window._api = {
             case 'getPath':
                 var list = [];
                 files.searchDirFiles(data.msg, list, ['mp4', 'ts', 'm3u8', 'flv', 'mpd', 'mkv'], 2);
-                if (list.length) window.revicePath(data.msg, list, path.basename(data.msg));
+                if (list.length) window.g_fileDrop.revicePath(data.msg, list, path.basename(data.msg));
                 return;
 
             default:

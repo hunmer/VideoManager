@@ -15,15 +15,15 @@ var g_sub = {
         registerAction('sub_delete', (dom, action) => {
             var file = '*path*/subs/' + g_video.key + '.vtt';
             if (nodejs.files.exists(file)) {
-                confirm('字幕', {
-                    title: '<b class="text-danger">是否删除字幕?</b>',
-                    callback: id => {
-                        if (id == 'ok') {
+                // confirm('字幕', {
+                //     title: '<b class="text-danger">是否删除字幕?</b>',
+                //     callback: id => {
+                //         if (id == 'ok') {
                             ipc_send('deleteFile', [file]);
                             g_sub.loadSub(g_video.key);
-                        }
-                    }
-                });
+                        // }
+                    // }
+                // });
             }
         });
         registerAction('sub_refresh', (dom, action) => {
@@ -124,7 +124,7 @@ var g_sub = {
         });
     },
     searchSub: function(s) {
-        g_sub.updateSub(undefined, s == '' ? undefined : sub => $(sub.text).text().indexOf(s) != -1)
+        g_sub.updateSub(undefined, s == '' ? undefined : (sub) => sub.text.replace(/<.*?>/g,"").indexOf(s) != -1)
     },
     loadSub: function(key, cache = true) {
         var file = '*path*/subs/' + key + '.vtt';
@@ -134,7 +134,7 @@ var g_sub = {
             // subs = PF_SRT.parse(nodejs.files.read(file));
             subs = _player.video.textTracks[0].cues;
         } else {
-            subs = this.getSub(file);
+            subs = this.getSub(this.file);
         }
         this.subs = subs;
         this.updateSub(subs, this.filter);
@@ -204,7 +204,7 @@ var g_sub = {
         var s = '';
         var i = 0;
         for (var sub of this.subs) {
-            s += `${getTime(sub.startTime, ':', ':', '', false, 3)} --> ${getTime(sub.endTime, ':', ':', '',false, 3)}\r\n${sub.text}\r\n\r\n`;
+            s += `${getTime(sub.startTime, ':', ':', '', false, 3)} --> ${getTime(sub.endTime, ':', ':', '',false, 3)}\r\n${sub.text.replace(/<.*?>/g,"")}\r\n\r\n`;
             i++;
         }
         if (s == '') {
@@ -220,7 +220,7 @@ var g_sub = {
     showTxt: function() {
         let items = $('.sub_item span');
         if (!items.length) return toast('没有字幕内容', 'alert-danger');
-        prompt("\r\n", {
+        prompt("，", {
             title: '输入连接符号',
             callback: join => {
                 var s = '';

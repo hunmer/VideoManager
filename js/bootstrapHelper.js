@@ -51,8 +51,6 @@ function fullModal(modal, show = true, onClose) {
     g_style.addStyle('modal', css);
 }
 
-
-
 function bindModalEvent(modal, opts) {
     modal
         .on('shown.bs.modal', function(event) {
