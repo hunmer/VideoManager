@@ -289,7 +289,7 @@ var g_video = {
         if (this.pos2 > 0 && this.pos1 == this.pos2) {
             return toast('至少要有1秒', 'alert-danger');
         }
-        loadTab('list');
+        
         var tag = $('#input_tag').val();
         if (tag != '') {
             g_tag.addTag(tag);
@@ -742,7 +742,7 @@ var g_video = {
                     clips: {},
                 }, props);
                 // TODO 队列
-                this.videoCover(key, false);
+                // this.videoCover(key, false);
             }
             h += `<a href="javascript: g_video.loadVideo('${key}')" class="text-${existed ? 'danger' : 'primary'}">${getFileName(file, true)}</a></br>`;
         }

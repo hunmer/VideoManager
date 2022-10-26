@@ -25,6 +25,20 @@ var MODAL_HTML = (id, opts) => {
  `
 }
 
+
+function replaceAll_once(str, search, replace, start = 0) {
+    if (typeof(str) != 'string') return ''
+    while (true) {
+        var i = str.indexOf(search, start);
+        if (i == -1) break;
+        start = i + search.length;
+        str = str.substr(0, i) + replace + str.substr(start, str.length - start);
+        start += replace.length - search.length;
+    }
+    return str;
+}
+
+
 function nextScrollTime(e) {
     var d = domSelector({ action: 'setScrollAddTime' }, '.active');
     if (!d.length) {

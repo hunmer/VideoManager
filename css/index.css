@@ -1,4 +1,6 @@
-
+.tooltip {
+    width: 300px;
+}
 
 .tag {
     position: relative;

@@ -10,9 +10,9 @@ var nsg = require('node-sprite-generator');
 var Jimp = require('jimp');
 var os = require('os');
 var request = require('request');
-const ffmpeg = require('fluent-ffmpeg');
-ffmpeg.setFfmpegPath(path.join(__dirname, 'bin/ffmpeg.exe'));
 var cli = require('./cli.js');
+
+
 
 function getLunchParam(param) {
     var args = process.argv;
@@ -188,7 +188,46 @@ window.nodejs = {
     require: require,
     exec: cli,
     path: replaceAll_once(__dirname, '\\', '\/'),
+    bin: path.dirname(process.execPath),
 }
+
+
+// let package = window.nodejs.package = {
+//     install: require('npm-install-package'),
+//     getPath(x) {
+//         return nodejs.bin + '/node_modules/' + x + '/'
+//     },
+//     isInstalled(x) {
+//         return fs.existsSync(package.getPath(x))
+//     },
+//     require(list) {
+//         if (!Array.isArray(list)) return require(package.getPath(list))
+//         let r = {}
+//         list.forEach(name => r[name] = package.require(name))
+//         return r
+//     },
+//     checkInstall(list){
+//         if (!Array.isArray(list)) list = [list]
+//         return new Promise((resolve, reject) => {
+//             let i = list.length
+//             const next = () => {
+//                 if (--i <= 0) resolve(list)
+//             }
+//             list.forEach(name => {
+//                 if (!package.isInstalled(name)) {
+//                     package.install(name, function(err) {
+//                         if (err) reject(err);
+//                         next()
+//                     })
+//                 } else {
+//                     next()
+//                 }
+//             })
+//         })
+//     },
+
+// }
+
 
 function videoThumb(file, output) {
     return new Promise(function(resolve, reject) {

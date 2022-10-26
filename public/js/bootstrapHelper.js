@@ -107,7 +107,7 @@ function buildModal(text, opts) {
         width: opts.width,
     }).toggleClass('modal-dialog-scrollable', opts.scrollable);
     modal.find('.modal-content').toggleClass('h-full', opts.fullHeight);
-    modal.find('.modal-title').html(opts.title);
+    modal.find('.modal-title').addClass('w-full').html(opts.title);
     modal.find('.modal-body').html(opts.html.replace('%html%', text));
     var footer = modal.find('.modal-footer').html(opts.footer || '');
     for (var btn of opts.btns) {

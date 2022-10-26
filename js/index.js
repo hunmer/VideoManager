@@ -245,6 +245,10 @@ $(function() {
             if (this.classList.contains('disabled')) return;
             doAction(this, this.dataset.input, event);
         })
+        .on('keydown', '[data-keydown]', function(event) {
+            if (this.classList.contains('disabled')) return;
+            doAction(this, this.dataset.keydown, event);
+        })
         .on('contextmenu', '[data-contenx]', function(event) {
             if (this.classList.contains('disabled')) return;
             doAction(this, this.dataset.contenx, event);
@@ -540,6 +544,7 @@ function doAction() {
                 break;
             case 'addPos':
                 g_video.addPos();
+                if(action.length == 1) loadTab('list');
                 break;
 
             case 'search':

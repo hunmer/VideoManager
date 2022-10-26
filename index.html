@@ -79,7 +79,7 @@
     <div class="d-flex hide" id="wrapper">
         <div class="border-end bg-white" id="sidebar-wrapper">
             <div class="sidebar-heading border-bottom">
-                <input id="searchVideo" class="form-control mr-sm-2" type="search" placeholder="搜索影片" aria-label="Search" oninput="g_video.searchVideo(this.value)">
+                <input id="searchVideo" class="form-control mr-sm-2" type="search" placeholder="搜索影片" aria-label="Search" onkeydown="if(event.keyCode == 13) g_video.searchVideo(this.value)">
                 <div class="d-flex justify-content-around">
                     <a  type="button" data-action="account_list" title="切换用户" class="btn">
                       <i class="bi bi-people"></i>
