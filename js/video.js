@@ -351,26 +351,32 @@ var g_video = {
 
     cut: function(key, start, time, file, saveTo, tip = true) {
         if (isNaN(time) || time <= 0) return toast('未设置终点');
-        ipc_send('cmd', {
-            input: file,
-            key: key,
-            start: start,
-            duration: time,
-            params: getConfig('enable_customCmd') ? getConfig('customCmd') : [
-                '-y',
-                `-ss ${start}`,
-                `-t ${time}`,
-            ],
-            output: saveTo,
-            type: 'cut',
-            callback: (k, saveFile, success) => {
-                this.cover(k, 0, saveFile, `*path*/cover/${k}.jpg`, false);
-                tip && toast('裁剪' + (success ? '成功' : '失败'), 'alert-' + (success ? 'success' : 'danger'));
-                if (success) {
+         triggerEvent('beforeCutVideo', {
+            key, start, time, file, saveTo, tip
+        }, data => {
+            var {key, start, time, file, saveTo, tip} = data
+            
+            ipc_send('cmd', {
+                input: file,
+                key: key,
+                start: start,
+                duration: time,
+                params: getConfig('enable_customCmd') ? getConfig('customCmd') : [
+                    '-y',
+                    `-ss ${start}`,
+                    `-t ${time}`,
+                ],
+                output: saveTo,
+                type: 'cut',
+                callback: (k, saveFile, success) => {
+                    this.cover(k, 0, saveFile, `*path*/cover/${k}.jpg`, false);
+                    tip && toast('裁剪' + (success ? '成功' : '失败'), 'alert-' + (success ? 'success' : 'danger'));
+                    if (success) {
 
+                    }
                 }
-            }
-        });
+            });
+        })
     },
     cover: function(key, time, file, saveTo, tip = true) {
         var self = this;
