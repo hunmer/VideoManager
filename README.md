@@ -1,3 +1,5 @@
+此项目已经不再维护，请移步到：[mVideoPlayer](https://github.com/hunmer/mVideoPlayer)
+
 <p align="center">
   <img src="/favicon.png">
 </p>
